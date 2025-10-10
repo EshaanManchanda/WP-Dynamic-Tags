@@ -1,0 +1,52 @@
+{
+    "version": "1.0",
+    "export_date": "2025-09-30T08:45:27+00:00",
+    "total_tags": 2,
+    "site_url": "http:\/\/test.local",
+    "tags": [
+        {
+            "key": "tage2",
+            "primary_shortcode": "[tagkey key=\"tage2\"]",
+            "value": "tag 2",
+            "category": "general",
+            "created_date": "2025-09-29T11:41:05+00:00",
+            "modified_date": false,
+            "priority": 0,
+            "groups": [
+                {
+                    "id": 6,
+                    "name": "test group",
+                    "slug": "test-group",
+                    "description": "",
+                    "color": "#f39c12"
+                }
+            ],
+            "shortcode_patterns": [
+                "[test_group_tage2]"
+            ],
+            "usage_count": "256"
+        },
+        {
+            "key": "tagname",
+            "primary_shortcode": "[tagkey key=\"tagname\"]",
+            "value": "testing the tag",
+            "category": "general",
+            "created_date": "2025-09-29T01:04:12+00:00",
+            "modified_date": false,
+            "priority": 0,
+            "groups": [
+                {
+                    "id": 4,
+                    "name": "group",
+                    "slug": "group",
+                    "description": "",
+                    "color": "#2271b1"
+                }
+            ],
+            "shortcode_patterns": [
+                "[group_tagname]"
+            ],
+            "usage_count": "999"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+tag_key,tag_value,category,groups
+company_name,Acme Corporation,general,Branding
+company_email,contact@acmecorp.com,general,Contact Info
+company_phone,+1 (555) 123-4567,general,Contact Info
+site_tagline,Your Trusted Partner in Innovation,general,Branding;Marketing
+office_address,"123 Business St, Suite 100, New York, NY 10001",general,Contact Info
+support_hours,Monday - Friday: 9 AM - 5 PM EST,general,
+facebook_url,https://facebook.com/acmecorp,general,Social Media
+twitter_url,https://twitter.com/acmecorp,general,Social Media
+linkedin_url,https://linkedin.com/company/acmecorp,general,Social Media
+copyright_text,© 2024 Acme Corporation. All rights reserved.,general,
+promo_banner,Get 20% off your first order! Use code: WELCOME20,general,Promotions;Marketing
+welcome_message,"Welcome to our website! We're glad you're here.",general,Messages
+customer_testimonial,"This company has been amazing to work with. Highly recommended!",general,Testimonials;Marketing
+privacy_policy_url,https://acmecorp.com/privacy,general,Legal
+terms_url,https://acmecorp.com/terms,general,Legal
