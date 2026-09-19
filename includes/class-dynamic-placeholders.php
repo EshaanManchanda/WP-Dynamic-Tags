@@ -507,12 +507,141 @@ class WP_Dynamic_Tags_Placeholders {
                     $role = substr($condition, 10);
                     return current_user_can($role);
                 }
-                
+
+                // Field-based conditions: truthy check or comparison against a
+                // resolvable token, e.g. {if:acf:featured}, {if:wc:price>50},
+                // {if:meta:status=active}. Returns null (not bool) when the
+                // condition isn't a resolvable token at all, so a genuinely
+                // custom condition name still reaches the filter hook below.
+                $field_result = $this->evaluate_field_condition($condition);
+                if ($field_result !== null) {
+                    return $field_result;
+                }
+
                 // Allow custom conditions via filter
                 return apply_filters('dt_evaluate_condition', false, $condition);
         }
     }
-    
+
+    /**
+     * Public façade over evaluate_condition() for the [dt_if] shortcode.
+     */
+    public function evaluate_condition_public($condition) {
+        return $this->evaluate_condition($condition);
+    }
+
+    /**
+     * Whether a resolved value should read as "true" in a condition: unlike
+     * is_empty_value() (used for {token??fallback}, where "0" is meaningful
+     * data), a condition treats "0"/0/false the same as PHP's own empty().
+     */
+    public static function is_truthy($value) {
+        if (is_array($value)) {
+            return !empty($value);
+        }
+        return $value !== '' && $value !== null && $value !== '0' && $value !== 0 && $value !== false;
+    }
+
+    /**
+     * Split a condition string into its shape: a comparison ("key OP value"),
+     * a "key contains value" check, or a bare key/key:arg truthy check.
+     * Pure function - no WordPress calls - so it can be unit tested directly.
+     *
+     * @return array{type: string, key: string, arg: ?string, op: ?string, value: ?string}
+     */
+    public static function parse_condition_expression($condition) {
+        // Multi-char operators must be checked before their single-char subset
+        // (">=" before ">") or the split would land in the wrong place.
+        foreach (array('!=', '>=', '<=', '=', '>', '<') as $op) {
+            $pos = strpos($condition, $op);
+            if ($pos !== false) {
+                return self::split_key_arg(trim(substr($condition, 0, $pos))) + array(
+                    'type' => 'comparison',
+                    'op' => $op,
+                    'value' => trim(substr($condition, $pos + strlen($op))),
+                );
+            }
+        }
+
+        if (preg_match('/^(.+?)\s+contains\s+(.+)$/i', $condition, $m)) {
+            return self::split_key_arg(trim($m[1])) + array(
+                'type' => 'comparison',
+                'op' => 'contains',
+                'value' => trim($m[2]),
+            );
+        }
+
+        return self::split_key_arg(trim($condition)) + array(
+            'type' => 'truthy',
+            'op' => null,
+            'value' => null,
+        );
+    }
+
+    private static function split_key_arg($key_part) {
+        $key = $key_part;
+        $arg = null;
+        if (strpos($key_part, ':') !== false) {
+            list($key, $arg) = explode(':', $key_part, 2);
+            $arg = trim($arg);
+        }
+        return array('key' => trim($key), 'arg' => $arg);
+    }
+
+    /**
+     * Compare a resolved value against a parsed condition's operator/value.
+     * Pure function - no WordPress calls - so it can be unit tested directly.
+     *
+     * @param string|array $left The already-resolved token value.
+     */
+    public static function compare_values($left, $op, $value_str) {
+        if (is_array($left)) {
+            $left = ($op === '=' || $op === '!=' || $op === 'contains')
+                ? implode(', ', array_filter($left, 'is_scalar'))
+                : count($left);
+        }
+
+        switch ($op) {
+            case '=':
+                return (string) $left === $value_str;
+            case '!=':
+                return (string) $left !== $value_str;
+            case '>':
+                return (float) $left > (float) $value_str;
+            case '<':
+                return (float) $left < (float) $value_str;
+            case '>=':
+                return (float) $left >= (float) $value_str;
+            case '<=':
+                return (float) $left <= (float) $value_str;
+            case 'contains':
+                return stripos((string) $left, $value_str) !== false;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Evaluate a condition as a token reference: a bare key/key:arg for a
+     * truthy check, or "key OP value" for a comparison. Returns null (not a
+     * bool) when the condition isn't a resolvable token at all, so the caller
+     * can fall through to other checks (e.g. the dt_evaluate_condition filter).
+     */
+    private function evaluate_field_condition($condition) {
+        $parsed = self::parse_condition_expression($condition);
+        $value = $this->resolve_token($parsed['key'], $parsed['arg']);
+
+        if ($value === false) {
+            // Comparisons already committed to being field-based - an
+            // unresolvable key just means "no match", not "not a token".
+            return $parsed['type'] === 'truthy' ? null : false;
+        }
+
+        return $parsed['type'] === 'truthy'
+            ? self::is_truthy($value)
+            : self::compare_values($value, $parsed['op'], $parsed['value']);
+    }
+
     /**
      * Process date format placeholders
      */
@@ -971,6 +1100,8 @@ class WP_Dynamic_Tags_Placeholders {
                 'if_user_role:admin' => __('Conditional content for specific user role', 'wp-dynamic-tags'),
                 'if_mobile' => __('Conditional content for mobile devices', 'wp-dynamic-tags'),
                 'if_front_page' => __('Conditional content for front page', 'wp-dynamic-tags'),
+                'if:wc:price>50' => __('Condition can also test a field value: truthy check (e.g. {if:acf:featured}) or comparison with =, !=, >, <, >=, <=, contains', 'wp-dynamic-tags'),
+                '[dt_if condition="..."][dt_else]' => __('Wrap a whole block of content (not just a token) so it can be hidden/shown by any condition above, e.g. [dt_if condition="wc:price>50"]On sale![dt_else]Regular price[/dt_if]', 'wp-dynamic-tags'),
             ),
             'meta_and_fields' => array(
                 'meta:key' => __('Post meta value for the given key, e.g. {meta:price}', 'wp-dynamic-tags'),
@@ -990,9 +1121,10 @@ class WP_Dynamic_Tags_Placeholders {
                 'date:Y-m-d' => __('Custom date format (replace Y-m-d with desired format)', 'wp-dynamic-tags'),
                 'token|formatter' => __('Apply a formatter, e.g. {post_title|upper} or {meta:price|currency}', 'wp-dynamic-tags'),
                 'token??fallback' => __('Fallback text shown when the token resolves empty, e.g. {meta:subtitle??Coming soon}', 'wp-dynamic-tags'),
+                '[dt_template tag="..." query="..."]' => __('Render an existing Dynamic Tag once per post in a query, e.g. [dt_template tag="product_card" query="post_type=product&posts_per_page=6"]', 'wp-dynamic-tags'),
             )
         );
-        
+
         return apply_filters('dt_available_placeholders', $placeholders);
     }
     
@@ -1011,6 +1143,8 @@ class WP_Dynamic_Tags_Placeholders {
                 '{if:user_logged_in}Welcome back!{else}Please log in{/if}' => __('Different content based on login status', 'wp-dynamic-tags'),
                 '{if:user_role:administrator}Admin Panel{/if}' => __('Content only for specific user roles', 'wp-dynamic-tags'),
                 '{if:is_mobile}Mobile version{else}Desktop version{/if}' => __('Device-specific content', 'wp-dynamic-tags'),
+                '{if:wc:stock_status=instock}In stock{else}Sold out{/if}' => __('Condition based on a field value', 'wp-dynamic-tags'),
+                '[dt_if condition="wc:sale_percent>20"]Big sale![dt_else][/dt_if]' => __('Hide/show a whole block of content, not just text inside a tag', 'wp-dynamic-tags'),
             ),
             'advanced' => array(
                 'Today is {date:l, F j, Y}' => __('Custom date format', 'wp-dynamic-tags'),
@@ -1021,6 +1155,10 @@ class WP_Dynamic_Tags_Placeholders {
                 '{wc:price|currency}' => __('Format a WooCommerce product field', 'wp-dynamic-tags'),
                 '[dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]' => __('Render a template once per gallery image', 'wp-dynamic-tags'),
                 '[dt_loop source="acf:team_members" separator=", "]{item:name}[/dt_loop]' => __('Render a template once per repeater row', 'wp-dynamic-tags'),
+            ),
+            'templates' => array(
+                '[dt_template tag="product_card" query="post_type=product&posts_per_page=6"]' => __('Render a Dynamic Tag once per product, like a repeating card', 'wp-dynamic-tags'),
+                '[dt_template tag="team_member" query="post_type=team&orderby=menu_order&order=ASC"]' => __('Render a Dynamic Tag once per team member, in a custom order', 'wp-dynamic-tags'),
             )
         );
     }

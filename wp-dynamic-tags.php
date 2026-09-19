@@ -271,6 +271,8 @@ class WP_Dynamic_Tags_Plugin
             add_shortcode('dt_count', array($this, 'count_shortcode'));
             add_shortcode('dt_list', array($this, 'list_shortcode'));
             add_shortcode('dt_loop', array($this, 'loop_shortcode'));
+            add_shortcode('dt_if', array($this, 'if_shortcode'));
+            add_shortcode('dt_template', array($this, 'template_shortcode'));
 
             // Register individual tag shortcodes
             $this->register_simple_shortcodes();
@@ -787,6 +789,96 @@ class WP_Dynamic_Tags_Plugin
         }
 
         return implode($atts['separator'], $rendered);
+    }
+
+    /**
+     * Visibility shortcode - [dt_if condition="wc:price>50"]on sale copy[dt_else]default copy[/dt_if]
+     * A block-level generalization of the {if:}...{else}...{/if} token (which
+     * only branches text inside a Dynamic Tag's own content): this can wrap
+     * ANY content dropped into a builder's HTML/shortcode widget, so it can
+     * hide/show a whole rendered block, not just a merge-tag's text.
+     * The [dt_else] marker is a plain string split, not a registered shortcode.
+     */
+    public function if_shortcode($atts, $content = '')
+    {
+        $atts = shortcode_atts(array(
+            'condition' => '',
+        ), $atts, 'dt_if');
+
+        if (empty($atts['condition']) || !$this->placeholders || !method_exists($this->placeholders, 'evaluate_condition_public')) {
+            return '';
+        }
+
+        $parts = explode('[dt_else]', $content, 2);
+        $branch = $this->placeholders->evaluate_condition_public($atts['condition']) ? $parts[0] : (isset($parts[1]) ? $parts[1] : '');
+
+        return apply_filters('dt_process_value', $branch);
+    }
+
+    /**
+     * Dynamic template shortcode - [dt_template tag="product_card" query="post_type=product&posts_per_page=6"]
+     * Renders an existing Dynamic Tag's content once per post in a WP_Query,
+     * so every per-post placeholder ({post_title}, {wc:price}, {acf:...}, etc.)
+     * resolves against each queried record instead of the current page's post.
+     * `query` is a standard URL-querystring-style WP_Query args string
+     * (parsed with wp_parse_str) - deliberately not a query-builder abstraction,
+     * just this one shortcode's own args.
+     */
+    public function template_shortcode($atts)
+    {
+        $atts = shortcode_atts(array(
+            'tag' => '',
+            'query' => '',
+            'separator' => '',
+            'before' => '',
+            'after' => '',
+            'empty' => '',
+        ), $atts, 'dt_template');
+
+        if (empty($atts['tag'])) {
+            return $atts['empty'];
+        }
+
+        $sanitized_key = $this->sanitize_tag_key($atts['tag']);
+        $template_content = '';
+        foreach ($this->get_dynamic_tags() as $tag_data) {
+            if ($tag_data['tag_key'] === $sanitized_key) {
+                $template_content = $tag_data['content'];
+                break;
+            }
+        }
+
+        if ($template_content === '') {
+            return $atts['empty'];
+        }
+
+        $query_args = array(
+            'post_type' => 'post',
+            'posts_per_page' => 5,
+            'post_status' => 'publish',
+            'orderby' => 'date',
+            'order' => 'DESC',
+        );
+        if (!empty($atts['query'])) {
+            wp_parse_str($atts['query'], $parsed_query);
+            $query_args = array_merge($query_args, $parsed_query);
+        }
+
+        $query = new WP_Query($query_args);
+        if (!$query->have_posts()) {
+            wp_reset_postdata();
+            return $atts['empty'];
+        }
+
+        $rendered = array();
+        while ($query->have_posts()) {
+            $query->the_post();
+            $value = apply_filters('dt_process_value', $template_content);
+            $rendered[] = wp_kses_post($value);
+        }
+        wp_reset_postdata();
+
+        return $atts['before'] . implode($atts['separator'], $rendered) . $atts['after'];
     }
 
     /**
@@ -4822,7 +4914,7 @@ class WP_Dynamic_Tags_Plugin
 
                 // Find all dynamic tag shortcodes
                 foreach ($shortcode_tags as $tag => $callback) {
-                    if (strpos($tag, '_') !== false || in_array($tag, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop'])) {
+                    if (strpos($tag, '_') !== false || in_array($tag, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_template'])) {
                         $dt_shortcodes[$tag] = $callback;
                     }
                 }
@@ -4841,7 +4933,7 @@ class WP_Dynamic_Tags_Plugin
                                 <td><code>[<?php echo esc_html($shortcode); ?>]</code></td>
                                 <td>
                                     <?php
-                                    if (in_array($shortcode, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop'])) {
+                                    if (in_array($shortcode, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_template'])) {
                                         echo 'System';
                                     } elseif (strpos($shortcode, '_') !== false) {
                                         echo 'Group-aware';
