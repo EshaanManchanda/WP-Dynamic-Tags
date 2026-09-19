@@ -103,14 +103,18 @@ has nothing equivalent yet. Ordered so later items depend on earlier ones.
    query="post_type=product&posts_per_page=6"]` renders an existing Dynamic
    Tag once per post in a query, so every per-post placeholder resolves
    against each record. The `query` attribute is a plain WP_Query-args
-   string (`wp_parse_str`), deliberately not a reusable query-builder
-   abstraction — that's still gap #7.
+   string (`wp_parse_str`).
    Competitors: Elementor Pro (Theme Builder), Dynamic.ooo, JetEngine, Toolset.
-7. **Query-builder data source** — "get N posts of type X where meta Y = Z"
-   as a reusable data source, vs. today's single-record-only fields.
+7. ✅ **Query-builder data source — done in V4.** `{query:post_type=...&...}`
+   returns an array of post rows (id/title/permalink/excerpt/date/thumbnail),
+   usable directly with `[dt_loop source="query:..."]{item:title}[/dt_loop]`
+   — a reusable data source, not tied to any single shortcode.
    Competitors: JetEngine (core strength), Toolset, Elementor Pro (limited).
-8. **REST/external API tag** — fetch external JSON and expose a path as a
-   token. No competitor does this well either, but it's fully absent here.
+8. ✅ **REST/external API tag — done in V4.** `{api:URL::json.path}` fetches
+   external JSON (via `wp_safe_remote_get()` — WordPress's SSRF-guarded
+   HTTP function, refuses requests to private/reserved IP ranges) and walks
+   a dot-notation path into it, with 5-minute success / 1-minute failure
+   caching so a slow or down endpoint can't slow down every page load.
 9. **PHP/function escape-hatch tag** — a developer-only tag type for custom
    logic, mirroring what every page-builder ecosystem eventually offers.
 10. **Formal source/formatter registration API** — `register_external_placeholder()`
@@ -211,7 +215,7 @@ Everything in Pro, plus gaps #6–11 and agency ops:
 | **V1 — done** | Broad placeholder set, formatters, fallback (this session) | — |
 | **V2 — done** | Array primitives (#1: `\|join`, `\|count`, `\|first`, `\|last`, `[dt_loop]`), WooCommerce fields (#2), ACF repeater/gallery/relationship via dot notation (#3), user/term meta (#4) | V1's `{prefix:arg}` + formatter pattern |
 | **V3 — done** | Field-based conditions + `[dt_if]` block visibility (#5), `[dt_template]` per-record rendering (#6) | V2 (visibility/templates reuse the same token resolution and array primitives) |
-| **V4 — Query & external data** | Query builder (#7), REST/API tag (#8), PHP tag (#9) | V2/V3 (query results feed the same array primitives) |
+| **V4 — in progress** | Query builder (#7, done), REST/API tag (#8, done), PHP tag (#9, pending a security-model decision) | V2/V3 (query results feed the same array primitives) |
 | **V5 — Ecosystem** | Formal developer API (#10), debugger (#11), third-party integrations (#12) | V2–V4 (nothing to register a source *for* until sources vary) |
 
 Build order matters here specifically because gap #1 (array handling) is a
