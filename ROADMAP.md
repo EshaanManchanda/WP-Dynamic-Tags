@@ -115,8 +115,15 @@ has nothing equivalent yet. Ordered so later items depend on earlier ones.
    HTTP function, refuses requests to private/reserved IP ranges) and walks
    a dot-notation path into it, with 5-minute success / 1-minute failure
    caching so a slow or down endpoint can't slow down every page load.
-9. **PHP/function escape-hatch tag** — a developer-only tag type for custom
-   logic, mirroring what every page-builder ecosystem eventually offers.
+9. ✅ **PHP/function escape-hatch tag — done in V4, as a whitelist, not eval().**
+   `{func:name}` / `{func:name:arg}` calls a function a developer explicitly
+   exposed via `register_dynamic_tag_function()`. Deliberately **not** a
+   literal-eval of tag-authored text: any Author+ role can edit a Dynamic
+   Tag, so eval'ing that content would mean any Author-level user could run
+   arbitrary PHP on the server. The whitelist gets the actual value (custom
+   logic beyond what a data-getter placeholder can express) without adding
+   any new remote-code-execution surface — a content editor can only invoke
+   logic a developer already wrote and chose to expose by name.
 10. **Formal source/formatter registration API** — `register_external_placeholder()`
     exists but is undocumented, placeholder-only, and has no equivalent for
     registering a new formatter or a new data source. Elementor Pro's
@@ -215,7 +222,7 @@ Everything in Pro, plus gaps #6–11 and agency ops:
 | **V1 — done** | Broad placeholder set, formatters, fallback (this session) | — |
 | **V2 — done** | Array primitives (#1: `\|join`, `\|count`, `\|first`, `\|last`, `[dt_loop]`), WooCommerce fields (#2), ACF repeater/gallery/relationship via dot notation (#3), user/term meta (#4) | V1's `{prefix:arg}` + formatter pattern |
 | **V3 — done** | Field-based conditions + `[dt_if]` block visibility (#5), `[dt_template]` per-record rendering (#6) | V2 (visibility/templates reuse the same token resolution and array primitives) |
-| **V4 — in progress** | Query builder (#7, done), REST/API tag (#8, done), PHP tag (#9, pending a security-model decision) | V2/V3 (query results feed the same array primitives) |
+| **V4 — done** | Query builder (#7), REST/API tag (#8), whitelist-based function tag (#9) | V2/V3 (query results feed the same array primitives) |
 | **V5 — Ecosystem** | Formal developer API (#10), debugger (#11), third-party integrations (#12) | V2–V4 (nothing to register a source *for* until sources vary) |
 
 Build order matters here specifically because gap #1 (array handling) is a
