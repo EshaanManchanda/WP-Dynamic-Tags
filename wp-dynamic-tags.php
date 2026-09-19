@@ -3310,6 +3310,11 @@ class WP_Dynamic_Tags_Plugin
         echo '<button type="button" class="button button-small" id="dt-insert-api">' . esc_html__('Insert {api:...}', 'wp-dynamic-tags') . '</button>';
         echo '</div>';
 
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-func-key-input" placeholder="' . esc_attr__('registered function name[:arg]', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-func">' . esc_html__('Insert {func:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
+
         echo '</div>';
         echo '</div>';
 
@@ -3426,6 +3431,12 @@ class WP_Dynamic_Tags_Plugin
                     var key = $('#dt-api-key-input').val();
                     if (!key) return;
                     dtInsertPlaceholderText('{api:' + key + '}');
+                });
+
+                $('#dt-insert-func').on('click', function () {
+                    var key = $('#dt-func-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{func:' + key + '}');
                 });
             });
         </script>

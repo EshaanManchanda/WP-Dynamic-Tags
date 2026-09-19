@@ -16,6 +16,17 @@ class WP_Dynamic_Tags_Placeholders {
     /** Parameterized placeholders, e.g. {meta:key} / {acf:field}. Keyed by prefix. */
     private $parameterized_placeholders = array();
 
+    /**
+     * Developer-registered functions for {func:name}/{func:name:arg} - kept
+     * as its own registry, separate from $parameterized_placeholders, because
+     * it's a deliberate escape hatch: only names a developer explicitly
+     * exposes via register_dynamic_tag_function() are callable from tag
+     * content. There is no eval() of tag-authored code anywhere in this
+     * class - a content editor can never define new executable logic, only
+     * invoke logic a developer already wrote and chose to expose by name.
+     */
+    private $allowed_functions = array();
+
     /** Tracks the active instance so external code can call get_instance(). */
     private static $_instance = null;
 
@@ -136,6 +147,8 @@ class WP_Dynamic_Tags_Placeholders {
         if (apply_filters('dt_enable_api_placeholder', true)) {
             $this->register_parameterized_placeholder('api', array($this, 'get_api_value'));
         }
+        // {func:name} / {func:name:arg} - whitelisted developer functions (see register_dynamic_tag_function())
+        $this->register_parameterized_placeholder('func', array($this, 'get_func_value'));
     }
     
     /**
@@ -180,6 +193,45 @@ class WP_Dynamic_Tags_Placeholders {
                 $instance->register_placeholder($key, $callback);
             }
         }, 25); // Priority 25 — after the class is instantiated (priority 20 in chatbot)
+    }
+
+    /**
+     * Register a function callable from tag content as {func:name} or
+     * {func:name:arg}. This is the plugin's PHP/custom-logic escape hatch -
+     * deliberately NOT an eval() of tag-authored text. A content editor can
+     * only invoke a function a developer already wrote and chose to expose
+     * by name; they can never define new executable logic from a text field.
+     * Same registration convention as register_external_placeholder().
+     *
+     * Example (in a theme's functions.php or a custom plugin):
+     *   WP_Dynamic_Tags_Placeholders::register_dynamic_tag_function(
+     *       'shipping_estimate',
+     *       function ($arg) { return calculate_shipping_days($arg); }
+     *   );
+     *   // In a Dynamic Tag's content: {func:shipping_estimate:express}
+     *
+     * @param string   $name     Function name (used as {func:name} in content).
+     * @param callable $callback Receives the optional arg string (or null), returns a value.
+     */
+    public static function register_dynamic_tag_function($name, $callback) {
+        add_action('init', function() use ($name, $callback) {
+            if (!class_exists('WP_Dynamic_Tags_Placeholders')
+                || !method_exists('WP_Dynamic_Tags_Placeholders', 'get_instance')) {
+                return;
+            }
+            $instance = WP_Dynamic_Tags_Placeholders::get_instance();
+            if ($instance && method_exists($instance, 'register_allowed_function')) {
+                $instance->register_allowed_function($name, $callback);
+            }
+        }, 25);
+    }
+
+    /**
+     * Add a function to the {func:...} whitelist. Not called directly by
+     * plugin code outside of register_dynamic_tag_function()'s hook.
+     */
+    public function register_allowed_function($name, $callback) {
+        $this->allowed_functions[$name] = $callback;
     }
 
     /**
@@ -464,6 +516,23 @@ class WP_Dynamic_Tags_Placeholders {
         }
 
         return self::walk_path($data, $path);
+    }
+
+    /**
+     * Get a whitelisted function's return value for {func:name} / {func:name:arg}.
+     * Only functions a developer explicitly exposed via
+     * register_dynamic_tag_function() are callable here - an unrecognized
+     * name returns '' rather than erroring, same as every other placeholder.
+     */
+    private function get_func_value($arg) {
+        list($name, $call_arg) = array_pad(explode(':', $arg, 2), 2, null);
+        $name = trim($name);
+
+        if (!isset($this->allowed_functions[$name]) || !is_callable($this->allowed_functions[$name])) {
+            return '';
+        }
+
+        return call_user_func($this->allowed_functions[$name], $call_arg);
     }
 
     /**
@@ -1213,6 +1282,7 @@ class WP_Dynamic_Tags_Placeholders {
                 'wc:field' => __('WooCommerce product field: price, regular_price, sale_price, sale_percent, sku, stock_status, stock_quantity, categories, tags (requires WooCommerce)', 'wp-dynamic-tags'),
                 'query:post_type=...&posts_per_page=...' => __('Query posts as an array of rows (id, title, permalink, excerpt, date, thumbnail) for use with [dt_loop]', 'wp-dynamic-tags'),
                 'api:https://...::path.to.field' => __('Fetch external JSON and optionally walk a dot-notation path into it, e.g. {api:https://api.example.com/rates::usd|round:2}', 'wp-dynamic-tags'),
+                'func:name' => __('Call a developer-registered function (see register_dynamic_tag_function() in code) - not arbitrary PHP, only functions explicitly exposed by name', 'wp-dynamic-tags'),
             ),
             'array' => array(
                 'token|join:, ' => __('Join an array value into text with a separator, e.g. {wc:categories|join:", "}', 'wp-dynamic-tags'),
@@ -1267,6 +1337,7 @@ class WP_Dynamic_Tags_Placeholders {
             'data_sources' => array(
                 '[dt_loop source="query:post_type=post&posts_per_page=3"]{item:title}[/dt_loop]' => __('List recent posts without creating a Dynamic Tag first', 'wp-dynamic-tags'),
                 '{api:https://api.exchangerate.host/latest::rates.EUR|round:2}' => __('Pull a single value out of an external JSON API', 'wp-dynamic-tags'),
+                '{func:shipping_estimate:express}' => __('Call a function a developer registered in code, e.g. WP_Dynamic_Tags_Placeholders::register_dynamic_tag_function()', 'wp-dynamic-tags'),
             )
         );
     }
