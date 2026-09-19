@@ -73,18 +73,23 @@ they're all single-storage, single-builder products. The gap is entirely in
 Every item below is a **capability gap** — a competitor has it, this plugin
 has nothing equivalent yet. Ordered so later items depend on earlier ones.
 
-1. **Array/repeater primitives** — `{count}`, `{join}`, `{first}`, `{last}`,
-   and a loop construct for repeater-shaped data. Nothing today can express
-   "for each item in a list." *Blocks almost everything below.*
+1. ✅ **Array/repeater primitives — done in V2.** `|join`, `|count`, `|first`,
+   `|last` formatters, plus `[dt_loop source="..."]` for iterating array
+   values (e.g. `[dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]`).
    Competitors: JetEngine (core strength), Elementor Pro, Dynamic.ooo, Toolset.
-2. **WooCommerce field set** — price, SKU, stock, sale %, product categories,
-   cart/customer data. Zero WooCommerce awareness today.
+2. ✅ **WooCommerce field set — done in V2.** `{wc:price}`, `regular_price`,
+   `sale_price`, `sale_percent`, `sku`, `stock_status`, `stock_quantity`,
+   `categories`, `tags`. Cart/customer/session data deliberately cut (not
+   bindable to "the current post" the way this engine resolves values) —
+   still a gap if that's ever needed.
    Competitors: Elementor Pro, Dynamic.ooo, JetEngine (all extensive).
-3. **ACF repeater/gallery/relationship fields** — today's ACF support is
-   scalar-field-only; repeaters and galleries return nothing. Needs #1 first.
+3. ✅ **ACF repeater/gallery/relationship fields — done in V2.** Dot notation
+   (`{acf:team_members.name}`) extracts a repeater/group column as an array;
+   galleries flatten to URL arrays, relationship/post_object to title arrays.
+   Per-related-post fields beyond the title are still a gap.
    Competitors: Elementor Pro, Dynamic.ooo (both full support).
-4. **User meta / term meta placeholders** — `{meta:key}` only reads post
-   meta today; no equivalent for user or term meta.
+4. ✅ **User meta / term meta placeholders — done in V2.** `{user_meta:key}`
+   (post author) and `{term_meta:key}` (primary term).
 5. **Element-level conditional visibility** — today's `{if:}` only branches
    text *inside* a tag's output; there's no way to hide/show a whole
    builder element based on a condition.
@@ -116,10 +121,9 @@ has nothing equivalent yet. Ordered so later items depend on earlier ones.
 These already exist and work, but have a known limitation, bug, or rough
 edge worth fixing before adding new surface area:
 
-- **ACF integration is scalar-only** (`includes/class-acf-integration.php`) —
-  silently returns empty/nothing for repeater, gallery, and relationship
-  field types instead of erroring or partially rendering, which can look
-  like a bug to a user who doesn't know the limitation exists.
+- ✅ **ACF scalar-only limitation — fixed in V2.** Repeater/gallery/
+  relationship fields now flatten to arrays (see gap #3); relationship still
+  only exposes the post title, not other per-related-post fields.
 - **`[dt]` tag-level fallback is incomplete** — the README documents
   `[dt_fallback tag=".." default=".."]`, but the shortcode doesn't actually
   support a `default=` attribute. Docs and behavior have drifted apart.
@@ -137,10 +141,8 @@ edge worth fixing before adding new surface area:
   real columns from `class-database-manager.php` (`shortcode`, `priority`,
   `meta_data`, `post_id`, etc.), so anyone reading the README to understand
   the storage layer gets an incomplete picture.
-- **Formatter set is text/number/date only** — covers the common cases
-  (`upper`, `currency`, `round`, `relative`, etc.) but has no array-aware
-  formatters (e.g. `|join`, `|count`), which will be needed the moment
-  gap #1 (array primitives) ships.
+- ✅ **Array-aware formatters — added in V2.** `|join`, `|count`, `|first`,
+  `|last` now sit alongside the original 11 text/number/date formatters.
 
 ---
 
@@ -200,7 +202,7 @@ Everything in Pro, plus gaps #6–11 and agency ops:
 | Phase | Scope (gap #s) | Depends on |
 |---|---|---|
 | **V1 — done** | Broad placeholder set, formatters, fallback (this session) | — |
-| **V2 — Data depth** | Array primitives (#1), then WooCommerce (#2) + ACF repeater/gallery (#3) + user/term meta (#4) on top of it | V1's `{prefix:arg}` + formatter pattern |
+| **V2 — done** | Array primitives (#1: `\|join`, `\|count`, `\|first`, `\|last`, `[dt_loop]`), WooCommerce fields (#2), ACF repeater/gallery/relationship via dot notation (#3), user/term meta (#4) | V1's `{prefix:arg}` + formatter pattern |
 | **V3 — Placement** | Element visibility (#5), dynamic templates (#6) | V2 (visibility conditions often test array/relation fields) |
 | **V4 — Query & external data** | Query builder (#7), REST/API tag (#8), PHP tag (#9) | V2/V3 (query results feed the same array primitives) |
 | **V5 — Ecosystem** | Formal developer API (#10), debugger (#11), third-party integrations (#12) | V2–V4 (nothing to register a source *for* until sources vary) |
