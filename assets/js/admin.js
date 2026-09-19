@@ -387,28 +387,70 @@
         },
         
         /**
-         * Copy text to clipboard
+         * Copy text to clipboard with enhanced error handling
          */
         copyToClipboard: function(text) {
+            if (!text) {
+                console.error('DT: No text to copy');
+                return false;
+            }
+
+            // Check if dtAdmin strings are loaded
+            if (typeof dtAdmin === 'undefined' || !dtAdmin.strings) {
+                console.warn('DT: dtAdmin object not loaded, using fallback copy method');
+            }
+
+            // Try modern clipboard API first
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text);
+                navigator.clipboard.writeText(text).then(function() {
+                    console.log('DT: Copied successfully using Clipboard API: ' + text);
+                }).catch(function(err) {
+                    console.error('DT: Clipboard API failed, trying fallback: ', err);
+                    DynamicTagsAdmin.fallbackCopy(text);
+                });
             } else {
-                // Fallback for older browsers
-                var textArea = document.createElement('textarea');
-                textArea.value = text;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
+                // Use fallback for older browsers or non-secure contexts
+                console.log('DT: Using fallback copy method (no Clipboard API or non-secure context)');
+                DynamicTagsAdmin.fallbackCopy(text);
+            }
+        },
+
+        /**
+         * Fallback copy method using execCommand
+         */
+        fallbackCopy: function(text) {
+            var textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            textArea.setAttribute('readonly', '');
+            document.body.appendChild(textArea);
+
+            try {
                 textArea.focus();
                 textArea.select();
-                
-                try {
-                    document.execCommand('copy');
-                } catch (err) {
-                    console.error('Failed to copy text: ', err);
+                textArea.setSelectionRange(0, 99999); // For mobile devices
+
+                var successful = document.execCommand('copy');
+                if (successful) {
+                    console.log('DT: Copied successfully using execCommand: ' + text);
+                } else {
+                    console.error('DT: execCommand copy failed');
+                    if (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.copyFailed) {
+                        alert(dtAdmin.strings.copyFailed + '\n\n' + text);
+                    } else {
+                        alert('Failed to copy. Please copy manually:\n\n' + text);
+                    }
                 }
-                
+            } catch (err) {
+                console.error('DT: Fallback copy failed: ', err);
+                if (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.copyFailed) {
+                    alert(dtAdmin.strings.copyFailed + '\n\n' + text);
+                } else {
+                    alert('Failed to copy. Please copy manually:\n\n' + text);
+                }
+            } finally {
                 document.body.removeChild(textArea);
             }
         },
@@ -840,17 +882,44 @@
  */
 function copyShortcode(button) {
     var codeElement = button.previousElementSibling;
-    var shortcode = codeElement.getAttribute('data-shortcode');
+    var shortcode = codeElement ? codeElement.getAttribute('data-shortcode') : null;
+
+    // Fallback: try to get shortcode from button's data attribute
+    if (!shortcode) {
+        shortcode = button.getAttribute('data-shortcode');
+    }
+
+    // Fallback: try to get text from code element
+    if (!shortcode && codeElement) {
+        shortcode = codeElement.textContent || codeElement.innerText;
+    }
+
+    if (!shortcode) {
+        console.error('DT: No shortcode found to copy');
+        var errorMsg = (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.copyFailed)
+            ? dtAdmin.strings.copyFailed
+            : 'Failed to copy shortcode';
+        showCopyNotification(errorMsg, 'error');
+        return;
+    }
+
+    console.log('DT: Attempting to copy shortcode: ' + shortcode);
 
     // Try to copy to clipboard
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(shortcode).then(function() {
-            showCopyNotification(dtAdmin.strings.shortcodeCopied);
+            console.log('DT: Shortcode copied successfully');
+            var successMsg = (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.shortcodeCopied)
+                ? dtAdmin.strings.shortcodeCopied
+                : 'Shortcode copied!';
+            showCopyNotification(successMsg);
             animateButton(button);
-        }).catch(function() {
+        }).catch(function(err) {
+            console.error('DT: Clipboard API failed: ', err);
             fallbackCopy(shortcode, button);
         });
     } else {
+        console.log('DT: Using fallback copy for shortcode');
         fallbackCopy(shortcode, button);
     }
 }
@@ -861,24 +930,44 @@ function fallbackCopy(text, button) {
     textarea.value = text;
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
+    textarea.style.left = '-999999px';
+    textarea.style.top = '-999999px';
+    textarea.setAttribute('readonly', '');
     document.body.appendChild(textarea);
 
     try {
+        textarea.focus();
         textarea.select();
-        textarea.setSelectionRange(0, 99999);
+        textarea.setSelectionRange(0, 99999); // For mobile devices
         var successful = document.execCommand('copy');
 
         if (successful) {
-            showCopyNotification(dtAdmin.strings.shortcodeCopied);
-            animateButton(button);
+            console.log('DT: Fallback copy successful');
+            var successMsg = (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.shortcodeCopied)
+                ? dtAdmin.strings.shortcodeCopied
+                : 'Shortcode copied!';
+            showCopyNotification(successMsg);
+            if (button) {
+                animateButton(button);
+            }
         } else {
-            showCopyNotification(dtAdmin.strings.copyFailed, 'error');
+            console.error('DT: execCommand copy returned false');
+            var errorMsg = (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.copyFailed)
+                ? dtAdmin.strings.copyFailed
+                : 'Failed to copy shortcode';
+            showCopyNotification(errorMsg, 'error');
         }
     } catch (err) {
-        showCopyNotification(dtAdmin.strings.copyFailed, 'error');
+        console.error('DT: Fallback copy exception: ', err);
+        var errorMsg = (typeof dtAdmin !== 'undefined' && dtAdmin.strings && dtAdmin.strings.copyFailed)
+            ? dtAdmin.strings.copyFailed
+            : 'Failed to copy shortcode';
+        showCopyNotification(errorMsg, 'error');
+    } finally {
+        if (textarea && textarea.parentNode) {
+            document.body.removeChild(textarea);
+        }
     }
-
-    document.body.removeChild(textarea);
 }
 
 function showCopyNotification(message, type) {

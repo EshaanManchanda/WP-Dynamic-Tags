@@ -2016,29 +2016,22 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
     }
 
     /**
-     * NEW SIMPLIFIED: Get the single shortcode pattern for a tag (group_tag format)
+     * SIMPLIFIED: Get the single shortcode pattern for a tag (tag_key format only)
      */
     private function get_tag_shortcode_patterns($post_id, $tag_key, $group_names) {
-        // MATCHES new simplified logic from wp-dynamic-tags.php
-        if (!empty($group_names)) {
-            // For grouped tags: return [group_tag] format only
-            $primary_group = reset($group_names); // Use first group
-            $group_slug = $this->sanitize_tag_key($primary_group);
-            $primary_shortcode = $group_slug . '_' . $tag_key;
+        // SIMPLIFIED: Always use [tag_key] format regardless of groups
+        // Groups are for organizational purposes only, not part of the shortcode
 
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("WP Dynamic Tags Export: Grouped tag '{$tag_key}' -> [{$primary_shortcode}]");
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            if (!empty($group_names)) {
+                $primary_group = reset($group_names);
+                error_log("WP Dynamic Tags Export: Tag '{$tag_key}' in group '{$primary_group}' -> [{$tag_key}]");
+            } else {
+                error_log("WP Dynamic Tags Export: Tag '{$tag_key}' -> [{$tag_key}]");
             }
-
-            return array('[' . $primary_shortcode . ']');
-        } else {
-            // For ungrouped tags: return [tag] format only
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("WP Dynamic Tags Export: Ungrouped tag '{$tag_key}' -> [{$tag_key}]");
-            }
-
-            return array('[' . $tag_key . ']');
         }
+
+        return array('[' . $tag_key . ']');
     }
 
     /**

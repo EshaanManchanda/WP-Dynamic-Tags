@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<ruleset name="GEMA Plugin Standards">
+  <description>WordPress Coding Standards for GEMA plugins</description>
+  <rule ref="WordPress"/>
+  <rule ref="WordPress-Extra"/>
+  <file>includes/</file>
+  <arg name="extensions" value="php"/>
+  <arg value="sp"/>
+  <config name="minimum_supported_wp_version" value="6.0"/>
+</ruleset>

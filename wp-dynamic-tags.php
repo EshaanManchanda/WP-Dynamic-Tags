@@ -43,7 +43,8 @@ define('WP_DYNAMIC_TAGS_PLUGIN_URL', plugin_dir_url(__FILE__));
 /**
  * Main WP Dynamic Tags Plugin Class
  */
-class WP_Dynamic_Tags_Plugin {
+class WP_Dynamic_Tags_Plugin
+{
 
     private static $instance = null;
     private $post_type = 'dynamic_tag';
@@ -88,30 +89,33 @@ class WP_Dynamic_Tags_Plugin {
         'registration_fingerprint' => '',
         'registration_count' => 0
     );
-    
+
     /**
      * Get plugin instance (Singleton pattern)
      */
-    public static function get_instance() {
+    public static function get_instance()
+    {
         if (null === self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-    
+
     /**
      * Constructor
      */
-    private function __construct() {
+    private function __construct()
+    {
         add_action('init', array($this, 'init'));
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_init', array($this, 'handle_quick_create'));
         add_action('admin_init', array($this, 'handle_conflict_resolution_actions'));
+        add_action('admin_init', array($this, 'ensure_certificates_group'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
-        
+
         // Load enhanced classes
         $this->load_includes();
-        
+
         // Plugin lifecycle hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
@@ -132,6 +136,8 @@ class WP_Dynamic_Tags_Plugin {
 
         // Show admin notices for bulk/row actions
         add_action('admin_notices', array($this, 'show_action_notices'));
+        add_action('admin_notices', array($this, 'show_data_restoration_notice'));
+        add_action('admin_notices', array($this, 'show_deactivation_notice'));
         add_action('wp_ajax_dt_dismiss_menu_notice', array($this, 'dismiss_menu_notice'));
 
         // Debug shortcode testing
@@ -148,11 +154,12 @@ class WP_Dynamic_Tags_Plugin {
         add_action('admin_action_dt_download_sample_csv', array($this, 'download_sample_csv'));
         add_action('admin_action_dt_download_sample_full_csv', array($this, 'download_sample_full_csv'));
     }
-    
+
     /**
      * Initialize plugin
      */
-    public function init() {
+    public function init()
+    {
         try {
             $this->register_post_type();
             $this->register_shortcodes();
@@ -166,7 +173,7 @@ class WP_Dynamic_Tags_Plugin {
                 error_log('WP Dynamic Tags Plugin Init Error: ' . $e->getMessage());
             }
         }
-        
+
         // Admin customizations
         if (is_admin()) {
             add_filter('manage_' . $this->post_type . '_posts_columns', array($this, 'custom_columns'));
@@ -189,50 +196,52 @@ class WP_Dynamic_Tags_Plugin {
             add_action('add_meta_boxes', array($this, 'add_editor_meta_boxes'));
         }
     }
-    
+
     /**
      * Register Custom Post Type for Dynamic Tags
      */
-    public function register_post_type() {
+    public function register_post_type()
+    {
         $labels = array(
-            'name'                  => __('Dynamic Tags', 'wp-dynamic-tags'),
-            'singular_name'         => __('Dynamic Tag', 'wp-dynamic-tags'),
-            'menu_name'             => __('Dynamic Tags', 'wp-dynamic-tags'),
-            'add_new'               => __('Add New Tag', 'wp-dynamic-tags'),
-            'add_new_item'          => __('Add New Dynamic Tag', 'wp-dynamic-tags'),
-            'new_item'              => __('New Dynamic Tag', 'wp-dynamic-tags'),
-            'edit_item'             => __('Edit Dynamic Tag', 'wp-dynamic-tags'),
-            'view_item'             => __('View Dynamic Tag', 'wp-dynamic-tags'),
-            'all_items'             => __('All Tags', 'wp-dynamic-tags'),
-            'search_items'          => __('Search Tags', 'wp-dynamic-tags'),
-            'not_found'             => __('No tags found', 'wp-dynamic-tags'),
-            'not_found_in_trash'    => __('No tags found in trash', 'wp-dynamic-tags'),
+            'name' => __('Dynamic Tags', 'wp-dynamic-tags'),
+            'singular_name' => __('Dynamic Tag', 'wp-dynamic-tags'),
+            'menu_name' => __('Dynamic Tags', 'wp-dynamic-tags'),
+            'add_new' => __('Add New Tag', 'wp-dynamic-tags'),
+            'add_new_item' => __('Add New Dynamic Tag', 'wp-dynamic-tags'),
+            'new_item' => __('New Dynamic Tag', 'wp-dynamic-tags'),
+            'edit_item' => __('Edit Dynamic Tag', 'wp-dynamic-tags'),
+            'view_item' => __('View Dynamic Tag', 'wp-dynamic-tags'),
+            'all_items' => __('All Tags', 'wp-dynamic-tags'),
+            'search_items' => __('Search Tags', 'wp-dynamic-tags'),
+            'not_found' => __('No tags found', 'wp-dynamic-tags'),
+            'not_found_in_trash' => __('No tags found in trash', 'wp-dynamic-tags'),
         );
-        
+
         $args = array(
-            'labels'                => $labels,
-            'public'                => false,
-            'publicly_queryable'    => false,
-            'show_ui'               => true,
-            'show_in_menu'          => true,
-            'query_var'             => false,
-            'rewrite'               => false,
-            'capability_type'       => 'post',
-            'has_archive'           => false,
-            'hierarchical'          => false,
-            'menu_position'         => 30,
-            'menu_icon'             => 'dashicons-tag',
-            'supports'              => array('title', 'editor'),
-            'show_in_rest'          => false,
+            'labels' => $labels,
+            'public' => false,
+            'publicly_queryable' => false,
+            'show_ui' => true,
+            'show_in_menu' => true,
+            'query_var' => false,
+            'rewrite' => false,
+            'capability_type' => 'post',
+            'has_archive' => false,
+            'hierarchical' => false,
+            'menu_position' => 30,
+            'menu_icon' => 'dashicons-tag',
+            'supports' => array('title', 'editor'),
+            'show_in_rest' => false,
         );
-        
+
         register_post_type($this->post_type, $args);
     }
-    
+
     /**
      * Register all shortcodes with fixed order and error handling
      */
-    public function register_shortcodes() {
+    public function register_shortcodes()
+    {
         // Skip registration during REST API requests to prevent timeouts
         if (defined('REST_REQUEST') && REST_REQUEST) {
             return;
@@ -280,11 +289,12 @@ class WP_Dynamic_Tags_Plugin {
             }
         }
     }
-    
+
     /**
      * Generate fingerprint for current tags state to detect changes
      */
-    private function generate_tags_fingerprint() {
+    private function generate_tags_fingerprint()
+    {
         global $wpdb;
 
         // Get count and last modified date for quick fingerprint
@@ -306,7 +316,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized method to get dynamic tags with multi-level caching
      */
-    private function get_dynamic_tags($limit = 0, $offset = 0) {
+    private function get_dynamic_tags($limit = 0, $offset = 0)
+    {
         $cache_key = $this->transient_key . '_' . $this->cache_version;
         if ($limit > 0) {
             $cache_key .= '_' . $limit . '_' . $offset;
@@ -337,7 +348,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized database fetch with pagination support and improved indexing
      */
-    private function fetch_dynamic_tags_from_db($limit = 0, $offset = 0) {
+    private function fetch_dynamic_tags_from_db($limit = 0, $offset = 0)
+    {
         global $wpdb;
 
         // Optimized SQL with proper indexing hints
@@ -391,7 +403,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Fallback shortcode handler - UPDATED to work with new data structure
      */
-    public function fallback_shortcode($atts) {
+    public function fallback_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'key' => '',
         ), $atts, 'dt');
@@ -421,7 +434,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Group shortcode handler - [dt_group group="contact"]
      */
-    public function group_shortcode($atts) {
+    public function group_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'group' => '',
             'format' => 'inline', // inline, list, grid
@@ -502,7 +516,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Random tag shortcode - [dt_random group="quotes"]
      */
-    public function random_shortcode($atts) {
+    public function random_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'group' => '',
             'count' => 1
@@ -562,7 +577,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized count shortcode - [dt_count group="seo"]
      */
-    public function count_shortcode($atts) {
+    public function count_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'group' => '',
             'format' => 'number' // number, text
@@ -581,7 +597,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized counting method using direct SQL
      */
-    private function get_dynamic_tags_count($group_name = '') {
+    private function get_dynamic_tags_count($group_name = '')
+    {
         global $wpdb;
 
         $cache_key = 'count_' . ($group_name ? md5($group_name) : 'all');
@@ -633,7 +650,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Convert number to text format
      */
-    private function number_to_text($count) {
+    private function number_to_text($count)
+    {
         if ($count === 0) {
             return __('no tags', 'wp-dynamic-tags');
         } elseif ($count === 1) {
@@ -646,7 +664,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * List shortcode - [dt_list group="contact" template="{key}: {value}"]
      */
-    public function list_shortcode($atts) {
+    public function list_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'group' => '',
             'template' => '{value}',
@@ -728,7 +747,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized shortcode registration with lazy loading
      */
-    private function register_simple_shortcodes() {
+    private function register_simple_shortcodes()
+    {
         // Performance metrics tracking
         $start_time = microtime(true);
 
@@ -736,9 +756,6 @@ class WP_Dynamic_Tags_Plugin {
         $cached_tags = $this->get_dynamic_tags();
 
         if (empty($cached_tags)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('WP Dynamic Tags: No published tags found');
-            }
             return;
         }
 
@@ -789,13 +806,19 @@ class WP_Dynamic_Tags_Plugin {
         $execution_time = round((microtime(true) - $start_time) * 1000, 2);
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            // Single performance summary log
-            error_log("WP Dynamic Tags: Registration complete - {$registered_count} registered, {$failed_count} failed, {$skipped_count} skipped in {$execution_time}ms");
+            // Only log if there are issues or verbose debugging is enabled
+            $is_verbose = defined('DT_DEBUG_VERBOSE') && DT_DEBUG_VERBOSE;
+            $has_issues = $failed_count > 0 || $execution_time > 100; // Log if failures or slow (>100ms)
 
-            // Only log batch details if there are failures or in detailed debug mode
-            if ($failed_count > 0 || defined('WP_DEBUG_DETAILED')) {
-                error_log("WP Dynamic Tags: Details - " . implode('; ', array_slice($batch_logs, 0, 10)) .
-                         (count($batch_logs) > 10 ? '... (' . (count($batch_logs) - 10) . ' more)' : ''));
+            if ($is_verbose || $has_issues) {
+                // Single performance summary log
+                error_log("WP Dynamic Tags: Registration complete - {$registered_count} registered, {$failed_count} failed, {$skipped_count} skipped in {$execution_time}ms");
+
+                // Only log batch details if there are failures or in detailed debug mode
+                if ($failed_count > 0 || $is_verbose) {
+                    error_log("WP Dynamic Tags: Details - " . implode('; ', array_slice($batch_logs, 0, 10)) .
+                        (count($batch_logs) > 10 ? '... (' . (count($batch_logs) - 10) . ' more)' : ''));
+                }
             }
         }
     }
@@ -809,7 +832,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Register a shortcode with conflict prevention
      */
-    private function register_shortcode_safely($shortcode_name, $callback) {
+    private function register_shortcode_safely($shortcode_name, $callback)
+    {
         // Remove if already exists
         if (shortcode_exists($shortcode_name)) {
             remove_shortcode($shortcode_name);
@@ -831,7 +855,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Clean only our tracked shortcodes (much more efficient)
      */
-    private function cleanup_tracked_shortcodes() {
+    private function cleanup_tracked_shortcodes()
+    {
         $removed_count = 0;
         foreach (self::$registered_shortcodes as $shortcode => $status) {
             if (shortcode_exists($shortcode)) {
@@ -849,7 +874,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Remove conflicting shortcodes for a specific tag
      */
-    private function remove_conflicting_shortcodes($post_id, $tag_title, $primary_shortcode) {
+    private function remove_conflicting_shortcodes($post_id, $tag_title, $primary_shortcode)
+    {
         $tag_key = $this->sanitize_tag_key($tag_title);
         $groups = wp_get_post_terms($post_id, 'tag_groups');
         $has_groups = !is_wp_error($groups) && !empty($groups);
@@ -889,14 +915,15 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized shortcode registration with safe conflict handling
      */
-    private function register_clean_shortcode($shortcode_key, $tag_content, $post_id) {
+    private function register_clean_shortcode($shortcode_key, $tag_content, $post_id)
+    {
         // Skip empty or invalid shortcode keys
         if (empty($shortcode_key) || !is_string($shortcode_key)) {
             return false;
         }
 
         // Create optimized callback with reduced overhead
-        $callback = function($atts) use ($tag_content, $post_id, $shortcode_key) {
+        $callback = function ($atts) use ($tag_content, $post_id, $shortcode_key) {
             // Frontend debug logging - only in verbose mode
             if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
                 $context = is_admin() ? 'ADMIN' : 'FRONTEND';
@@ -937,7 +964,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Track shortcode usage for analytics
      */
-    private function track_shortcode_usage($post_id) {
+    private function track_shortcode_usage($post_id)
+    {
         $current_count = get_post_meta($post_id, '_dt_usage_count', true) ?: 0;
         update_post_meta($post_id, '_dt_usage_count', $current_count + 1);
         update_post_meta($post_id, '_dt_last_used', current_time('mysql'));
@@ -946,7 +974,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * NEW: Validate the simplified shortcode system (ensure one shortcode per tag)
      */
-    public function validate_simplified_system() {
+    public function validate_simplified_system()
+    {
         global $shortcode_tags;
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -999,7 +1028,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Check if a shortcode belongs to our plugin
      */
-    private function is_our_shortcode($shortcode_key) {
+    private function is_our_shortcode($shortcode_key)
+    {
         // Check if shortcode matches our patterns
         $our_patterns = array(
             '/^[a-z0-9_]+$/',  // Basic tag pattern
@@ -1021,7 +1051,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Extract base key from a potentially group-prefixed shortcode
      */
-    private function extract_base_key($shortcode_key) {
+    private function extract_base_key($shortcode_key)
+    {
         // If it contains underscore, try to extract the last part as base key
         if (strpos($shortcode_key, '_') !== false) {
             $parts = explode('_', $shortcode_key);
@@ -1033,7 +1064,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Clear only dynamic tag shortcodes (surgical removal, not aggressive)
      */
-    private function clear_dynamic_tag_shortcodes() {
+    private function clear_dynamic_tag_shortcodes()
+    {
         global $shortcode_tags;
         $removed_count = 0;
 
@@ -1091,7 +1123,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Get list of known tag shortcodes for precise removal
      */
-    private function get_known_tag_shortcodes() {
+    private function get_known_tag_shortcodes()
+    {
         $known_shortcodes = array();
 
         try {
@@ -1116,7 +1149,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Refresh shortcodes when a post is deleted
      */
-    public function refresh_shortcodes_on_delete($post_id) {
+    public function refresh_shortcodes_on_delete($post_id)
+    {
         if (get_post_type($post_id) === $this->post_type) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log("WP Dynamic Tags: Refreshing shortcodes after post {$post_id} deletion");
@@ -1132,7 +1166,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Refresh shortcodes when post is saved (enhanced)
      */
-    public function refresh_shortcodes_on_save($post_id) {
+    public function refresh_shortcodes_on_save($post_id)
+    {
         // Check if this is our post type
         if (get_post_type($post_id) !== $this->post_type) {
             return;
@@ -1159,8 +1194,7 @@ class WP_Dynamic_Tags_Plugin {
         }
 
         // Clear cache and refresh shortcodes
-        delete_transient($this->transient_key);
-        $this->clear_admin_cache();
+        $this->clear_all_plugin_caches();
 
         // Only re-register if this is a published post
         if (get_post_status($post_id) === 'publish') {
@@ -1175,7 +1209,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Validate that shortcode registration worked for a specific post
      */
-    private function validate_shortcode_registration($post_id) {
+    private function validate_shortcode_registration($post_id)
+    {
         if (!defined('WP_DEBUG') || !WP_DEBUG) {
             return; // Only run validation in debug mode
         }
@@ -1223,7 +1258,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Production-ready validation of all shortcode registrations
      */
-    private function validate_all_registrations() {
+    private function validate_all_registrations()
+    {
         try {
             $cached_tags = $this->get_dynamic_tags();
             $total_tags = count($cached_tags);
@@ -1301,7 +1337,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Show admin notice for validation errors (production-ready)
      */
-    public function show_validation_errors() {
+    public function show_validation_errors()
+    {
         if (!current_user_can('manage_options')) {
             return;
         }
@@ -1334,18 +1371,11 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Enhanced shortcode refresh for better performance
      */
-    public function force_refresh_shortcodes() {
+    public function force_refresh_shortcodes()
+    {
         try {
-            // Clear all related caches
-            delete_transient($this->transient_key);
-            $this->clear_shortcode_cache();
-
-            // Reset admin cache
-            $this->admin_cache = array(
-                'duplicate_tags' => null,
-                'all_groups' => null,
-                'initialized' => false
-            );
+            // Clear all related caches (transients, static cache, admin cache)
+            $this->clear_all_plugin_caches();
 
             // Re-register all shortcodes
             $this->register_shortcodes();
@@ -1363,7 +1393,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Enforce single shortcode per tag by removing conflicting variants
      */
-    private function enforce_single_shortcode_per_tag($base_key, $group_key, $has_groups, $tag_title) {
+    private function enforce_single_shortcode_per_tag($base_key, $group_key, $has_groups, $tag_title)
+    {
         global $shortcode_tags;
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1426,7 +1457,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Initialize admin cache for performance (with error handling)
      */
-    private function init_admin_cache() {
+    private function init_admin_cache()
+    {
         if ($this->admin_cache['initialized']) {
             return;
         }
@@ -1462,7 +1494,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Get cached duplicate tags (performance optimized)
      */
-    private function get_cached_duplicate_tags() {
+    private function get_cached_duplicate_tags()
+    {
         $this->init_admin_cache();
         return $this->admin_cache['duplicate_tags'];
     }
@@ -1470,7 +1503,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Check for duplicate tag names across all tags
      */
-    private function check_for_duplicate_tag_names() {
+    private function check_for_duplicate_tag_names()
+    {
         // Use cached version if available (for admin page performance)
         if (is_admin() && !empty($this->admin_cache['duplicate_tags'])) {
             return $this->admin_cache['duplicate_tags'];
@@ -1485,7 +1519,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized duplicate checking using direct SQL
      */
-    private function check_for_duplicate_tag_names_uncached() {
+    private function check_for_duplicate_tag_names_uncached()
+    {
         global $wpdb;
 
         // Use SQL to find duplicates directly
@@ -1523,7 +1558,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Get ungrouped duplicate tags that need group assignment
      */
-    public function get_ungrouped_duplicate_tags() {
+    public function get_ungrouped_duplicate_tags()
+    {
         $duplicate_tags = $this->check_for_duplicate_tag_names();
         $ungrouped_duplicates = array();
 
@@ -1547,7 +1583,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Check if a tag name is available for ungrouped use
      */
-    public function is_tag_name_available($tag_name, $exclude_post_id = 0) {
+    public function is_tag_name_available($tag_name, $exclude_post_id = 0)
+    {
         $sanitized_key = $this->sanitize_tag_key($tag_name);
         $duplicate_tags = $this->check_for_duplicate_tag_names();
 
@@ -1573,7 +1610,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Optimized tag usage tracking with caching
      */
-    private function update_tag_usage($tag_key) {
+    private function update_tag_usage($tag_key)
+    {
         // Skip usage tracking if not needed (performance optimization)
         if (!is_admin() && (!defined('WP_DEBUG') || !WP_DEBUG)) {
             return;
@@ -1607,7 +1645,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Sanitize tag key
      */
-    private function sanitize_tag_key($key) {
+    private function sanitize_tag_key($key)
+    {
         // NEW SIMPLIFIED SANITIZATION: only lowercase letters, numbers, and underscores
         $key = strtolower(trim($key));
         // Remove all non-alphanumeric characters and replace with underscore
@@ -1628,64 +1667,43 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * NEW SIMPLIFIED: Generate the ONE shortcode for a tag based on [group_tag] logic
      */
-    public function generate_single_shortcode($post_id, $tag_title) {
+    public function generate_single_shortcode($post_id, $tag_title)
+    {
         $tag_key = $this->sanitize_tag_key($tag_title);
 
-        // Get groups for this tag
+        // Get groups for this tag (for logging and metadata only)
         $groups = wp_get_post_terms($post_id, 'tag_groups');
 
         // Check for conflicts with existing tags
         $conflicts = $this->check_shortcode_conflicts($post_id, $tag_key, $groups);
 
-        // Determine shortcode based on groups and conflicts
-        if (!is_wp_error($groups) && !empty($groups)) {
-            // Has groups: use [group_tag] format
-            $primary_group = $groups[0];
-            $group_key = $this->sanitize_tag_key($primary_group->name);
-            $shortcode = $group_key . '_' . $tag_key;
+        // SIMPLIFIED: Always use [tag_key] format regardless of groups
+        // Groups are now only for organizational purposes, not part of the shortcode
+        $shortcode = $tag_key;
 
-            // Check for grouped shortcode conflicts
-            if ($this->shortcode_exists_for_other_tag($shortcode, $post_id)) {
-                $shortcode = $this->resolve_shortcode_conflict($shortcode, $post_id, true);
-            }
+        // Check for shortcode conflicts and resolve if needed
+        if ($this->shortcode_exists_for_other_tag($shortcode, $post_id)) {
+            $shortcode = $this->resolve_shortcode_conflict($shortcode, $post_id, false);
+        }
 
-            if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
+        if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
+            if (!is_wp_error($groups) && !empty($groups)) {
+                $primary_group = $groups[0];
                 $conflict_status = $conflicts ? ' (resolved conflicts)' : '';
-                error_log("WP Dynamic Tags: Generated grouped shortcode [{$shortcode}] for tag '{$tag_title}' in group '{$primary_group->name}'{$conflict_status}");
-            }
-
-            return $shortcode;
-        } else {
-            // No groups: check if there's a grouped version of this tag
-            $grouped_alternative = $this->find_grouped_alternative($tag_key, $post_id);
-
-            if ($grouped_alternative) {
-                // Grouped version exists, this ungrouped version should be marked as duplicate
-                if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-                    error_log("WP Dynamic Tags: Generated ungrouped shortcode [{$tag_key}] for tag '{$tag_title}' - DUPLICATE WARNING: Grouped version exists");
-                }
-
-                // Store conflict information
-                update_post_meta($post_id, '_dt_has_conflict', true);
-                update_post_meta($post_id, '_dt_conflict_type', 'ungrouped_duplicate');
-                update_post_meta($post_id, '_dt_grouped_alternative', $grouped_alternative);
-
-                return $tag_key;
+                error_log("WP Dynamic Tags: Generated shortcode [{$shortcode}] for tag '{$tag_title}' in group '{$primary_group->name}'{$conflict_status}");
             } else {
-                // No conflicts: standard ungrouped shortcode
-                if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-                    error_log("WP Dynamic Tags: Generated ungrouped shortcode [{$tag_key}] for tag '{$tag_title}'");
-                }
-
-                return $tag_key;
+                error_log("WP Dynamic Tags: Generated shortcode [{$shortcode}] for tag '{$tag_title}'");
             }
         }
+
+        return $shortcode;
     }
 
     /**
      * Check for shortcode conflicts
      */
-    private function check_shortcode_conflicts($post_id, $tag_key, $groups) {
+    private function check_shortcode_conflicts($post_id, $tag_key, $groups)
+    {
         $conflicts = array();
 
         // Check for tags with same title but different grouping
@@ -1715,7 +1733,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Generate basic shortcode without conflict resolution
      */
-    private function generate_basic_shortcode($post_id, $tag_title, $groups) {
+    private function generate_basic_shortcode($post_id, $tag_title, $groups)
+    {
         $tag_key = $this->sanitize_tag_key($tag_title);
 
         if (!is_wp_error($groups) && !empty($groups)) {
@@ -1730,7 +1749,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Check if shortcode exists for another tag
      */
-    private function shortcode_exists_for_other_tag($shortcode, $exclude_post_id) {
+    private function shortcode_exists_for_other_tag($shortcode, $exclude_post_id)
+    {
         global $shortcode_tags;
 
         if (isset($shortcode_tags[$shortcode])) {
@@ -1758,7 +1778,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Find grouped alternative for an ungrouped tag
      */
-    private function find_grouped_alternative($tag_key, $exclude_post_id) {
+    private function find_grouped_alternative($tag_key, $exclude_post_id)
+    {
         $current_title = get_the_title($exclude_post_id);
 
         // Look for tags with same title that are grouped
@@ -1791,7 +1812,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Resolve shortcode conflict by creating unique version
      */
-    private function resolve_shortcode_conflict($shortcode, $post_id, $is_grouped = false) {
+    private function resolve_shortcode_conflict($shortcode, $post_id, $is_grouped = false)
+    {
         $counter = 1;
         $base_shortcode = $shortcode;
 
@@ -1818,7 +1840,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * SIMPLIFIED: Get the single shortcode for a tag (replaces complex get_tag_shortcodes)
      */
-    public function get_tag_shortcode($post_id, $tag_title) {
+    public function get_tag_shortcode($post_id, $tag_title)
+    {
         return $this->generate_single_shortcode($post_id, $tag_title);
     }
 
@@ -1828,7 +1851,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Smart cache invalidation with granular control
      */
-    private function clear_cache($specific_key = null) {
+    private function clear_cache($specific_key = null)
+    {
         if ($specific_key) {
             // Clear only specific cache entry
             $cache_key = $this->transient_key . '_' . $this->cache_version . '_' . $specific_key;
@@ -1843,7 +1867,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Clear all plugin-related caches efficiently
      */
-    private function clear_all_plugin_caches() {
+    private function clear_all_plugin_caches()
+    {
         global $wpdb;
 
         // Clear transients in batch
@@ -1868,7 +1893,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Clear admin cache for performance optimization
      */
-    private function clear_admin_cache() {
+    private function clear_admin_cache()
+    {
         $this->admin_cache = array(
             'duplicate_tags' => null,
             'all_groups' => null,
@@ -1880,7 +1906,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Refresh shortcodes when terms are changed
      */
-    public function refresh_shortcodes_on_terms_change($object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids) {
+    public function refresh_shortcodes_on_terms_change($object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids)
+    {
         if ($taxonomy === 'tag_groups' && get_post_type($object_id) === $this->post_type) {
             $this->clear_cache();
             $this->clear_admin_cache();
@@ -1892,7 +1919,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Validate tag name on save to prevent duplicate ungrouped tags
      */
-    public function validate_tag_name_on_save($post_id) {
+    public function validate_tag_name_on_save($post_id)
+    {
         // Skip autosave
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
@@ -1928,7 +1956,7 @@ class WP_Dynamic_Tags_Plugin {
                 set_transient('dt_duplicate_error_' . $post_id, $post_title, 60);
 
                 // Add an admin notice for the conflict
-                add_action('admin_notices', function() use ($post_title) {
+                add_action('admin_notices', function () use ($post_title) {
                     $this->show_duplicate_tag_notice($post_title);
                 });
 
@@ -1952,7 +1980,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Add duplicate name error for logging
      */
-    private function add_duplicate_name_error($post_id, $post_title) {
+    private function add_duplicate_name_error($post_id, $post_title)
+    {
         $errors = get_option('dt_duplicate_errors', array());
         $errors[] = array(
             'post_id' => $post_id,
@@ -1972,7 +2001,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Show admin notice for duplicate tag conflicts
      */
-    public function show_duplicate_tag_notice($tag_title) {
+    public function show_duplicate_tag_notice($tag_title)
+    {
         global $post;
 
         // Check for transient error
@@ -2002,7 +2032,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Show admin notices for existing duplicate conflicts
      */
-    public function show_existing_conflict_notices() {
+    public function show_existing_conflict_notices()
+    {
         if (!current_user_can('manage_options')) {
             return;
         }
@@ -2036,7 +2067,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Show admin notice about menu consolidation
      */
-    public function show_menu_consolidation_notice() {
+    public function show_menu_consolidation_notice()
+    {
         // Only show on Dynamic Tags related pages
         $screen = get_current_screen();
         if (!$screen || strpos($screen->id, 'dynamic_tag') === false) {
@@ -2063,14 +2095,14 @@ class WP_Dynamic_Tags_Plugin {
         // Add JavaScript to handle dismissal
         ?>
         <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            $(document).on('click', '.notice[data-dismissible="dt-menu-consolidation"] .notice-dismiss', function() {
-                $.post(ajaxurl, {
-                    action: 'dt_dismiss_menu_notice',
-                    nonce: '<?php echo wp_create_nonce('dt_dismiss_notice'); ?>'
+            jQuery(document).ready(function ($) {
+                $(document).on('click', '.notice[data-dismissible="dt-menu-consolidation"] .notice-dismiss', function () {
+                    $.post(ajaxurl, {
+                        action: 'dt_dismiss_menu_notice',
+                        nonce: '<?php echo wp_create_nonce('dt_dismiss_notice'); ?>'
+                    });
                 });
             });
-        });
         </script>
         <?php
     }
@@ -2078,7 +2110,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle dismissal of menu consolidation notice
      */
-    public function dismiss_menu_notice() {
+    public function dismiss_menu_notice()
+    {
         if (!wp_verify_nonce($_POST['nonce'], 'dt_dismiss_notice')) {
             wp_die('Security check failed');
         }
@@ -2094,7 +2127,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Show admin notices for bulk and row actions
      */
-    public function show_action_notices() {
+    public function show_action_notices()
+    {
         global $pagenow;
 
         if ($pagenow !== 'edit.php' || !isset($_GET['post_type']) || $_GET['post_type'] !== $this->post_type) {
@@ -2121,9 +2155,111 @@ class WP_Dynamic_Tags_Plugin {
     }
 
     /**
+     * Show data restoration notice after plugin activation
+     */
+    public function show_data_restoration_notice()
+    {
+        $restored_data = get_transient('wp_dynamic_tags_data_restored');
+
+        if (!$restored_data || !$restored_data['has_data']) {
+            return;
+        }
+
+        $total_tags = $restored_data['post_tags_count'] + $restored_data['table_tags_count'];
+
+        ?>
+        <div class="notice notice-success is-dismissible">
+            <h3><?php esc_html_e('🎉 Welcome Back to WP Dynamic Tags!', 'wp-dynamic-tags'); ?></h3>
+            <p>
+                <strong><?php esc_html_e('Your data has been automatically restored:', 'wp-dynamic-tags'); ?></strong>
+            </p>
+            <ul style="margin-left: 20px; list-style: disc;">
+                <?php if ($restored_data['post_tags_count'] > 0): ?>
+                    <li>
+                        <?php
+                        printf(
+                            esc_html(_n('%d tag post', '%d tag posts', $restored_data['post_tags_count'], 'wp-dynamic-tags')),
+                            $restored_data['post_tags_count']
+                        );
+                        ?>
+                    </li>
+                <?php endif; ?>
+                <?php if ($restored_data['table_tags_count'] > 0): ?>
+                    <li>
+                        <?php
+                        printf(
+                            esc_html(_n('%d database tag', '%d database tags', $restored_data['table_tags_count'], 'wp-dynamic-tags')),
+                            $restored_data['table_tags_count']
+                        );
+                        ?>
+                    </li>
+                <?php endif; ?>
+                <?php if ($restored_data['groups_count'] > 0): ?>
+                    <li>
+                        <?php
+                        printf(
+                            esc_html(_n('%d tag group', '%d tag groups', $restored_data['groups_count'], 'wp-dynamic-tags')),
+                            $restored_data['groups_count']
+                        );
+                        ?>
+                    </li>
+                <?php endif; ?>
+            </ul>
+            <p>
+                <strong><?php esc_html_e('✅ All your shortcodes are working and ready to use!', 'wp-dynamic-tags'); ?></strong>
+            </p>
+        </div>
+        <?php
+
+        // Delete the transient so notice only shows once
+        delete_transient('wp_dynamic_tags_data_restored');
+    }
+
+    /**
+     * Show deactivation notice about data retention
+     */
+    public function show_deactivation_notice()
+    {
+        $show_notice = get_transient('wp_dynamic_tags_deactivated');
+
+        if (!$show_notice) {
+            return;
+        }
+
+        $delete_on_uninstall = get_option('wp_dynamic_tags_delete_on_uninstall', false);
+        $settings_url = admin_url('edit.php?post_type=dynamic_tag&page=dt-settings');
+
+        ?>
+        <div class="notice notice-info is-dismissible">
+            <h3><?php esc_html_e('WP Dynamic Tags Deactivated', 'wp-dynamic-tags'); ?></h3>
+            <?php if (!$delete_on_uninstall): ?>
+                <p>
+                    <strong><?php esc_html_e('✅ Your data is safe!', 'wp-dynamic-tags'); ?></strong><br>
+                    <?php esc_html_e('All your tags and groups have been preserved. If you reinstall the plugin, everything will work automatically.', 'wp-dynamic-tags'); ?>
+                </p>
+            <?php else: ?>
+                <p>
+                    <strong><?php esc_html_e('⚠️ Data deletion is enabled', 'wp-dynamic-tags'); ?></strong><br>
+                    <?php esc_html_e('If you uninstall the plugin, all data will be permanently deleted.', 'wp-dynamic-tags'); ?>
+                </p>
+            <?php endif; ?>
+            <p>
+                <a href="<?php echo esc_url($settings_url); ?>" class="button button-primary">
+                    <?php esc_html_e('Manage Data Retention Settings', 'wp-dynamic-tags'); ?>
+                </a>
+            </p>
+        </div>
+        <?php
+
+        // Delete the transient so notice only shows once
+        delete_transient('wp_dynamic_tags_deactivated');
+    }
+
+    /**
      * AJAX handler for testing shortcodes
      */
-    public function test_shortcode_ajax() {
+    public function test_shortcode_ajax()
+    {
         if (!wp_verify_nonce($_POST['nonce'], 'dt_test_shortcode')) {
             wp_die('Security check failed');
         }
@@ -2162,7 +2298,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * AJAX handler for real-time duplicate checking
      */
-    public function ajax_check_duplicate() {
+    public function ajax_check_duplicate()
+    {
         check_ajax_referer('dt_check_duplicate', 'nonce');
 
         if (!current_user_can('edit_posts')) {
@@ -2231,7 +2368,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Admin menu setup
      */
-    public function admin_menu() {
+    public function admin_menu()
+    {
         add_submenu_page(
             'edit.php?post_type=' . $this->post_type,
             __('Quick Create & Help', 'wp-dynamic-tags'),
@@ -2266,11 +2404,12 @@ class WP_Dynamic_Tags_Plugin {
         // Hook admin notices for validation errors
         add_action('admin_notices', array($this, 'show_validation_errors'));
     }
-    
+
     /**
      * Custom admin columns
      */
-    public function custom_columns($columns) {
+    public function custom_columns($columns)
+    {
         $new_columns = array();
         $new_columns['cb'] = $columns['cb'];
         $new_columns['title'] = __('Tag Key', 'wp-dynamic-tags');
@@ -2284,11 +2423,12 @@ class WP_Dynamic_Tags_Plugin {
 
         return $new_columns;
     }
-    
+
     /**
      * Custom column content
      */
-    public function custom_column_content($column, $post_id) {
+    public function custom_column_content($column, $post_id)
+    {
         switch ($column) {
             case 'tag_value':
                 $content = get_post_field('post_content', $post_id);
@@ -2338,7 +2478,7 @@ class WP_Dynamic_Tags_Plugin {
                     echo '<span style="color: #999;" title="Error: ' . esc_attr($e->getMessage()) . '">Error</span>';
                 }
                 break;
-                
+
             case 'shortcode':
                 // Performance optimization: Add error handling and caching
                 try {
@@ -2450,11 +2590,12 @@ class WP_Dynamic_Tags_Plugin {
                 break;
         }
     }
-    
+
     /**
      * Make columns sortable
      */
-    public function sortable_columns($columns) {
+    public function sortable_columns($columns)
+    {
         $columns['tag_value'] = 'post_content';
         $columns['usage_count'] = 'usage_count';
         $columns['last_used'] = 'last_used';
@@ -2465,7 +2606,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Register custom bulk actions
      */
-    public function register_bulk_actions($bulk_actions) {
+    public function register_bulk_actions($bulk_actions)
+    {
         $bulk_actions['export_json'] = __('Export as JSON', 'wp-dynamic-tags');
         $bulk_actions['export_csv'] = __('Export as CSV', 'wp-dynamic-tags');
         $bulk_actions['assign_group'] = __('Assign to Group', 'wp-dynamic-tags');
@@ -2476,7 +2618,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle custom bulk actions
      */
-    public function handle_bulk_actions($redirect_to, $action, $post_ids) {
+    public function handle_bulk_actions($redirect_to, $action, $post_ids)
+    {
         if (empty($post_ids)) {
             return $redirect_to;
         }
@@ -2533,7 +2676,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Add custom row actions
      */
-    public function add_row_actions($actions, $post) {
+    public function add_row_actions($actions, $post)
+    {
         if ($post->post_type !== $this->post_type) {
             return $actions;
         }
@@ -2560,7 +2704,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Bulk export tags as JSON
      */
-    private function bulk_export_json($post_ids) {
+    private function bulk_export_json($post_ids)
+    {
         $tags = array();
         foreach ($post_ids as $post_id) {
             $post = get_post($post_id);
@@ -2597,7 +2742,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Bulk export tags as CSV
      */
-    private function bulk_export_csv($post_ids) {
+    private function bulk_export_csv($post_ids)
+    {
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="dynamic-tags-bulk-export-' . date('Y-m-d-H-i-s') . '.csv"');
 
@@ -2631,7 +2777,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle duplicate tag action from row actions
      */
-    public function handle_duplicate_tag_action() {
+    public function handle_duplicate_tag_action()
+    {
         if (!isset($_GET['post_id'])) {
             wp_die(__('No tag specified for duplication.', 'wp-dynamic-tags'));
         }
@@ -2685,7 +2832,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle export single tag action from row actions
      */
-    public function handle_export_single_action() {
+    public function handle_export_single_action()
+    {
         if (!isset($_GET['post_id'])) {
             wp_die(__('No tag specified for export.', 'wp-dynamic-tags'));
         }
@@ -2736,7 +2884,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Download sample.csv file
      */
-    public function download_sample_csv() {
+    public function download_sample_csv()
+    {
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
         }
@@ -2757,7 +2906,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Download sample-full.csv file
      */
-    public function download_sample_full_csv() {
+    public function download_sample_full_csv()
+    {
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
         }
@@ -2778,7 +2928,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Add custom meta boxes to edit screen
      */
-    public function add_editor_meta_boxes() {
+    public function add_editor_meta_boxes()
+    {
         // Shortcode Preview Box
         add_meta_box(
             'dt-shortcode-preview',
@@ -2803,7 +2954,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render shortcode preview meta box
      */
-    public function render_shortcode_preview_box($post) {
+    public function render_shortcode_preview_box($post)
+    {
         $post_title = $post->post_title;
         $tag_key = $this->sanitize_tag_key($post_title);
 
@@ -2834,72 +2986,72 @@ class WP_Dynamic_Tags_Plugin {
         // JavaScript for real-time preview
         ?>
         <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            var $title = $('#title');
-            var $shortcodeDisplay = $('#dt-generated-shortcode');
-            var $copyBtn = $('#dt-copy-shortcode-btn');
-            var $duplicateCheck = $('#dt-duplicate-check');
-            var checkTimeout;
+            jQuery(document).ready(function ($) {
+                var $title = $('#title');
+                var $shortcodeDisplay = $('#dt-generated-shortcode');
+                var $copyBtn = $('#dt-copy-shortcode-btn');
+                var $duplicateCheck = $('#dt-duplicate-check');
+                var checkTimeout;
 
-            function updateShortcodePreview() {
-                var title = $title.val().trim();
+                function updateShortcodePreview() {
+                    var title = $title.val().trim();
 
-                if (!title) {
-                    $shortcodeDisplay.html('<span style="color: #999;"><?php _e('Enter a tag name to generate shortcode', 'wp-dynamic-tags'); ?></span>');
-                    $copyBtn.prop('disabled', true);
-                    $duplicateCheck.hide();
-                    return;
+                    if (!title) {
+                        $shortcodeDisplay.html('<span style="color: #999;"><?php _e('Enter a tag name to generate shortcode', 'wp-dynamic-tags'); ?></span>');
+                        $copyBtn.prop('disabled', true);
+                        $duplicateCheck.hide();
+                        return;
+                    }
+
+                    // Sanitize tag key (client-side approximation)
+                    var tagKey = title.toLowerCase()
+                        .replace(/[^a-z0-9_\-]/g, '_')
+                        .replace(/_{2,}/g, '_')
+                        .replace(/^_|_$/g, '');
+
+                    $shortcodeDisplay.html('<code>[' + tagKey + ']</code>');
+                    $copyBtn.prop('disabled', false);
+
+                    // Check for duplicates
+                    clearTimeout(checkTimeout);
+                    checkTimeout = setTimeout(function () {
+                        checkDuplicate(tagKey);
+                    }, 500);
                 }
 
-                // Sanitize tag key (client-side approximation)
-                var tagKey = title.toLowerCase()
-                    .replace(/[^a-z0-9_\-]/g, '_')
-                    .replace(/_{2,}/g, '_')
-                    .replace(/^_|_$/g, '');
-
-                $shortcodeDisplay.html('<code>[' + tagKey + ']</code>');
-                $copyBtn.prop('disabled', false);
-
-                // Check for duplicates
-                clearTimeout(checkTimeout);
-                checkTimeout = setTimeout(function() {
-                    checkDuplicate(tagKey);
-                }, 500);
-            }
-
-            function checkDuplicate(tagKey) {
-                $.post(ajaxurl, {
-                    action: 'dt_check_duplicate',
-                    tag_key: tagKey,
-                    post_id: <?php echo $post->ID; ?>,
-                    nonce: '<?php echo wp_create_nonce('dt_check_duplicate'); ?>'
-                }, function(response) {
-                    if (response.success) {
-                        if (response.data.is_duplicate) {
-                            $duplicateCheck.html('<span style="color: #d63638;">⚠️ ' + response.data.message + '</span>').show();
-                        } else {
-                            $duplicateCheck.html('<span style="color: #00a32a;">✅ ' + response.data.message + '</span>').show();
+                function checkDuplicate(tagKey) {
+                    $.post(ajaxurl, {
+                        action: 'dt_check_duplicate',
+                        tag_key: tagKey,
+                        post_id: <?php echo $post->ID; ?>,
+                        nonce: '<?php echo wp_create_nonce('dt_check_duplicate'); ?>'
+                    }, function (response) {
+                        if (response.success) {
+                            if (response.data.is_duplicate) {
+                                $duplicateCheck.html('<span style="color: #d63638;">⚠️ ' + response.data.message + '</span>').show();
+                            } else {
+                                $duplicateCheck.html('<span style="color: #00a32a;">✅ ' + response.data.message + '</span>').show();
+                            }
                         }
-                    }
-                });
-            }
+                    });
+                }
 
-            $title.on('input', updateShortcodePreview);
+                $title.on('input', updateShortcodePreview);
 
-            $copyBtn.on('click', function() {
-                var shortcode = $shortcodeDisplay.find('code').text();
-                navigator.clipboard.writeText(shortcode).then(function() {
-                    var originalText = $copyBtn.html();
-                    $copyBtn.html('✅ <?php _e('Copied!', 'wp-dynamic-tags'); ?>');
-                    setTimeout(function() {
-                        $copyBtn.html(originalText);
-                    }, 2000);
+                $copyBtn.on('click', function () {
+                    var shortcode = $shortcodeDisplay.find('code').text();
+                    navigator.clipboard.writeText(shortcode).then(function () {
+                        var originalText = $copyBtn.html();
+                        $copyBtn.html('✅ <?php _e('Copied!', 'wp-dynamic-tags'); ?>');
+                        setTimeout(function () {
+                            $copyBtn.html(originalText);
+                        }, 2000);
+                    });
                 });
+
+                // Initial update
+                updateShortcodePreview();
             });
-
-            // Initial update
-            updateShortcodePreview();
-        });
         </script>
         <?php
     }
@@ -2907,7 +3059,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render placeholder helper meta box
      */
-    public function render_placeholder_helper_box($post) {
+    public function render_placeholder_helper_box($post)
+    {
         // Enhanced validation: check if placeholders object exists and has required method
         if (!$this->placeholders || !is_object($this->placeholders) || !method_exists($this->placeholders, 'get_all_placeholders')) {
             echo '<div class="notice notice-warning inline">';
@@ -2932,7 +3085,11 @@ class WP_Dynamic_Tags_Plugin {
             'user' => __('User Data', 'wp-dynamic-tags'),
             'date' => __('Date & Time', 'wp-dynamic-tags'),
             'site' => __('Site Information', 'wp-dynamic-tags'),
-            'post' => __('Post Context', 'wp-dynamic-tags')
+            'post' => __('Post Context', 'wp-dynamic-tags'),
+            'taxonomy' => __('Taxonomy / Terms', 'wp-dynamic-tags'),
+            'author' => __('Post Author', 'wp-dynamic-tags'),
+            'url' => __('URL / Request', 'wp-dynamic-tags'),
+            'chatbot' => __('Chatbot Event', 'wp-dynamic-tags'),
         );
 
         foreach ($categories as $cat_key => $cat_name) {
@@ -2942,10 +3099,16 @@ class WP_Dynamic_Tags_Plugin {
 
             foreach ($placeholders as $key => $value) {
                 // Simple categorization based on prefix
-                if (($cat_key === 'user' && strpos($key, 'user_') === 0) ||
+                if (
+                    ($cat_key === 'user' && strpos($key, 'user_') === 0) ||
                     ($cat_key === 'date' && (strpos($key, 'current_') === 0 || strpos($key, 'date') !== false)) ||
-                    ($cat_key === 'site' && (strpos($key, 'site_') === 0 || strpos($key, 'admin_') === 0)) ||
-                    ($cat_key === 'post' && strpos($key, 'post_') === 0)) {
+                    ($cat_key === 'site' && (strpos($key, 'site_') === 0 || strpos($key, 'admin_') === 0 || strpos($key, 'wp_') === 0 || strpos($key, 'theme_') === 0 || strpos($key, 'php_') === 0)) ||
+                    ($cat_key === 'post' && strpos($key, 'post_') === 0) ||
+                    ($cat_key === 'taxonomy' && (strpos($key, 'term_') === 0 || strpos($key, 'tag_') === 0)) ||
+                    ($cat_key === 'author' && strpos($key, 'author_') === 0) ||
+                    ($cat_key === 'url' && strpos($key, 'url_') === 0) ||
+                    ($cat_key === 'chatbot' && (strpos($key, 'event_') === 0 || strpos($key, 'chatbot_') === 0))
+                ) {
 
                     echo '<button type="button" class="button button-small dt-insert-placeholder" data-placeholder="{' . esc_attr($key) . '}" style="text-align: left; padding: 4px 8px; font-size: 11px;">';
                     echo '<code>{' . esc_html($key) . '}</code>';
@@ -2957,31 +3120,110 @@ class WP_Dynamic_Tags_Plugin {
             echo '</div>';
         }
 
+        // Parameterized placeholders: no fixed key to list as a chip, so offer a key input instead.
+        echo '<div style="border: 1px solid #ddd; padding: 12px; border-radius: 4px;">';
+        echo '<h4 style="margin: 0 0 10px 0; font-size: 13px; color: #2271b1;">' . esc_html__('Custom / Meta Fields', 'wp-dynamic-tags') . '</h4>';
+        echo '<div style="display: flex; flex-direction: column; gap: 6px;">';
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-meta-key-input" placeholder="' . esc_attr__('meta key', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-meta">' . esc_html__('Insert {meta:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
+
+        if (function_exists('get_field')) {
+            echo '<div style="display: flex; gap: 4px;">';
+            echo '<input type="text" id="dt-acf-key-input" placeholder="' . esc_attr__('ACF field name', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+            echo '<button type="button" class="button button-small" id="dt-insert-acf">' . esc_html__('Insert {acf:...}', 'wp-dynamic-tags') . '</button>';
+            echo '</div>';
+        }
+
+        echo '</div>';
+        echo '</div>';
+
         echo '</div>';
 
         // JavaScript for inserting placeholders
         ?>
         <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            $('.dt-insert-placeholder').on('click', function() {
-                var placeholder = $(this).data('placeholder');
-                var $btn = $(this);
+            jQuery(document).ready(function ($) {
+                function insertAtCursor(el, text) {
+                    var start = el.selectionStart;
+                    var end = el.selectionEnd;
+                    var val = el.value;
+                    el.value = val.substring(0, start) + text + val.substring(end);
+                    // Move cursor to after the inserted text
+                    el.selectionStart = el.selectionEnd = start + text.length;
+                    // Trigger change event so frameworks notice the update
+                    $(el).trigger('change');
+                }
 
-                // Copy to clipboard
-                navigator.clipboard.writeText(placeholder).then(function() {
-                    var originalHTML = $btn.html();
-                    $btn.html('✅ <?php _e('Copied!', 'wp-dynamic-tags'); ?>');
-                    setTimeout(function() {
-                        $btn.html(originalHTML);
-                    }, 1500);
+                // Insert into whichever editor/field currently has focus, or the main content editor.
+                function dtInsertPlaceholderText(text) {
+                    var $focused = $(document.activeElement);
+                    if ($focused.is('input[type="text"], textarea') && !$focused.is('#content')) {
+                        insertAtCursor($focused[0], text);
+                        return;
+                    }
+
+                    if (typeof tinymce !== 'undefined') {
+                        var editor = tinymce.get('content');
+                        if (editor && !editor.isHidden()) {
+                            editor.execCommand('mceInsertContent', false, text);
+                            return;
+                        }
+                    }
+
+                    var textArea = document.getElementById('content');
+                    if (textArea) {
+                        insertAtCursor(textArea, text);
+                        textArea.focus();
+                    }
+                }
+
+                $('.dt-insert-placeholder').on('click', function () {
+                    var placeholder = $(this).data('placeholder');
+                    var $btn = $(this);
+
+                    // ── 1. Copy to clipboard ───────────────────────────────────
+                    // navigator.clipboard requires HTTPS. Provide an execCommand fallback.
+                    function showCopied() {
+                        var originalHTML = $btn.html();
+                        $btn.html('✅ <?php _e('Copied!', 'wp-dynamic-tags'); ?>');
+                        setTimeout(function () { $btn.html(originalHTML); }, 1500);
+                    }
+
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(placeholder).then(showCopied).catch(function () {
+                            fallbackCopy(placeholder, showCopied);
+                        });
+                    } else {
+                        fallbackCopy(placeholder, showCopied);
+                    }
+
+                    function fallbackCopy(text, cb) {
+                        var $ta = $('<textarea>').val(text).css({ position: 'fixed', top: 0, left: 0, opacity: 0 });
+                        $('body').append($ta);
+                        $ta[0].select();
+                        try { document.execCommand('copy'); } catch (e) { }
+                        $ta.remove();
+                        if (cb) cb();
+                    }
+
+                    // ── 2. Insert into editor / textarea ──────────────────────
+                    dtInsertPlaceholderText(placeholder);
                 });
 
-                // Try to insert into editor if possible
-                if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {
-                    tinymce.activeEditor.execCommand('mceInsertContent', false, placeholder);
-                }
+                $('#dt-insert-meta').on('click', function () {
+                    var key = $('#dt-meta-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{meta:' + key + '}');
+                });
+
+                $('#dt-insert-acf').on('click', function () {
+                    var key = $('#dt-acf-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{acf:' + key + '}');
+                });
             });
-        });
         </script>
         <?php
     }
@@ -2989,7 +3231,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Add filter dropdowns to admin list
      */
-    public function add_admin_filters($post_type) {
+    public function add_admin_filters($post_type)
+    {
         if ($post_type !== $this->post_type) {
             return;
         }
@@ -3013,7 +3256,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render group filter dropdown (with error handling)
      */
-    private function render_group_filter() {
+    private function render_group_filter()
+    {
         try {
             // Check if taxonomy exists
             if (!taxonomy_exists('tag_groups')) {
@@ -3073,7 +3317,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render conflict status filter dropdown
      */
-    private function render_conflict_status_filter() {
+    private function render_conflict_status_filter()
+    {
         $selected = isset($_GET['filter_conflict']) ? sanitize_text_field($_GET['filter_conflict']) : '';
 
         echo '<select name="filter_conflict" id="filter_conflict">';
@@ -3087,7 +3332,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render usage filter dropdown
      */
-    private function render_usage_filter() {
+    private function render_usage_filter()
+    {
         $selected = isset($_GET['filter_usage']) ? sanitize_text_field($_GET['filter_usage']) : '';
 
         echo '<select name="filter_usage" id="filter_usage">';
@@ -3102,7 +3348,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render date filter dropdown
      */
-    private function render_date_filter() {
+    private function render_date_filter()
+    {
         $selected = isset($_GET['filter_date']) ? sanitize_text_field($_GET['filter_date']) : '';
 
         echo '<select name="filter_date" id="filter_date">';
@@ -3117,7 +3364,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Render content length filter dropdown
      */
-    private function render_content_length_filter() {
+    private function render_content_length_filter()
+    {
         $selected = isset($_GET['filter_length']) ? sanitize_text_field($_GET['filter_length']) : '';
 
         echo '<select name="filter_length" id="filter_length">';
@@ -3132,7 +3380,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Get count of posts in a specific group (replaces non-existent wp_count_posts_by_term)
      */
-    private function get_posts_count_by_group($group_id) {
+    private function get_posts_count_by_group($group_id)
+    {
         try {
             // Validate group ID
             if (empty($group_id) || !is_numeric($group_id)) {
@@ -3168,7 +3417,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Filter admin query based on custom filters
      */
-    public function filter_admin_query($query) {
+    public function filter_admin_query($query)
+    {
         global $pagenow;
 
         if (!is_admin() || $pagenow !== 'edit.php') {
@@ -3186,7 +3436,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Modify admin query for filtering
      */
-    public function modify_admin_query($query) {
+    public function modify_admin_query($query)
+    {
         global $pagenow;
 
         if (!is_admin() || $pagenow !== 'edit.php' || !$query->is_main_query()) {
@@ -3313,7 +3564,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Filter posts by conflict status (for complex queries)
      */
-    public function filter_posts_by_conflict_status($where) {
+    public function filter_posts_by_conflict_status($where)
+    {
         // This is a simplified implementation - in a real scenario you'd need more complex SQL
         // For now, we'll let the post list show all and rely on the admin column to show status
         remove_filter('posts_where', array($this, 'filter_posts_by_conflict_status'));
@@ -3323,7 +3575,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Filter posts by OK status (no conflicts)
      */
-    public function filter_posts_by_ok_status($where) {
+    public function filter_posts_by_ok_status($where)
+    {
         // This is a simplified implementation
         remove_filter('posts_where', array($this, 'filter_posts_by_ok_status'));
         return $where;
@@ -3332,31 +3585,34 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Quick create page
      */
-    public function quick_create_page() {
+    public function quick_create_page()
+    {
         ?>
         <div class="wrap">
             <h1><?php _e('Dynamic Tags - Quick Create & Help', 'wp-dynamic-tags'); ?></h1>
-            
+
             <?php if (isset($_GET['created']) && $_GET['created'] === '1'): ?>
                 <div class="notice notice-success is-dismissible">
                     <p><?php _e('Dynamic tag created successfully!', 'wp-dynamic-tags'); ?></p>
                 </div>
             <?php endif; ?>
-            
+
             <div class="card" style="max-width: 600px;">
                 <h2><?php _e('Quick Create Tag', 'wp-dynamic-tags'); ?></h2>
                 <form method="post" action="">
                     <?php wp_nonce_field('dt_quick_create', 'dt_nonce'); ?>
-                    
+
                     <table class="form-table">
                         <tr>
                             <th scope="row">
                                 <label for="tag_key"><?php _e('Tag Key', 'wp-dynamic-tags'); ?></label>
                             </th>
                             <td>
-                                <input type="text" name="tag_key" id="tag_key" class="regular-text" required 
-                                       placeholder="<?php esc_attr_e('e.g., site_title, company_name', 'wp-dynamic-tags'); ?>">
-                                <p class="description"><?php _e('Use lowercase letters, numbers, underscores, and dashes only.', 'wp-dynamic-tags'); ?></p>
+                                <input type="text" name="tag_key" id="tag_key" class="regular-text" required
+                                    placeholder="<?php esc_attr_e('e.g., site_title, company_name', 'wp-dynamic-tags'); ?>">
+                                <p class="description">
+                                    <?php _e('Use lowercase letters, numbers, underscores, and dashes only.', 'wp-dynamic-tags'); ?>
+                                </p>
                             </td>
                         </tr>
                         <tr>
@@ -3365,8 +3621,10 @@ class WP_Dynamic_Tags_Plugin {
                             </th>
                             <td>
                                 <textarea name="tag_value" id="tag_value" class="large-text" rows="4" required
-                                          placeholder="<?php esc_attr_e('Enter the content for this tag...', 'wp-dynamic-tags'); ?>"></textarea>
-                                <p class="description"><?php _e('You can use dynamic placeholders like {current_year}, {user_name}, etc.', 'wp-dynamic-tags'); ?></p>
+                                    placeholder="<?php esc_attr_e('Enter the content for this tag...', 'wp-dynamic-tags'); ?>"></textarea>
+                                <p class="description">
+                                    <?php _e('You can use dynamic placeholders like {current_year}, {user_name}, etc.', 'wp-dynamic-tags'); ?>
+                                </p>
                             </td>
                         </tr>
                         <tr>
@@ -3381,36 +3639,42 @@ class WP_Dynamic_Tags_Plugin {
                                     <option value="branding"><?php _e('Branding', 'wp-dynamic-tags'); ?></option>
                                     <option value="custom"><?php _e('Custom', 'wp-dynamic-tags'); ?></option>
                                 </select>
-                                <p class="description"><?php _e('Organize your tags into categories for better management.', 'wp-dynamic-tags'); ?></p>
+                                <p class="description">
+                                    <?php _e('Organize your tags into categories for better management.', 'wp-dynamic-tags'); ?>
+                                </p>
                             </td>
                         </tr>
                     </table>
-                    
+
                     <p class="submit">
-                        <input type="submit" name="create_tag" class="button-primary" 
-                               value="<?php esc_attr_e('Create Tag', 'wp-dynamic-tags'); ?>">
+                        <input type="submit" name="create_tag" class="button-primary"
+                            value="<?php esc_attr_e('Create Tag', 'wp-dynamic-tags'); ?>">
                     </p>
                 </form>
             </div>
 
             <div class="card" style="margin-top: 20px; background: #e7f5fe; border-left: 4px solid #2271b1;">
                 <h2 style="margin-top: 0;">📥 <?php _e('Import Guide - Bulk Create Tags from CSV', 'wp-dynamic-tags'); ?></h2>
-                <p class="description"><?php _e('Save time by importing multiple tags at once from a CSV file.', 'wp-dynamic-tags'); ?></p>
+                <p class="description">
+                    <?php _e('Save time by importing multiple tags at once from a CSV file.', 'wp-dynamic-tags'); ?></p>
 
                 <h3><?php _e('Step 1: Download Sample File', 'wp-dynamic-tags'); ?></h3>
                 <p><?php _e('Choose a sample file to get started:', 'wp-dynamic-tags'); ?></p>
                 <p>
-                    <a href="<?php echo admin_url('admin.php?action=dt_download_sample_csv'); ?>" class="button button-secondary">
+                    <a href="<?php echo admin_url('admin.php?action=dt_download_sample_csv'); ?>"
+                        class="button button-secondary">
                         📄 <?php _e('Download Basic Sample (simple format)', 'wp-dynamic-tags'); ?>
                     </a>
-                    <a href="<?php echo admin_url('admin.php?action=dt_download_sample_full_csv'); ?>" class="button button-secondary" style="margin-left: 10px;">
+                    <a href="<?php echo admin_url('admin.php?action=dt_download_sample_full_csv'); ?>"
+                        class="button button-secondary" style="margin-left: 10px;">
                         📋 <?php _e('Download Full Sample (with metadata)', 'wp-dynamic-tags'); ?>
                     </a>
                 </p>
 
                 <h3><?php _e('Step 2: Edit the CSV File', 'wp-dynamic-tags'); ?></h3>
                 <ul>
-                    <li><?php _e('Open the downloaded file in Excel, Google Sheets, or any text editor', 'wp-dynamic-tags'); ?></li>
+                    <li><?php _e('Open the downloaded file in Excel, Google Sheets, or any text editor', 'wp-dynamic-tags'); ?>
+                    </li>
                     <li><?php _e('Add your tags (one per row)', 'wp-dynamic-tags'); ?></li>
                     <li><?php _e('Keep the header row intact', 'wp-dynamic-tags'); ?></li>
                     <li><?php _e('Save as CSV format (UTF-8 encoding recommended)', 'wp-dynamic-tags'); ?></li>
@@ -3418,7 +3682,8 @@ class WP_Dynamic_Tags_Plugin {
 
                 <h3><?php _e('Step 3: Import Your Tags', 'wp-dynamic-tags'); ?></h3>
                 <p>
-                    <a href="<?php echo admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-import-export'); ?>" class="button button-primary button-large">
+                    <a href="<?php echo admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-import-export'); ?>"
+                        class="button button-primary button-large">
                         ⬆️ <?php _e('Go to Import/Export Page', 'wp-dynamic-tags'); ?>
                     </a>
                 </p>
@@ -3463,20 +3728,23 @@ class WP_Dynamic_Tags_Plugin {
                     <li>✅ <?php _e('Test with a small file first (2-3 tags)', 'wp-dynamic-tags'); ?></li>
                     <li>✅ <?php _e('Assign groups to tags with duplicate names', 'wp-dynamic-tags'); ?></li>
                     <li>✅ <?php _e('Enclose values with commas in quotes: "value, here"', 'wp-dynamic-tags'); ?></li>
-                    <li>✅ <?php _e('You can use dynamic placeholders like {current_year} in tag values', 'wp-dynamic-tags'); ?></li>
+                    <li>✅ <?php _e('You can use dynamic placeholders like {current_year} in tag values', 'wp-dynamic-tags'); ?>
+                    </li>
                 </ul>
             </div>
 
             <div class="card" style="margin-top: 20px;">
                 <h2><?php _e('How to Use Dynamic Tags', 'wp-dynamic-tags'); ?></h2>
-                <p><?php _e('After creating a tag, you can use it anywhere in WordPress with shortcodes:', 'wp-dynamic-tags'); ?></p>
-                
+                <p><?php _e('After creating a tag, you can use it anywhere in WordPress with shortcodes:', 'wp-dynamic-tags'); ?>
+                </p>
+
                 <h3><?php _e('Usage Examples:', 'wp-dynamic-tags'); ?></h3>
                 <ul>
                     <li><strong><?php _e('Direct shortcode:', 'wp-dynamic-tags'); ?></strong> <code>[your_tag_key]</code></li>
-                    <li><strong><?php _e('Fallback shortcode:', 'wp-dynamic-tags'); ?></strong> <code>[dt key="your_tag_key"]</code></li>
+                    <li><strong><?php _e('Fallback shortcode:', 'wp-dynamic-tags'); ?></strong>
+                        <code>[dt key="your_tag_key"]</code></li>
                 </ul>
-                
+
                 <h3><?php _e('Where You Can Use Them:', 'wp-dynamic-tags'); ?></h3>
                 <ul>
                     <li><?php _e('Elementor Text/Heading widgets', 'wp-dynamic-tags'); ?></li>
@@ -3485,19 +3753,21 @@ class WP_Dynamic_Tags_Plugin {
                     <li><?php _e('Classic Editor content', 'wp-dynamic-tags'); ?></li>
                     <li><?php _e('Widgets (if shortcodes are enabled)', 'wp-dynamic-tags'); ?></li>
                 </ul>
-                
+
                 <h3><?php _e('Dynamic Placeholders (NEW!):', 'wp-dynamic-tags'); ?></h3>
                 <p><?php _e('You can now use dynamic placeholders in your tag values:', 'wp-dynamic-tags'); ?></p>
                 <ul>
                     <li><code>{user_display_name}</code> - <?php _e('Current user name', 'wp-dynamic-tags'); ?></li>
                     <li><code>{current_year}</code> - <?php _e('Current year', 'wp-dynamic-tags'); ?></li>
                     <li><code>{site_name}</code> - <?php _e('Site title', 'wp-dynamic-tags'); ?></li>
-                    <li><code>{if:user_logged_in}Welcome back!{else}Please login{/if}</code> - <?php _e('Conditional content', 'wp-dynamic-tags'); ?></li>
+                    <li><code>{if:user_logged_in}Welcome back!{else}Please login{/if}</code> -
+                        <?php _e('Conditional content', 'wp-dynamic-tags'); ?></li>
                 </ul>
-                
+
                 <h3><?php _e('Tips:', 'wp-dynamic-tags'); ?></h3>
                 <ul>
-                    <li><?php _e('Tag keys are automatically sanitized (lowercase, underscores replace spaces)', 'wp-dynamic-tags'); ?></li>
+                    <li><?php _e('Tag keys are automatically sanitized (lowercase, underscores replace spaces)', 'wp-dynamic-tags'); ?>
+                    </li>
                     <li><?php _e('Tags are cached for better performance', 'wp-dynamic-tags'); ?></li>
                     <li><?php _e('You can use HTML in tag values', 'wp-dynamic-tags'); ?></li>
                     <li><?php _e('Dynamic placeholders are processed in real-time', 'wp-dynamic-tags'); ?></li>
@@ -3505,7 +3775,7 @@ class WP_Dynamic_Tags_Plugin {
                     <li><?php _e('Import/Export feature available for backup and migration', 'wp-dynamic-tags'); ?></li>
                 </ul>
             </div>
-            
+
             <div class="card" style="margin-top: 20px;">
                 <h2><?php _e('Current Tags', 'wp-dynamic-tags'); ?>
                     <small>(<?php echo $this->get_dynamic_tags_count(); ?> total)</small>
@@ -3521,7 +3791,7 @@ class WP_Dynamic_Tags_Plugin {
                 $total_pages = ceil($total_tags / $per_page);
 
                 if (!empty($tags)):
-                ?>
+                    ?>
                     <div class="tablenav tablenav-top">
                         <div class="alignleft">
                             <?php
@@ -3563,17 +3833,19 @@ class WP_Dynamic_Tags_Plugin {
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p><?php _e('No dynamic tags created yet. Use the form above to create your first tag!', 'wp-dynamic-tags'); ?></p>
+                    <p><?php _e('No dynamic tags created yet. Use the form above to create your first tag!', 'wp-dynamic-tags'); ?>
+                    </p>
                 <?php endif; ?>
             </div>
         </div>
         <?php
     }
-    
+
     /**
      * Conflict Resolution page
      */
-    public function conflict_resolution_page() {
+    public function conflict_resolution_page()
+    {
         if (isset($_POST['resolve_conflicts'])) {
             $this->handle_conflict_resolution();
         }
@@ -3597,7 +3869,8 @@ class WP_Dynamic_Tags_Plugin {
                 </div>
             <?php else: ?>
                 <div class="notice notice-warning">
-                    <p><?php _e('The following tags have duplicate names and need group assignments to prevent shortcode conflicts:', 'wp-dynamic-tags'); ?></p>
+                    <p><?php _e('The following tags have duplicate names and need group assignments to prevent shortcode conflicts:', 'wp-dynamic-tags'); ?>
+                    </p>
                 </div>
 
                 <form method="post" action="">
@@ -3648,8 +3921,9 @@ class WP_Dynamic_Tags_Plugin {
 
                     <p class="submit">
                         <input type="submit" name="resolve_conflicts" class="button-primary"
-                               value="<?php esc_attr_e('Auto-Resolve Selected Conflicts', 'wp-dynamic-tags'); ?>">
-                        <a href="<?php echo admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-group-manager'); ?>" class="button">
+                            value="<?php esc_attr_e('Auto-Resolve Selected Conflicts', 'wp-dynamic-tags'); ?>">
+                        <a href="<?php echo admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-group-manager'); ?>"
+                            class="button">
                             <?php _e('Manage Groups', 'wp-dynamic-tags'); ?>
                         </a>
                     </p>
@@ -3687,8 +3961,8 @@ class WP_Dynamic_Tags_Plugin {
 
                     <p class="submit">
                         <input type="submit" name="bulk_migrate" class="button"
-                               value="<?php esc_attr_e('Run Migration', 'wp-dynamic-tags'); ?>"
-                               onclick="return confirm('<?php esc_attr_e('This will modify existing tags. Continue?', 'wp-dynamic-tags'); ?>')">
+                            value="<?php esc_attr_e('Run Migration', 'wp-dynamic-tags'); ?>"
+                            onclick="return confirm('<?php esc_attr_e('This will modify existing tags. Continue?', 'wp-dynamic-tags'); ?>')">
                     </p>
                 </form>
             </div>
@@ -3699,7 +3973,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle conflict resolution form submission
      */
-    private function handle_conflict_resolution() {
+    private function handle_conflict_resolution()
+    {
         if (!wp_verify_nonce($_POST['dt_resolve_nonce'], 'dt_resolve_conflicts')) {
             wp_die(__('Security check failed', 'wp-dynamic-tags'));
         }
@@ -3708,7 +3983,7 @@ class WP_Dynamic_Tags_Plugin {
             wp_die(__('Insufficient permissions', 'wp-dynamic-tags'));
         }
 
-        $resolve_tags = isset($_POST['resolve_tags']) ? (array)$_POST['resolve_tags'] : array();
+        $resolve_tags = isset($_POST['resolve_tags']) ? (array) $_POST['resolve_tags'] : array();
         $resolved_count = 0;
 
         foreach ($resolve_tags as $tag_key) {
@@ -3728,7 +4003,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Auto-resolve tag conflict by creating/assigning groups
      */
-    private function auto_resolve_tag_conflict($tag_key) {
+    private function auto_resolve_tag_conflict($tag_key)
+    {
         $ungrouped_duplicates = $this->get_ungrouped_duplicate_tags();
 
         if (!isset($ungrouped_duplicates[$tag_key])) {
@@ -3771,7 +4047,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Generate meaningful group name for a post
      */
-    private function generate_group_name_for_post($post_id, $tag_key, $index) {
+    private function generate_group_name_for_post($post_id, $tag_key, $index)
+    {
         // Try to generate meaningful group names based on content or context
         $content = get_post_field('post_content', $post_id);
 
@@ -3793,7 +4070,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Suggest group names for duplicate resolution
      */
-    private function suggest_groups_for_duplicates($tag_key) {
+    private function suggest_groups_for_duplicates($tag_key)
+    {
         $ungrouped_duplicates = $this->get_ungrouped_duplicate_tags();
 
         if (!isset($ungrouped_duplicates[$tag_key])) {
@@ -3816,7 +4094,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle conflict resolution actions from admin_init
      */
-    public function handle_conflict_resolution_actions() {
+    public function handle_conflict_resolution_actions()
+    {
         // Handle bulk migration
         if (isset($_POST['bulk_migrate']) && wp_verify_nonce($_POST['dt_bulk_nonce'], 'dt_bulk_migrate')) {
             if (!current_user_can('manage_options')) {
@@ -3835,7 +4114,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Run bulk migration based on strategy
      */
-    private function run_bulk_migration($strategy) {
+    private function run_bulk_migration($strategy)
+    {
         $ungrouped_duplicates = $this->get_ungrouped_duplicate_tags();
 
         foreach ($ungrouped_duplicates as $tag_key => $posts) {
@@ -3861,7 +4141,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Resolve conflicts by adding ID prefix to tag names
      */
-    private function resolve_with_id_prefix($tag_key, $posts) {
+    private function resolve_with_id_prefix($tag_key, $posts)
+    {
         foreach ($posts as $post_data) {
             $post_id = $post_data['post_id'];
             $new_title = $post_id . '_' . $post_data['title'];
@@ -3876,7 +4157,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Resolve conflicts by assigning to default "Migrated" group
      */
-    private function resolve_with_default_group($tag_key, $posts) {
+    private function resolve_with_default_group($tag_key, $posts)
+    {
         // Create or get the "Migrated" group
         $group_term = get_term_by('name', 'Migrated', 'tag_groups');
         if (!$group_term) {
@@ -3904,33 +4186,34 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Handle quick create form submission
      */
-    public function handle_quick_create() {
+    public function handle_quick_create()
+    {
         if (!isset($_POST['create_tag']) || !current_user_can('manage_options')) {
             return;
         }
-        
+
         // Verify nonce
         if (!wp_verify_nonce($_POST['dt_nonce'], 'dt_quick_create')) {
             wp_die(__('Security check failed', 'wp-dynamic-tags'));
         }
-        
+
         $tag_key = sanitize_text_field($_POST['tag_key']);
         $tag_value = wp_kses_post($_POST['tag_value']);
         $tag_category = isset($_POST['tag_category']) ? sanitize_text_field($_POST['tag_category']) : 'general';
-        
+
         if (empty($tag_key) || empty($tag_value)) {
             return;
         }
-        
+
         // Create the post
         $post_id = wp_insert_post(array(
-            'post_title'   => $tag_key,
+            'post_title' => $tag_key,
             'post_content' => $tag_value,
-            'post_status'  => 'publish',
-            'post_type'    => $this->post_type,
-            'post_author'  => get_current_user_id(),
+            'post_status' => 'publish',
+            'post_type' => $this->post_type,
+            'post_author' => get_current_user_id(),
         ));
-        
+
         if ($post_id) {
             // Set default category if not set
             if (empty($tag_category)) {
@@ -3938,24 +4221,26 @@ class WP_Dynamic_Tags_Plugin {
             } else {
                 update_post_meta($post_id, '_dt_category', $tag_category);
             }
-            
+
             $this->clear_cache();
             wp_redirect(add_query_arg('created', '1', $_SERVER['REQUEST_URI']));
             exit;
         }
     }
-    
+
     /**
      * Load plugin text domain
      */
-    public function load_textdomain() {
+    public function load_textdomain()
+    {
         load_plugin_textdomain('wp-dynamic-tags', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
-    
+
     /**
      * Plugin activation
      */
-    public function activate() {
+    public function activate()
+    {
         // Load includes first to ensure classes are available
         $this->load_includes();
 
@@ -4003,12 +4288,101 @@ class WP_Dynamic_Tags_Plugin {
 
         // Store activation timestamp
         update_option('wp_dynamic_tags_activation_time', current_time('mysql'));
+
+        // Detect and restore existing data
+        $this->detect_and_restore_existing_data();
+
+        // Ensure the "certificates" tag group exists for Certificate-Generator integration
+        $this->ensure_certificates_group();
     }
-    
+
+    /**
+     * Ensure the "certificates" tag group (taxonomy term) exists.
+     * Certificate-Generator uses this group when syncing student/teacher/school data.
+     * Safe to call multiple times — only creates if it does not exist.
+     */
+    public function ensure_certificates_group()
+    {
+        if (!taxonomy_exists('tag_groups')) {
+            return;
+        }
+
+        $term = term_exists('certificates', 'tag_groups');
+        if (!$term) {
+            wp_insert_term(
+                'Certificates',
+                'tag_groups',
+                [
+                    'slug' => 'certificates',
+                    'description' => 'Tags synced from Certificate-Generator plugin',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Detect existing data and prepare for restoration
+     */
+    private function detect_and_restore_existing_data()
+    {
+        global $wpdb;
+
+        $existing_data = array(
+            'has_data' => false,
+            'post_tags_count' => 0,
+            'table_tags_count' => 0,
+            'groups_count' => 0
+        );
+
+        // Check for existing posts
+        $post_count = wp_count_posts($this->post_type);
+        $existing_data['post_tags_count'] = isset($post_count->publish) ? intval($post_count->publish) : 0;
+
+        // Check for existing custom table data
+        $table_name = $wpdb->prefix . 'dynamic_tags';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+            $table_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'active'");
+            $existing_data['table_tags_count'] = intval($table_count);
+        }
+
+        // Check for existing groups
+        $groups = get_terms(array(
+            'taxonomy' => 'tag_groups',
+            'hide_empty' => false
+        ));
+        $existing_data['groups_count'] = is_array($groups) ? count($groups) : 0;
+
+        // Determine if we have existing data
+        $existing_data['has_data'] = ($existing_data['post_tags_count'] > 0 ||
+            $existing_data['table_tags_count'] > 0 ||
+            $existing_data['groups_count'] > 0);
+
+        if ($existing_data['has_data']) {
+            // Set transient to show restoration notice
+            set_transient('wp_dynamic_tags_data_restored', $existing_data, 60);
+
+            // Log the restoration
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'WP Dynamic Tags: Existing data detected - %d post tags, %d table tags, %d groups',
+                    $existing_data['post_tags_count'],
+                    $existing_data['table_tags_count'],
+                    $existing_data['groups_count']
+                ));
+            }
+
+            // Force shortcode registration on next page load
+            delete_transient($this->transient_key);
+            delete_transient('dt_registration_lock');
+            delete_transient('dt_table_registration_lock');
+        }
+    }
+
     /**
      * Plugin deactivation
      */
-    public function deactivate() {
+    public function deactivate()
+    {
         // Clear cache
         $this->clear_cache();
 
@@ -4017,61 +4391,72 @@ class WP_Dynamic_Tags_Plugin {
 
         // Remove activation flag
         delete_option('wp_dynamic_tags_activated');
+
+        // Set transient to show deactivation notice next time admin loads
+        set_transient('wp_dynamic_tags_deactivated', true, DAY_IN_SECONDS);
     }
 
     /**
      * Get database manager instance
      */
-    public function get_db_manager() {
+    public function get_db_manager()
+    {
         return $this->db_manager;
     }
 
     /**
      * Get migration manager instance
      */
-    public function get_migration_manager() {
+    public function get_migration_manager()
+    {
         return $this->migration_manager;
     }
 
     /**
      * Get table manager instance
      */
-    public function get_table_manager() {
+    public function get_table_manager()
+    {
         return $this->table_manager;
     }
 
     /**
      * Get post-table bridge instance
      */
-    public function get_post_table_bridge() {
+    public function get_post_table_bridge()
+    {
         return $this->post_table_bridge;
     }
 
     /**
      * Get table shortcode processor instance
      */
-    public function get_table_shortcode_processor() {
+    public function get_table_shortcode_processor()
+    {
         return $this->table_shortcode_processor;
     }
 
     /**
      * Get table import/export instance
      */
-    public function get_table_import_export() {
+    public function get_table_import_export()
+    {
         return $this->table_import_export;
     }
 
     /**
      * Check if table integration is enabled
      */
-    public function is_table_integration_enabled() {
+    public function is_table_integration_enabled()
+    {
         return get_option('wp_dynamic_tags_table_integration_enabled', false);
     }
-    
+
     /**
      * Load enhanced feature classes
      */
-    private function load_includes() {
+    private function load_includes()
+    {
         $includes_dir = WP_DYNAMIC_TAGS_PLUGIN_DIR . 'includes/';
 
         // Load new table system classes first
@@ -4108,8 +4493,16 @@ class WP_Dynamic_Tags_Plugin {
             require_once $includes_dir . 'class-import-export.php';
         }
 
+        if (file_exists($includes_dir . 'class-dynamic-formatters.php')) {
+            require_once $includes_dir . 'class-dynamic-formatters.php';
+        }
+
         if (file_exists($includes_dir . 'class-dynamic-placeholders.php')) {
             require_once $includes_dir . 'class-dynamic-placeholders.php';
+        }
+
+        if (file_exists($includes_dir . 'class-acf-integration.php')) {
+            require_once $includes_dir . 'class-acf-integration.php';
         }
 
         if (file_exists($includes_dir . 'class-tag-groups.php')) {
@@ -4127,12 +4520,17 @@ class WP_Dynamic_Tags_Plugin {
         if (file_exists(plugin_dir_path(__FILE__) . 'admin/table-manager-admin.php')) {
             require_once plugin_dir_path(__FILE__) . 'admin/table-manager-admin.php';
         }
+
+        if (file_exists(plugin_dir_path(__FILE__) . 'admin/settings-page.php')) {
+            require_once plugin_dir_path(__FILE__) . 'admin/settings-page.php';
+        }
     }
-    
+
     /**
      * Initialize enhanced features
      */
-    private function init_enhanced_features() {
+    private function init_enhanced_features()
+    {
         // Initialize table system first
         if (class_exists('WP_Dynamic_Tags_Database_Manager')) {
             $this->db_manager = WP_Dynamic_Tags_Database_Manager::get_instance();
@@ -4217,17 +4615,51 @@ class WP_Dynamic_Tags_Plugin {
         if (is_admin() && class_exists('WP_Dynamic_Tags_Table_Manager_Admin')) {
             $this->table_manager_admin = new WP_Dynamic_Tags_Table_Manager_Admin();
         }
+
+        // Ensure shortcodes are registered from existing data (important for reinstalls)
+        $this->ensure_existing_shortcodes_registered();
     }
-    
+
+    /**
+     * Ensure existing shortcodes from database are registered
+     * Important for when plugin is reinstalled with existing data
+     */
+    private function ensure_existing_shortcodes_registered()
+    {
+        global $wpdb;
+
+        // Check if we have existing data in custom table
+        $table_name = $wpdb->prefix . 'dynamic_tags';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") !== $table_name) {
+            return; // Table doesn't exist, nothing to restore
+        }
+
+        // Count active tags in table
+        $tag_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'active'");
+
+        if ($tag_count > 0) {
+            // We have existing data - ensure shortcodes will be registered
+            // The table_shortcode_processor will handle this automatically via its 'init' hook
+            // But we'll clear any locks to ensure registration happens
+            delete_transient('dt_registration_lock');
+            delete_transient('dt_table_registration_lock');
+
+            if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
+                error_log("WP Dynamic Tags: Found {$tag_count} existing tags in database, shortcodes will be auto-registered");
+            }
+        }
+    }
+
     /**
      * Enqueue admin assets
      */
-    public function enqueue_admin_assets($hook) {
+    public function enqueue_admin_assets($hook)
+    {
         // Only load on our plugin pages
         if (strpos($hook, 'dynamic_tag') === false && strpos($hook, 'dt-') === false) {
             return;
         }
-        
+
         // Enqueue CSS
         wp_enqueue_style(
             'dt-admin-css',
@@ -4235,7 +4667,7 @@ class WP_Dynamic_Tags_Plugin {
             array(),
             WP_DYNAMIC_TAGS_VERSION
         );
-        
+
         // Enqueue JavaScript
         wp_enqueue_script(
             'dt-admin-js',
@@ -4244,7 +4676,7 @@ class WP_Dynamic_Tags_Plugin {
             WP_DYNAMIC_TAGS_VERSION,
             true
         );
-        
+
         // Localize script with data
         $existing_tags = $this->get_dynamic_tags();
         $existing_keys = array();
@@ -4282,7 +4714,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Debug information page
      */
-    public function debug_page() {
+    public function debug_page()
+    {
         ?>
         <div class="wrap">
             <h1><?php _e('Dynamic Tags - Debug Information', 'wp-dynamic-tags'); ?></h1>
@@ -4324,7 +4757,8 @@ class WP_Dynamic_Tags_Plugin {
                                     ?>
                                 </td>
                                 <td>
-                                    <button onclick="testShortcode('<?php echo esc_js($shortcode); ?>')" class="button button-small">Test</button>
+                                    <button onclick="testShortcode('<?php echo esc_js($shortcode); ?>')"
+                                        class="button button-small">Test</button>
                                     <span id="test-result-<?php echo esc_attr($shortcode); ?>" style="margin-left: 10px;"></span>
                                 </td>
                             </tr>
@@ -4341,7 +4775,8 @@ class WP_Dynamic_Tags_Plugin {
                 <p><strong><?php _e('Cached Tags Count:', 'wp-dynamic-tags'); ?></strong> <?php echo count($cached_tags); ?></p>
                 <details>
                     <summary><?php _e('View Cached Tags Data', 'wp-dynamic-tags'); ?></summary>
-                    <pre style="background: #f1f1f1; padding: 15px; margin-top: 10px; overflow: auto; max-height: 400px;"><?php echo esc_html(print_r($cached_tags, true)); ?></pre>
+                    <pre
+                        style="background: #f1f1f1; padding: 15px; margin-top: 10px; overflow: auto; max-height: 400px;"><?php echo esc_html(print_r($cached_tags, true)); ?></pre>
                 </details>
             </div>
 
@@ -4351,13 +4786,16 @@ class WP_Dynamic_Tags_Plugin {
                 $duplicate_tags = $this->check_for_duplicate_tag_names();
                 $ungrouped_duplicates = $this->get_ungrouped_duplicate_tags();
                 ?>
-                <p><strong><?php _e('Duplicate Tag Groups:', 'wp-dynamic-tags'); ?></strong> <?php echo count($duplicate_tags); ?></p>
-                <p><strong><?php _e('Ungrouped Duplicates:', 'wp-dynamic-tags'); ?></strong> <?php echo count($ungrouped_duplicates); ?></p>
+                <p><strong><?php _e('Duplicate Tag Groups:', 'wp-dynamic-tags'); ?></strong>
+                    <?php echo count($duplicate_tags); ?></p>
+                <p><strong><?php _e('Ungrouped Duplicates:', 'wp-dynamic-tags'); ?></strong>
+                    <?php echo count($ungrouped_duplicates); ?></p>
 
                 <?php if (!empty($duplicate_tags)): ?>
                     <details>
                         <summary><?php _e('View Duplicate Tags', 'wp-dynamic-tags'); ?></summary>
-                        <pre style="background: #f1f1f1; padding: 15px; margin-top: 10px; overflow: auto; max-height: 400px;"><?php echo esc_html(print_r($duplicate_tags, true)); ?></pre>
+                        <pre
+                            style="background: #f1f1f1; padding: 15px; margin-top: 10px; overflow: auto; max-height: 400px;"><?php echo esc_html(print_r($duplicate_tags, true)); ?></pre>
                     </details>
                 <?php endif; ?>
             </div>
@@ -4365,60 +4803,63 @@ class WP_Dynamic_Tags_Plugin {
             <div class="card" style="margin-top: 20px;">
                 <h2><?php _e('Shortcode Testing', 'wp-dynamic-tags'); ?></h2>
                 <p><?php _e('Test specific shortcodes:', 'wp-dynamic-tags'); ?></p>
-                <input type="text" id="test-shortcode-input" placeholder="Enter shortcode (e.g., math_olympiad_date3)" style="width: 300px;">
-                <button onclick="testCustomShortcode()" class="button button-primary"><?php _e('Test Shortcode', 'wp-dynamic-tags'); ?></button>
-                <div id="custom-test-result" style="margin-top: 10px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; display: none;"></div>
+                <input type="text" id="test-shortcode-input" placeholder="Enter shortcode (e.g., math_olympiad_date3)"
+                    style="width: 300px;">
+                <button onclick="testCustomShortcode()"
+                    class="button button-primary"><?php _e('Test Shortcode', 'wp-dynamic-tags'); ?></button>
+                <div id="custom-test-result"
+                    style="margin-top: 10px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; display: none;"></div>
             </div>
         </div>
 
         <script>
-        function testShortcode(shortcode) {
-            var resultElement = document.getElementById('test-result-' + shortcode);
-            resultElement.innerHTML = 'Testing...';
+            function testShortcode(shortcode) {
+                var resultElement = document.getElementById('test-result-' + shortcode);
+                resultElement.innerHTML = 'Testing...';
 
-            fetch(ajaxurl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=dt_test_shortcode&shortcode=' + encodeURIComponent(shortcode) + '&nonce=<?php echo wp_create_nonce('dt_test_shortcode'); ?>'
-            })
-            .then(response => response.text())
-            .then(data => {
-                resultElement.innerHTML = data ? 'Result: ' + data : 'Empty result';
-            })
-            .catch(error => {
-                resultElement.innerHTML = 'Error: ' + error;
-            });
-        }
-
-        function testCustomShortcode() {
-            var shortcode = document.getElementById('test-shortcode-input').value;
-            var resultElement = document.getElementById('custom-test-result');
-
-            if (!shortcode) {
-                alert('Please enter a shortcode to test');
-                return;
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=dt_test_shortcode&shortcode=' + encodeURIComponent(shortcode) + '&nonce=<?php echo wp_create_nonce('dt_test_shortcode'); ?>'
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        resultElement.innerHTML = data ? 'Result: ' + data : 'Empty result';
+                    })
+                    .catch(error => {
+                        resultElement.innerHTML = 'Error: ' + error;
+                    });
             }
 
-            resultElement.style.display = 'block';
-            resultElement.innerHTML = 'Testing [' + shortcode + ']...';
+            function testCustomShortcode() {
+                var shortcode = document.getElementById('test-shortcode-input').value;
+                var resultElement = document.getElementById('custom-test-result');
 
-            fetch(ajaxurl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=dt_test_shortcode&shortcode=' + encodeURIComponent(shortcode) + '&nonce=<?php echo wp_create_nonce('dt_test_shortcode'); ?>'
-            })
-            .then(response => response.text())
-            .then(data => {
-                resultElement.innerHTML = '<strong>Shortcode:</strong> [' + shortcode + ']<br><strong>Result:</strong> ' + (data || 'Empty/No result');
-            })
-            .catch(error => {
-                resultElement.innerHTML = '<strong>Error:</strong> ' + error;
-            });
-        }
+                if (!shortcode) {
+                    alert('Please enter a shortcode to test');
+                    return;
+                }
+
+                resultElement.style.display = 'block';
+                resultElement.innerHTML = 'Testing [' + shortcode + ']...';
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=dt_test_shortcode&shortcode=' + encodeURIComponent(shortcode) + '&nonce=<?php echo wp_create_nonce('dt_test_shortcode'); ?>'
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        resultElement.innerHTML = '<strong>Shortcode:</strong> [' + shortcode + ']<br><strong>Result:</strong> ' + (data || 'Empty/No result');
+                    })
+                    .catch(error => {
+                        resultElement.innerHTML = '<strong>Error:</strong> ' + error;
+                    });
+            }
         </script>
         <?php
     }
@@ -4426,7 +4867,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Check if admin page is functioning correctly (for debugging)
      */
-    public function admin_page_health_check() {
+    public function admin_page_health_check()
+    {
         if (!is_admin() || !current_user_can('manage_options')) {
             return;
         }
@@ -4450,7 +4892,7 @@ class WP_Dynamic_Tags_Plugin {
 
         // If issues found and debugging is enabled, show notice
         if (!empty($issues) && defined('WP_DEBUG') && WP_DEBUG) {
-            add_action('admin_notices', function() use ($issues) {
+            add_action('admin_notices', function () use ($issues) {
                 echo '<div class="notice notice-warning">';
                 echo '<p><strong>WP Dynamic Tags Health Check:</strong></p>';
                 echo '<ul>';
@@ -4466,7 +4908,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Performance monitoring and statistics
      */
-    public function get_performance_stats() {
+    public function get_performance_stats()
+    {
         if (!defined('WP_DEBUG') || !WP_DEBUG) {
             return array();
         }
@@ -4484,7 +4927,8 @@ class WP_Dynamic_Tags_Plugin {
     /**
      * Display performance debug info (only in debug mode)
      */
-    public function show_performance_debug() {
+    public function show_performance_debug()
+    {
         if (!defined('WP_DEBUG') || !WP_DEBUG || !current_user_can('manage_options')) {
             return;
         }
@@ -4499,18 +4943,18 @@ class WP_Dynamic_Tags_Plugin {
 }
 
 // Initialize the plugin
-add_action('plugins_loaded', function() {
+add_action('plugins_loaded', function () {
     WP_Dynamic_Tags_Plugin::get_instance();
 });
 
 // Clear cache when dynamic tag posts are saved or deleted
-add_action('save_post', function($post_id) {
+add_action('save_post', function ($post_id) {
     if (get_post_type($post_id) === 'dynamic_tag') {
         delete_transient('wp_dynamic_tags_cache');
     }
 });
 
-add_action('before_delete_post', function($post_id) {
+add_action('before_delete_post', function ($post_id) {
     if (get_post_type($post_id) === 'dynamic_tag') {
         delete_transient('wp_dynamic_tags_cache');
     }

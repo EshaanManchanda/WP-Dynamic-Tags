@@ -43,14 +43,37 @@ class WP_Dynamic_Tags_Conflict_Manager_Admin {
      * Conflict manager page
      */
     public function conflict_manager_page() {
+        // Security check: verify user has proper capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(
+                __('You do not have sufficient permissions to access this page.', 'wp-dynamic-tags'),
+                __('Permission Denied', 'wp-dynamic-tags'),
+                array('response' => 403)
+            );
+        }
+
         // Get conflict resolver instance
         $plugin = WP_Dynamic_Tags_Plugin::get_instance();
-        $resolver = $plugin->conflict_resolver;
 
-        if (!$resolver) {
-            echo '<div class="wrap"><h1>Conflict Manager</h1><p>Conflict resolver not available.</p></div>';
+        // Check if plugin instance exists
+        if (!$plugin) {
+            echo '<div class="wrap"><h1>' . esc_html__('Conflict Manager', 'wp-dynamic-tags') . '</h1>';
+            echo '<p>' . esc_html__('Plugin instance not available.', 'wp-dynamic-tags') . '</p></div>';
             return;
         }
+
+        // Check if conflict_resolver property exists and is accessible
+        if (!isset($plugin->conflict_resolver) || !$plugin->conflict_resolver) {
+            echo '<div class="wrap">';
+            echo '<h1>' . esc_html__('Conflict Manager', 'wp-dynamic-tags') . '</h1>';
+            echo '<div class="notice notice-error"><p>';
+            echo esc_html__('Conflict resolver is not initialized. Please try reloading the page or deactivating and reactivating the plugin.', 'wp-dynamic-tags');
+            echo '</p></div>';
+            echo '</div>';
+            return;
+        }
+
+        $resolver = $plugin->conflict_resolver;
 
         // Get current conflicts
         $conflicts = $resolver->detect_all_conflicts();
@@ -398,21 +421,29 @@ class WP_Dynamic_Tags_Conflict_Manager_Admin {
         check_ajax_referer('dt_auto_resolve_conflicts', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Insufficient permissions');
+            wp_send_json_error(__('Insufficient permissions', 'wp-dynamic-tags'));
+            return;
         }
 
         $plugin = WP_Dynamic_Tags_Plugin::get_instance();
-        $resolver = $plugin->conflict_resolver;
 
-        if (!$resolver) {
-            wp_send_json_error('Conflict resolver not available');
+        if (!$plugin || !isset($plugin->conflict_resolver) || !$plugin->conflict_resolver) {
+            wp_send_json_error(__('Conflict resolver not available. Please try reloading the page.', 'wp-dynamic-tags'));
+            return;
         }
 
-        $results = $resolver->auto_resolve_simple_conflicts();
+        $resolver = $plugin->conflict_resolver;
 
-        wp_send_json_success(array(
-            'resolved_count' => count($results),
-            'results' => $results
-        ));
+        try {
+            $results = $resolver->auto_resolve_simple_conflicts();
+
+            wp_send_json_success(array(
+                'resolved_count' => count($results),
+                'results' => $results,
+                'message' => sprintf(__('%d conflict(s) resolved successfully.', 'wp-dynamic-tags'), count($results))
+            ));
+        } catch (Exception $e) {
+            wp_send_json_error(sprintf(__('Error resolving conflicts: %s', 'wp-dynamic-tags'), $e->getMessage()));
+        }
     }
 }

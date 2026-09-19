@@ -101,7 +101,8 @@ class WP_Dynamic_Tags_Table_Manager {
             'priority' => 0,
             'usage_count' => 0,
             'status' => 'active',
-            'meta_data' => array()
+            'meta_data' => array(),
+            'description' => '',
         );
 
         $data = wp_parse_args($data, $defaults);
@@ -544,10 +545,31 @@ class WP_Dynamic_Tags_Table_Manager {
     }
 
     /**
-     * Clear all cache
+     * Clear all cache — both instance-level and WordPress transients used by the main plugin.
+     * Called after any programmatic write (create/update/delete), including from external plugins.
      */
     private function clear_cache() {
         $this->cache = array();
+
+        // Invalidate the main plugin's transient so shortcodes are re-registered on next load.
+        delete_transient('wp_dynamic_tags_cache');
+
+        // Clear any versioned transient keys the main plugin uses (pattern: wp_dynamic_tags_cache_X.Y.Z)
+        global $wpdb;
+        $wpdb->query(
+            "DELETE FROM {$wpdb->options}
+             WHERE option_name LIKE '_transient_wp_dynamic_tags_cache_%'
+                OR option_name LIKE '_transient_timeout_wp_dynamic_tags_cache_%'"
+        );
+
+        // Clear main plugin static cache if the class is available
+        if (class_exists('WP_Dynamic_Tags_Plugin')) {
+            $plugin = WP_Dynamic_Tags_Plugin::get_instance();
+            if (property_exists($plugin, 'shared_tags_cache')) {
+                // Reflection is heavy; instead trigger a re-registration via a short-circuit action
+                do_action('wp_dynamic_tags_cache_cleared');
+            }
+        }
     }
 
     /**

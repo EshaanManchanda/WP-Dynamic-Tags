@@ -45,6 +45,12 @@ class WP_Dynamic_Tags_Database_Manager {
      * Ensure table exists (called during initialization)
      */
     public function ensure_table_exists() {
+        // Check if we've already verified table exists in this request
+        static $table_verified = false;
+        if ($table_verified) {
+            return;
+        }
+
         if (!$this->table_exists()) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('WP Dynamic Tags: Table does not exist, attempting to create: ' . $this->table_name);
@@ -66,11 +72,11 @@ class WP_Dynamic_Tags_Database_Manager {
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log('WP Dynamic Tags: Table created successfully in ensure_table_exists');
                 }
+                $table_verified = true;
             }
         } else {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('WP Dynamic Tags: Table already exists: ' . $this->table_name);
-            }
+            // Table exists - mark as verified without logging (reduces noise)
+            $table_verified = true;
         }
     }
 

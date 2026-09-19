@@ -192,7 +192,7 @@ class WP_Dynamic_Tags_Post_Table_Bridge {
         $post_data = array(
             'post_title' => $data['tag_name'],
             'post_content' => $data['content'],
-            'post_excerpt' => $data['description'],
+            'post_excerpt' => $data['description'] ?? '',
             'post_type' => $this->post_type,
             'post_status' => $data['status'] === 'active' ? 'publish' : 'draft',
             'post_date' => isset($data['created_date']) ? $data['created_date'] : current_time('mysql'),

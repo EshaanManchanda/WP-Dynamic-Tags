@@ -22,6 +22,14 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         $this->table_manager = WP_Dynamic_Tags_Table_Manager::get_instance();
         $this->db_manager = WP_Dynamic_Tags_Database_Manager::get_instance();
 
+        // Initialize performance stats counters
+        $this->performance_stats = array(
+            'cache_hits' => 0,
+            'cache_misses' => 0,
+            'shortcode_executions' => array(),
+            'usage_tracking' => array()
+        );
+
         // Hook into WordPress
         add_action('init', array($this, 'register_table_shortcodes'), 20);
         add_action('wp_dynamic_tags_tag_created', array($this, 'on_tag_created'), 10, 2);
@@ -161,6 +169,11 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             if ($atts['cache'] === 'true' && isset($this->cache[$cache_key])) {
                 $this->performance_stats['cache_hits']++;
                 return $this->cache[$cache_key];
+            }
+
+            // Track cache miss
+            if ($atts['cache'] === 'true') {
+                $this->performance_stats['cache_misses']++;
             }
 
             // Process content
