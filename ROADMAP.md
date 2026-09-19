@@ -90,13 +90,21 @@ has nothing equivalent yet. Ordered so later items depend on earlier ones.
    Competitors: Elementor Pro, Dynamic.ooo (both full support).
 4. ✅ **User meta / term meta placeholders — done in V2.** `{user_meta:key}`
    (post author) and `{term_meta:key}` (primary term).
-5. **Element-level conditional visibility** — today's `{if:}` only branches
-   text *inside* a tag's output; there's no way to hide/show a whole
-   builder element based on a condition.
+5. ✅ **Element-level conditional visibility — done in V3.** `{if:}` conditions
+   can now test a field's value, not just global site/user state: truthy
+   (`{if:acf:featured}`) or comparison (`{if:wc:price>50}`, `=`, `!=`, `<`,
+   `>=`, `<=`, `contains`). A new `[dt_if condition="..."][dt_else]...[/dt_if]`
+   shortcode wraps a whole block of content (not just a tag's own text), so
+   it can hide/show anything dropped into a builder's HTML/shortcode widget —
+   the closest a builder-agnostic plugin can get to true per-element
+   visibility without per-builder integration code.
    Competitors: Dynamic.ooo (dedicated product), JetEngine, Toolset.
-6. **Dynamic templates** — rendering a template once per record (product
-   card, team-member card, archive loop). This is the feature competitors
-   lead marketing with, and the plugin has no equivalent at all.
+6. ✅ **Dynamic templates — done in V3.** `[dt_template tag="product_card"
+   query="post_type=product&posts_per_page=6"]` renders an existing Dynamic
+   Tag once per post in a query, so every per-post placeholder resolves
+   against each record. The `query` attribute is a plain WP_Query-args
+   string (`wp_parse_str`), deliberately not a reusable query-builder
+   abstraction — that's still gap #7.
    Competitors: Elementor Pro (Theme Builder), Dynamic.ooo, JetEngine, Toolset.
 7. **Query-builder data source** — "get N posts of type X where meta Y = Z"
    as a reusable data source, vs. today's single-record-only fields.
@@ -127,10 +135,9 @@ edge worth fixing before adding new surface area:
 - **`[dt]` tag-level fallback is incomplete** — the README documents
   `[dt_fallback tag=".." default=".."]`, but the shortcode doesn't actually
   support a `default=` attribute. Docs and behavior have drifted apart.
-- **`{if:}` conditionals are content-only** — they can branch text inside a
-  tag's output, but can't control whether a whole page-builder element
-  renders at all (see gap #5 above); the in-content version is a weaker
-  subset of what's needed.
+- ✅ **`{if:}` conditionals were content-only — fixed in V3.** `[dt_if]` now
+  wraps a whole block of content, and conditions can test field values, not
+  just global site/user state (see gap #5).
 - **`register_external_placeholder()` is informal** — works, but is
   undocumented, placeholder-registration-only, and doesn't cover formatters
   or data sources, so it can't yet serve as the "real" developer API (see
@@ -203,7 +210,7 @@ Everything in Pro, plus gaps #6–11 and agency ops:
 |---|---|---|
 | **V1 — done** | Broad placeholder set, formatters, fallback (this session) | — |
 | **V2 — done** | Array primitives (#1: `\|join`, `\|count`, `\|first`, `\|last`, `[dt_loop]`), WooCommerce fields (#2), ACF repeater/gallery/relationship via dot notation (#3), user/term meta (#4) | V1's `{prefix:arg}` + formatter pattern |
-| **V3 — Placement** | Element visibility (#5), dynamic templates (#6) | V2 (visibility conditions often test array/relation fields) |
+| **V3 — done** | Field-based conditions + `[dt_if]` block visibility (#5), `[dt_template]` per-record rendering (#6) | V2 (visibility/templates reuse the same token resolution and array primitives) |
 | **V4 — Query & external data** | Query builder (#7), REST/API tag (#8), PHP tag (#9) | V2/V3 (query results feed the same array primitives) |
 | **V5 — Ecosystem** | Formal developer API (#10), debugger (#11), third-party integrations (#12) | V2–V4 (nothing to register a source *for* until sources vary) |
 
