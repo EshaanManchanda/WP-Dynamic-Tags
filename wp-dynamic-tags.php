@@ -3300,6 +3300,16 @@ class WP_Dynamic_Tags_Plugin
         echo '<button type="button" class="button button-small" id="dt-insert-term-meta">' . esc_html__('Insert {term_meta:...}', 'wp-dynamic-tags') . '</button>';
         echo '</div>';
 
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-query-key-input" placeholder="' . esc_attr__('post_type=post&posts_per_page=5', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-query">' . esc_html__('Insert {query:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
+
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-api-key-input" placeholder="' . esc_attr__('https://example.com/data.json::path.to.field', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-api">' . esc_html__('Insert {api:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
+
         echo '</div>';
         echo '</div>';
 
@@ -3404,6 +3414,18 @@ class WP_Dynamic_Tags_Plugin
                     var key = $('#dt-term-meta-key-input').val();
                     if (!key) return;
                     dtInsertPlaceholderText('{term_meta:' + key + '}');
+                });
+
+                $('#dt-insert-query').on('click', function () {
+                    var key = $('#dt-query-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{query:' + key + '}');
+                });
+
+                $('#dt-insert-api').on('click', function () {
+                    var key = $('#dt-api-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{api:' + key + '}');
                 });
             });
         </script>

@@ -130,6 +130,12 @@ class WP_Dynamic_Tags_Placeholders {
         // {user_meta:key} - post author's user meta; {term_meta:key} - primary term's term meta
         $this->register_parameterized_placeholder('user_meta', array($this, 'get_user_meta_value'));
         $this->register_parameterized_placeholder('term_meta', array($this, 'get_term_meta_value'));
+        // {query:post_type=product&posts_per_page=5&...} - reusable query data source (array of post rows)
+        $this->register_parameterized_placeholder('query', array($this, 'get_query_value'));
+        // {api:https://example.com/data.json::path.to.field} - external JSON data source
+        if (apply_filters('dt_enable_api_placeholder', true)) {
+            $this->register_parameterized_placeholder('api', array($this, 'get_api_value'));
+        }
     }
     
     /**
@@ -383,6 +389,102 @@ class WP_Dynamic_Tags_Placeholders {
             return '';
         }
         return (string) get_term_meta($term->term_id, $key, true);
+    }
+
+    /**
+     * Get a query-driven array of post rows for {query:...} - a reusable data
+     * source usable directly with [dt_loop source="query:..."]{item:title}[/dt_loop].
+     * $query_string is a WP_Query-args querystring (wp_parse_str), the same
+     * convention [dt_template]'s `query` attribute uses.
+     */
+    private function get_query_value($query_string) {
+        $query_args = array(
+            'post_type' => 'post',
+            'posts_per_page' => 5,
+            'post_status' => 'publish',
+        );
+        if (!empty($query_string)) {
+            wp_parse_str($query_string, $parsed_query);
+            $query_args = array_merge($query_args, $parsed_query);
+        }
+
+        $query = new WP_Query($query_args);
+        $rows = array();
+        foreach ($query->posts as $queried_post) {
+            $rows[] = array(
+                'id' => $queried_post->ID,
+                'title' => get_the_title($queried_post),
+                'permalink' => get_permalink($queried_post),
+                'excerpt' => get_the_excerpt($queried_post),
+                'date' => get_the_date('', $queried_post),
+                'thumbnail' => get_the_post_thumbnail_url($queried_post) ?: '',
+            );
+        }
+        wp_reset_postdata();
+
+        return $rows;
+    }
+
+    /**
+     * Get external JSON data for {api:URL::json.path} - fetches URL (cached),
+     * decodes JSON, and optionally walks a dot-notation path into the result
+     * (same convention as {acf:field.subfield}). With no path, returns the
+     * whole decoded payload as an array (usable with [dt_loop]/|join/|count).
+     *
+     * Uses wp_safe_remote_get() (not wp_remote_get()) specifically because it
+     * refuses requests to private/reserved IP ranges - the standard WordPress
+     * mitigation against SSRF via a user-suppliable URL. Responses are cached
+     * (success and failure) so this can't be used to hammer an external
+     * endpoint or a broken one from slowing down every page load.
+     */
+    private function get_api_value($arg) {
+        list($url, $path) = array_pad(explode('::', $arg, 2), 2, null);
+        $url = trim($url);
+        if (empty($url) || !preg_match('#^https?://#i', $url)) {
+            return '';
+        }
+
+        $cache_key = 'dt_api_' . md5($url);
+        $data = get_transient($cache_key);
+        if ($data === false) {
+            $response = wp_safe_remote_get($url, array('timeout' => 5));
+            if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+                set_transient($cache_key, array(), MINUTE_IN_SECONDS);
+                return '';
+            }
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            if (!is_array($data)) {
+                $data = array();
+            }
+            set_transient($cache_key, $data, 5 * MINUTE_IN_SECONDS);
+        }
+
+        if (empty($data)) {
+            return '';
+        }
+
+        return self::walk_path($data, $path);
+    }
+
+    /**
+     * Walk a dot-notation path ("data.rates.usd") into a decoded array,
+     * returning '' if any segment doesn't exist. Pure function - no
+     * WordPress calls - so it can be unit tested directly.
+     */
+    public static function walk_path($data, $path) {
+        if ($path === null || trim($path) === '') {
+            return $data;
+        }
+
+        $value = $data;
+        foreach (explode('.', trim($path)) as $segment) {
+            if (is_array($value) && array_key_exists($segment, $value)) {
+                $value = $value[$segment];
+            } else {
+                return '';
+            }
+        }
+        return $value;
     }
 
     /**
@@ -1109,6 +1211,8 @@ class WP_Dynamic_Tags_Placeholders {
                 'term_meta:key' => __('Primary term\'s term meta value, e.g. {term_meta:icon}', 'wp-dynamic-tags'),
                 'acf:field' => __('ACF field value; use field.subfield to pull a column out of a repeater/group, e.g. {acf:team_members.name} (requires ACF)', 'wp-dynamic-tags'),
                 'wc:field' => __('WooCommerce product field: price, regular_price, sale_price, sale_percent, sku, stock_status, stock_quantity, categories, tags (requires WooCommerce)', 'wp-dynamic-tags'),
+                'query:post_type=...&posts_per_page=...' => __('Query posts as an array of rows (id, title, permalink, excerpt, date, thumbnail) for use with [dt_loop]', 'wp-dynamic-tags'),
+                'api:https://...::path.to.field' => __('Fetch external JSON and optionally walk a dot-notation path into it, e.g. {api:https://api.example.com/rates::usd|round:2}', 'wp-dynamic-tags'),
             ),
             'array' => array(
                 'token|join:, ' => __('Join an array value into text with a separator, e.g. {wc:categories|join:", "}', 'wp-dynamic-tags'),
@@ -1159,6 +1263,10 @@ class WP_Dynamic_Tags_Placeholders {
             'templates' => array(
                 '[dt_template tag="product_card" query="post_type=product&posts_per_page=6"]' => __('Render a Dynamic Tag once per product, like a repeating card', 'wp-dynamic-tags'),
                 '[dt_template tag="team_member" query="post_type=team&orderby=menu_order&order=ASC"]' => __('Render a Dynamic Tag once per team member, in a custom order', 'wp-dynamic-tags'),
+            ),
+            'data_sources' => array(
+                '[dt_loop source="query:post_type=post&posts_per_page=3"]{item:title}[/dt_loop]' => __('List recent posts without creating a Dynamic Tag first', 'wp-dynamic-tags'),
+                '{api:https://api.exchangerate.host/latest::rates.EUR|round:2}' => __('Pull a single value out of an external JSON API', 'wp-dynamic-tags'),
             )
         );
     }
