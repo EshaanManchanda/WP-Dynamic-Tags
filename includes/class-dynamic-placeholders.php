@@ -127,6 +127,9 @@ class WP_Dynamic_Tags_Placeholders {
 
         // Parameterized placeholders: {meta:post_meta_key}
         $this->register_parameterized_placeholder('meta', array($this, 'get_meta_value'));
+        // {user_meta:key} - post author's user meta; {term_meta:key} - primary term's term meta
+        $this->register_parameterized_placeholder('user_meta', array($this, 'get_user_meta_value'));
+        $this->register_parameterized_placeholder('term_meta', array($this, 'get_term_meta_value'));
     }
     
     /**
@@ -257,6 +260,18 @@ class WP_Dynamic_Tags_Placeholders {
     }
 
     /**
+     * Whether a resolved value counts as "empty" for fallback purposes:
+     * empty string/null, or an empty array (a getter returning no rows).
+     * Pure function — no WordPress calls.
+     */
+    public static function is_empty_value($value) {
+        if ($value === '' || $value === null) {
+            return true;
+        }
+        return is_array($value) && empty($value);
+    }
+
+    /**
      * Replace a generic {key}/{key:arg}/{key|formatter}/{key??fallback} token.
      */
     private function replace_generic_token($matches) {
@@ -272,16 +287,35 @@ class WP_Dynamic_Tags_Placeholders {
         // otherwise a numeric formatter (e.g. currency) would turn an empty value
         // into a non-empty "$0.00" and the fallback would never get a chance to fire.
         // The fallback text itself is returned as-is, not run through the formatters.
-        if (($value === '' || $value === null) && $parsed['fallback'] !== null) {
+        if (self::is_empty_value($value) && $parsed['fallback'] !== null) {
             return $parsed['fallback'];
         }
 
         if (class_exists('WP_Dynamic_Tags_Formatters')) {
             foreach ($parsed['formatters'] as $formatter) {
-                if ($formatter !== '') {
-                    $value = WP_Dynamic_Tags_Formatters::format($value, $formatter);
+                if ($formatter === '') {
+                    continue;
                 }
+                // Skip formatters that don't understand arrays until one collapses
+                // the value to a scalar (e.g. {acf:repeater|first|upper}: "first"
+                // collapses it, then "upper" applies normally on the next iteration).
+                if (is_array($value)) {
+                    $formatter_name = strtok($formatter, ':');
+                    if (!WP_Dynamic_Tags_Formatters::is_array_aware($formatter_name)) {
+                        continue;
+                    }
+                }
+                $value = WP_Dynamic_Tags_Formatters::format($value, $formatter);
             }
+
+            // Safety net: a value that is still an array at this point (no
+            // array-collapsing formatter was used) must never render as the
+            // literal string "Array" — collapse it the same way |join would.
+            if (is_array($value)) {
+                $value = WP_Dynamic_Tags_Formatters::format($value, 'join');
+            }
+        } elseif (is_array($value)) {
+            $value = implode(', ', array_filter($value, 'is_scalar'));
         }
 
         return $value;
@@ -290,7 +324,7 @@ class WP_Dynamic_Tags_Placeholders {
     /**
      * Resolve a parsed key/arg pair against the flat or parameterized registries.
      *
-     * @return string|false The resolved value, or false if the key is unregistered.
+     * @return string|array|false The resolved value, or false if the key is unregistered.
      */
     private function resolve_token($key, $arg) {
         if ($arg === null) {
@@ -307,6 +341,17 @@ class WP_Dynamic_Tags_Placeholders {
     }
 
     /**
+     * Public façade over resolve_token() for consumers (e.g. [dt_loop]) that need
+     * the raw resolved value — including a real array — without the array-safety-net
+     * stringification that replace_generic_token() applies for direct {}-embedding.
+     *
+     * @return string|array|false
+     */
+    public function resolve_token_raw($key, $arg) {
+        return $this->resolve_token($key, $arg);
+    }
+
+    /**
      * Get a post meta value for the {meta:key} placeholder.
      */
     private function get_meta_value($key) {
@@ -315,6 +360,29 @@ class WP_Dynamic_Tags_Placeholders {
             return '';
         }
         return (string) get_post_meta($post_id, $key, true);
+    }
+
+    /**
+     * Get the post author's user meta for the {user_meta:key} placeholder.
+     * Reads the current record's author (extends {author:*}), not the viewer.
+     */
+    private function get_user_meta_value($key) {
+        global $post;
+        if (!$post) {
+            return '';
+        }
+        return (string) get_user_meta($post->post_author, $key, true);
+    }
+
+    /**
+     * Get the post's primary term's term meta for the {term_meta:key} placeholder.
+     */
+    private function get_term_meta_value($key) {
+        $term = $this->get_primary_term();
+        if (!$term) {
+            return '';
+        }
+        return (string) get_term_meta($term->term_id, $key, true);
     }
 
     /**
@@ -906,7 +974,17 @@ class WP_Dynamic_Tags_Placeholders {
             ),
             'meta_and_fields' => array(
                 'meta:key' => __('Post meta value for the given key, e.g. {meta:price}', 'wp-dynamic-tags'),
-                'acf:field' => __('ACF field value for the given field name, e.g. {acf:subtitle} (requires ACF)', 'wp-dynamic-tags'),
+                'user_meta:key' => __('Post author\'s user meta value, e.g. {user_meta:phone}', 'wp-dynamic-tags'),
+                'term_meta:key' => __('Primary term\'s term meta value, e.g. {term_meta:icon}', 'wp-dynamic-tags'),
+                'acf:field' => __('ACF field value; use field.subfield to pull a column out of a repeater/group, e.g. {acf:team_members.name} (requires ACF)', 'wp-dynamic-tags'),
+                'wc:field' => __('WooCommerce product field: price, regular_price, sale_price, sale_percent, sku, stock_status, stock_quantity, categories, tags (requires WooCommerce)', 'wp-dynamic-tags'),
+            ),
+            'array' => array(
+                'token|join:, ' => __('Join an array value into text with a separator, e.g. {wc:categories|join:", "}', 'wp-dynamic-tags'),
+                'token|count' => __('Count the items in an array value, e.g. {acf:gallery|count}', 'wp-dynamic-tags'),
+                'token|first' => __('First item of an array value, e.g. {acf:team_members.name|first}', 'wp-dynamic-tags'),
+                'token|last' => __('Last item of an array value, e.g. {acf:team_members.name|last}', 'wp-dynamic-tags'),
+                '[dt_loop source="..."]{item}[/dt_loop]' => __('Repeat a template once per item of an array source, e.g. [dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]', 'wp-dynamic-tags'),
             ),
             'advanced' => array(
                 'date:Y-m-d' => __('Custom date format (replace Y-m-d with desired format)', 'wp-dynamic-tags'),
@@ -937,6 +1015,12 @@ class WP_Dynamic_Tags_Placeholders {
             'advanced' => array(
                 'Today is {date:l, F j, Y}' => __('Custom date format', 'wp-dynamic-tags'),
                 '{if:is_front_page}{site_description}{else}{post_title}{/if}' => __('Complex conditional logic', 'wp-dynamic-tags'),
+            ),
+            'array' => array(
+                '{acf:team_members.name|join:", "}' => __('Comma-join a repeater column across all rows', 'wp-dynamic-tags'),
+                '{wc:price|currency}' => __('Format a WooCommerce product field', 'wp-dynamic-tags'),
+                '[dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]' => __('Render a template once per gallery image', 'wp-dynamic-tags'),
+                '[dt_loop source="acf:team_members" separator=", "]{item:name}[/dt_loop]' => __('Render a template once per repeater row', 'wp-dynamic-tags'),
             )
         );
     }

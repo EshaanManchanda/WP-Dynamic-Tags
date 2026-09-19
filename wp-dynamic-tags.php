@@ -270,6 +270,7 @@ class WP_Dynamic_Tags_Plugin
             add_shortcode('dt_random', array($this, 'random_shortcode'));
             add_shortcode('dt_count', array($this, 'count_shortcode'));
             add_shortcode('dt_list', array($this, 'list_shortcode'));
+            add_shortcode('dt_loop', array($this, 'loop_shortcode'));
 
             // Register individual tag shortcodes
             $this->register_simple_shortcodes();
@@ -736,6 +737,56 @@ class WP_Dynamic_Tags_Plugin
         }
 
         return implode($atts['separator'], $items);
+    }
+
+    /**
+     * Loop shortcode - [dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]
+     * Iterates an array-returning token source, re-rendering the enclosed template
+     * once per item. {item} for scalar rows, {item:subfield} for associative rows
+     * (e.g. repeater rows). Uses resolve_token_raw() to get the array before the
+     * public {}-token path would stringify it.
+     */
+    public function loop_shortcode($atts, $content = '')
+    {
+        $atts = shortcode_atts(array(
+            'source' => '',
+            'separator' => '',
+            'limit' => -1,
+            'empty' => '',
+        ), $atts, 'dt_loop');
+
+        if (empty($atts['source']) || !$this->placeholders || !method_exists($this->placeholders, 'resolve_token_raw')) {
+            return $atts['empty'];
+        }
+
+        $parsed = WP_Dynamic_Tags_Placeholders::parse_token_body($atts['source']);
+        $items = $this->placeholders->resolve_token_raw($parsed['key'], $parsed['arg']);
+
+        if (!is_array($items) || empty($items)) {
+            return $atts['empty'];
+        }
+
+        $limit = intval($atts['limit']);
+        if ($limit > 0) {
+            $items = array_slice($items, 0, $limit);
+        }
+
+        $rendered = array();
+        foreach ($items as $item) {
+            $piece = $content;
+            if (is_array($item)) {
+                $piece = preg_replace_callback('/\{item:([a-z0-9_]+)\}/i', function ($m) use ($item) {
+                    return isset($item[$m[1]]) && is_scalar($item[$m[1]]) ? (string) $item[$m[1]] : '';
+                }, $piece);
+                $piece = str_replace('{item}', '', $piece);
+            } else {
+                $piece = str_replace('{item}', (string) $item, $piece);
+            }
+            // Allow other placeholders inside the loop template too.
+            $rendered[] = apply_filters('dt_process_value', $piece);
+        }
+
+        return implode($atts['separator'], $rendered);
     }
 
     /**
@@ -3131,10 +3182,31 @@ class WP_Dynamic_Tags_Plugin
 
         if (function_exists('get_field')) {
             echo '<div style="display: flex; gap: 4px;">';
-            echo '<input type="text" id="dt-acf-key-input" placeholder="' . esc_attr__('ACF field name', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+            echo '<input type="text" id="dt-acf-key-input" placeholder="' . esc_attr__('ACF field, or repeater.subfield', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
             echo '<button type="button" class="button button-small" id="dt-insert-acf">' . esc_html__('Insert {acf:...}', 'wp-dynamic-tags') . '</button>';
             echo '</div>';
         }
+
+        if (function_exists('wc_get_product')) {
+            echo '<div style="display: flex; gap: 4px;">';
+            echo '<select id="dt-wc-key-input" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+            foreach (array('price', 'regular_price', 'sale_price', 'sale_percent', 'sku', 'stock_status', 'stock_quantity', 'categories', 'tags') as $wc_key) {
+                echo '<option value="' . esc_attr($wc_key) . '">' . esc_html($wc_key) . '</option>';
+            }
+            echo '</select>';
+            echo '<button type="button" class="button button-small" id="dt-insert-wc">' . esc_html__('Insert {wc:...}', 'wp-dynamic-tags') . '</button>';
+            echo '</div>';
+        }
+
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-user-meta-key-input" placeholder="' . esc_attr__('author user meta key', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-user-meta">' . esc_html__('Insert {user_meta:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
+
+        echo '<div style="display: flex; gap: 4px;">';
+        echo '<input type="text" id="dt-term-meta-key-input" placeholder="' . esc_attr__('primary term meta key', 'wp-dynamic-tags') . '" style="flex: 1; font-size: 11px; padding: 2px 4px;">';
+        echo '<button type="button" class="button button-small" id="dt-insert-term-meta">' . esc_html__('Insert {term_meta:...}', 'wp-dynamic-tags') . '</button>';
+        echo '</div>';
 
         echo '</div>';
         echo '</div>';
@@ -3222,6 +3294,24 @@ class WP_Dynamic_Tags_Plugin
                     var key = $('#dt-acf-key-input').val();
                     if (!key) return;
                     dtInsertPlaceholderText('{acf:' + key + '}');
+                });
+
+                $('#dt-insert-wc').on('click', function () {
+                    var key = $('#dt-wc-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{wc:' + key + '}');
+                });
+
+                $('#dt-insert-user-meta').on('click', function () {
+                    var key = $('#dt-user-meta-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{user_meta:' + key + '}');
+                });
+
+                $('#dt-insert-term-meta').on('click', function () {
+                    var key = $('#dt-term-meta-key-input').val();
+                    if (!key) return;
+                    dtInsertPlaceholderText('{term_meta:' + key + '}');
                 });
             });
         </script>
@@ -4505,6 +4595,10 @@ class WP_Dynamic_Tags_Plugin
             require_once $includes_dir . 'class-acf-integration.php';
         }
 
+        if (file_exists($includes_dir . 'class-woocommerce-integration.php')) {
+            require_once $includes_dir . 'class-woocommerce-integration.php';
+        }
+
         if (file_exists($includes_dir . 'class-tag-groups.php')) {
             require_once $includes_dir . 'class-tag-groups.php';
         }
@@ -4728,7 +4822,7 @@ class WP_Dynamic_Tags_Plugin
 
                 // Find all dynamic tag shortcodes
                 foreach ($shortcode_tags as $tag => $callback) {
-                    if (strpos($tag, '_') !== false || in_array($tag, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list'])) {
+                    if (strpos($tag, '_') !== false || in_array($tag, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop'])) {
                         $dt_shortcodes[$tag] = $callback;
                     }
                 }
@@ -4747,7 +4841,7 @@ class WP_Dynamic_Tags_Plugin
                                 <td><code>[<?php echo esc_html($shortcode); ?>]</code></td>
                                 <td>
                                     <?php
-                                    if (in_array($shortcode, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list'])) {
+                                    if (in_array($shortcode, ['dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop'])) {
                                         echo 'System';
                                     } elseif (strpos($shortcode, '_') !== false) {
                                         echo 'Group-aware';
