@@ -24,10 +24,14 @@ were found and fixed this way:
    being invalidated. Both fixed at the root (see git history for
    `clear_dynamic_tag_shortcodes()` and `clear_all_plugin_caches()`).
 
-**ACF and WooCommerce integrations still haven't been exercised against
-real plugin data** — neither is installed on the dev site this was tested
-against — so treat sections 2.2 and 2.3 as unverified until you've run
-them yourself.
+**ACF and WooCommerce integrations (sections 2.2 and 2.3) have since been
+verified too** — both were temporarily installed and activated on the dev
+site specifically to test this, using real field groups (repeater, gallery,
+relationship) and a real product (sale price, SKU, stock, category, tag),
+then removed again afterward. All 17 assertions passed, including
+`[dt_loop]` over real repeater rows and `{if:wc:price>50}` against a real
+product. See git history for the verification script if you want to rerun
+it yourself with ACF/WooCommerce installed.
 
 ## 0. Setup
 

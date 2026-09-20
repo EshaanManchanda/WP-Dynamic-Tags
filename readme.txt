@@ -1,5 +1,4 @@
 === WP Dynamic Tags ===
-Contributors: eshaanmanchanda
 Tags: dynamic content, shortcodes, merge tags, elementor, woocommerce
 Requires at least: 5.0
 Tested up to: 7.1
@@ -53,11 +52,6 @@ No. The `{func:...}` placeholder only calls functions a developer has explicitly
 = Is there a query builder or external API support? =
 
 Yes — `{query:...}` runs a WP_Query and returns an array of post rows, and `{api:...}` fetches external JSON (via WordPress's SSRF-guarded `wp_safe_remote_get()`, with response caching).
-
-== Screenshots ==
-
-1. Creating a Dynamic Tag with the placeholder helper.
-2. The tag list with shortcode, conflict status, and usage columns.
 
 == Changelog ==
 
