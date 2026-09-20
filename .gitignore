@@ -1,4 +1,5 @@
-.zip
+*.zip
+/build/
 .claude
 /vendor/
 /node_modules/
