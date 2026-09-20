@@ -1,2 +1,7 @@
 .zip
 .claude
+/vendor/
+/node_modules/
+/exported/
+/*.log
+.DS_Store
