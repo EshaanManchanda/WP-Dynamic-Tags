@@ -301,7 +301,7 @@ class WP_Dynamic_Tags_Placeholders {
 
         $parts = explode('|', $body);
         $key_part = trim(array_shift($parts));
-        $formatters = array_map('trim', $parts);
+        $formatters = array_map(array(__CLASS__, 'trim_formatter_spec'), $parts);
 
         $key = $key_part;
         $arg = null;
@@ -315,6 +315,21 @@ class WP_Dynamic_Tags_Placeholders {
             'formatters' => $formatters,
             'fallback' => $fallback,
         );
+    }
+
+    /**
+     * Trim only a formatter spec's NAME (before the colon), never its argument
+     * ("upper " -> "upper", but "join:; " keeps its trailing space intact).
+     * This tolerates a token authored with spaces around "|" (e.g.
+     * {token | upper}) without destroying a semantically whitespace-sensitive
+     * argument like |join's separator. Pure function — no WordPress calls.
+     */
+    public static function trim_formatter_spec($spec) {
+        $colon_pos = strpos($spec, ':');
+        if ($colon_pos === false) {
+            return trim($spec);
+        }
+        return trim(substr($spec, 0, $colon_pos)) . ':' . substr($spec, $colon_pos + 1);
     }
 
     /**
@@ -721,6 +736,14 @@ class WP_Dynamic_Tags_Placeholders {
      * @return array{type: string, key: string, arg: ?string, op: ?string, value: ?string}
      */
     public static function parse_condition_expression($condition) {
+        // Accept &lt;/&gt; as aliases for </> : a literal < with no later >
+        // inside a [dt_if condition="..."] shortcode attribute value confuses
+        // WordPress core's own shortcode-in-HTML-tag detection (do_shortcode()
+        // silently fails to match the shortcode at all - a WP core limitation,
+        // not something this plugin can fix) - {if:...} tokens aren't affected
+        // since they're parsed by this plugin's own regex, not do_shortcode().
+        $condition = strtr($condition, array('&lt;' => '<', '&gt;' => '>'));
+
         // Multi-char operators must be checked before their single-char subset
         // (">=" before ">") or the split would land in the wrong place.
         foreach (array('!=', '>=', '<=', '=', '>', '<') as $op) {

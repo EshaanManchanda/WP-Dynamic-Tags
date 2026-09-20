@@ -78,6 +78,12 @@ class WP_Dynamic_Tags_Plugin
     private static $static_cache = array();
     private $cache_version = '2.0.1'; // Increment when cache structure changes
 
+    // Bumped by clear_all_plugin_caches() to invalidate fetch_dynamic_tags_from_db()'s
+    // wp_cache entries on demand - that layer is keyed by md5($sql) with no group-flush
+    // support assumed, so bumping this (included in the cache key) forces a guaranteed
+    // miss instead of trying to delete an unpredictable set of keys.
+    private static $db_query_cache_bust = 0;
+
     // Performance monitoring
     private static $performance_stats = array();
     private static $query_count = 0;
@@ -369,7 +375,7 @@ class WP_Dynamic_Tags_Plugin
         }
 
         // Use WordPress cache to avoid duplicate queries
-        $cache_key = 'dt_db_query_' . md5($sql);
+        $cache_key = 'dt_db_query_' . self::$db_query_cache_bust . '_' . md5($sql);
         $posts = wp_cache_get($cache_key, 'dynamic_tags');
 
         if ($posts === false) {
@@ -1216,6 +1222,18 @@ class WP_Dynamic_Tags_Plugin
             error_log('WP Dynamic Tags: Starting selective shortcode clearing...');
         }
 
+        // Always-registered system shortcodes (added unconditionally in
+        // register_shortcodes(), independent of any dynamic_tag CPT data) -
+        // never remove these here. They used to match '/^dt_/' below, which
+        // meant a save/delete of ANY Dynamic Tag post would remove them and
+        // rely on the very next register_shortcodes() call to re-add them;
+        // if that call was skipped by the registration lock (a 3-second
+        // transient guarding against duplicate registration), these would
+        // stay unregistered for the rest of the request - a real bug found
+        // via live testing (deleting a Dynamic Tag post could silently break
+        // [dt_loop]/[dt_if]/[dt_template]/etc. for the remainder of the page load).
+        $system_shortcodes = array('dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_template');
+
         // More precise patterns - avoid removing non-dynamic-tag shortcodes
         $precise_patterns = array(
             '/^dt_/',                    // Our dt_ prefixed shortcodes
@@ -1228,6 +1246,10 @@ class WP_Dynamic_Tags_Plugin
         $known_tag_shortcodes = $this->get_known_tag_shortcodes();
 
         foreach ($shortcode_tags as $shortcode => $callback) {
+            if (in_array($shortcode, $system_shortcodes, true)) {
+                continue;
+            }
+
             $should_remove = false;
 
             // Check against precise patterns
@@ -2014,7 +2036,20 @@ class WP_Dynamic_Tags_Plugin
     {
         global $wpdb;
 
-        // Clear transients in batch
+        // Clear the primary (no limit/offset) transient via the real WP API first -
+        // this is the one virtually every call site actually uses (get_dynamic_tags()
+        // is called with no args everywhere except one admin pagination view).
+        // delete_transient() invalidates the object cache layer that a raw SQL
+        // DELETE bypasses entirely; without this, a persistent object cache
+        // (Redis/Memcached) - or even the default in-memory one within a single
+        // request - keeps serving the pre-delete value from its 'options'/
+        // 'alloptions' cache even though the DB row is gone. Found via live
+        // testing: a Dynamic Tag created and immediately used elsewhere in the
+        // same request came back stale/empty because of this exact gap.
+        delete_transient($this->transient_key . '_' . $this->cache_version);
+
+        // Bulk raw-SQL delete as a safety net for the one other call site that
+        // passes limit/offset (paginated admin variants of the same key).
         $transient_pattern = $this->transient_key . '_' . $this->cache_version . '%';
         $wpdb->query($wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
@@ -2024,6 +2059,15 @@ class WP_Dynamic_Tags_Plugin
 
         // Clear static cache
         self::$static_cache = array();
+
+        // Bust fetch_dynamic_tags_from_db()'s wp_cache entries (see property
+        // docblock) - this was previously never invalidated here at all, so a
+        // Dynamic Tag created/edited while a persistent object cache (Redis/
+        // Memcached) is active would keep serving pre-edit data for up to the
+        // cache's 5-minute TTL. Found via live testing: a Dynamic Tag created
+        // and immediately used as a [dt_template] template in the same
+        // request came back empty because of this.
+        self::$db_query_cache_bust++;
 
         // Clear admin cache
         $this->admin_cache = array(

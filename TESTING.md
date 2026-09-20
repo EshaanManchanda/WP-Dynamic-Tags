@@ -1,12 +1,33 @@
 # WP Dynamic Tags — Manual Test Guide
 
 This is a hands-on test script for every feature shipped across V1–V4
-(see `ROADMAP.md`). None of this was exercised against a live WordPress
-request during development — PHPUnit/composer and WP-CLI weren't available
-in that environment, and a direct DB connection to the dev site couldn't be
-established either. Everything below was verified with standalone pure-logic
-scripts and manual code review only. **Treat every test case here as
-unverified until you've actually run it.**
+(see `ROADMAP.md`). Most of it has since been exercised against a real,
+running WordPress request (once the dev site's backend services were
+started) and passed — including a full regression pass after 3 real bugs
+were found and fixed this way:
+
+1. **`{token|join:sep}` with a trailing/leading space in the separator**
+   (e.g. `{wc:categories|join:; }`) had that whitespace silently stripped —
+   fixed by only trimming a formatter spec's *name*, never its argument.
+2. **`[dt_if condition="key<value"]` with a literal `<`** (no later `>`)
+   silently fails to render at all — this is a **WordPress core**
+   limitation (its own shortcode-in-HTML-tag detection gets confused by an
+   unbalanced `<`), not something this plugin can fix directly. Workaround:
+   write `&lt;`/`&gt;` instead of `<`/`>` inside a `condition="..."`
+   attribute — `parse_condition_expression()` decodes them. The `{if:...}`
+   *token* form (not a shortcode) is unaffected either way.
+3. **Creating or deleting a Dynamic Tag post could transiently un-register
+   the plugin's own system shortcodes** (`[dt_loop]`, `[dt_if]`,
+   `[dt_template]`, etc.) for the rest of that request, and separately,
+   **a Dynamic Tag created/used in the same request as a `[dt_template]`
+   call could come back empty** due to a stale object-cache entry never
+   being invalidated. Both fixed at the root (see git history for
+   `clear_dynamic_tag_shortcodes()` and `clear_all_plugin_caches()`).
+
+**ACF and WooCommerce integrations still haven't been exercised against
+real plugin data** — neither is installed on the dev site this was tested
+against — so treat sections 2.2 and 2.3 as unverified until you've run
+them yourself.
 
 ## 0. Setup
 
@@ -284,6 +305,7 @@ Paste this directly into a page (not inside a Dynamic Tag — this is the point:
 - [ ] The whole HTML block switches based on the condition, not just inline text.
 - [ ] Works with **no** `[dt_else]` present at all (should just show nothing when false).
 - [ ] Works with an `{acf:...}`/`{meta:...}` token *inside* the true/false branch — confirms nested token resolution still happens.
+- [ ] **`<`/`>` gotcha**: `condition="wc:price>50"` works, but `condition="wc:price<50"` (a literal `<` with no later `>` anywhere in the shortcode) does **not** — WordPress core's own shortcode parser gets confused by it and the whole `[dt_if]` silently fails to render (found via live testing; this is a WP core limitation, not this plugin). Use `condition="wc:price&lt;50"` instead — confirm this renders correctly.
 
 ### 3.3 `[dt_template]` — per-record rendering
 Create a Dynamic Tag titled `product_card` with content like:
@@ -353,3 +375,6 @@ Run these once at the end, they exercise the shared engine all the features abov
 - [ ] **Fallback still fires on an empty array**, not just empty string: e.g. `{acf:empty_repeater.name??no rows}` on a repeater with zero rows should show `no rows`.
 - [ ] **Formatter chains that mix array and scalar formatters** don't error: `{acf:team_members.name|first|upper|strip_html}` should work end to end.
 - [ ] All V1 tests in section 1 still pass unchanged after V2–V4 were added — the array-engine and condition-engine changes should be additive, not disruptive to existing content already using this plugin.
+- [ ] **A separator with meaningful whitespace survives**: `{wc:categories|join:, }` (comma-space) must actually join with `", "`, not `","` — a real bug (formatter args getting over-trimmed) was found and fixed here.
+- [ ] **Creating, then deleting, a Dynamic Tag post doesn't break the plugin's own system shortcodes for the rest of that page load**: create a throwaway Dynamic Tag, delete it again, then immediately test `[dt_loop]`, `[dt_if]`, `[dt_group]`, etc. on the same page load — all should still work. (A real bug here caused these to silently stop working after any Dynamic Tag save/delete, in a narrow timing window.)
+- [ ] **A Dynamic Tag used as a `[dt_template]` immediately after being created/edited reflects the new content**, not stale/empty data (another real caching bug, now fixed).
