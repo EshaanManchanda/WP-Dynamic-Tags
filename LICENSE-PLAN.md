@@ -84,8 +84,8 @@ Monthly and yearly only — no lifetime tier, per current plan.
 
 | Billing | Price | Notes |
 |---|---|---|
-| Monthly | **$2.99/mo** | Cancel anytime |
-| Yearly | **$19/yr** | ≈ $1.58/mo — about 47% off the monthly rate, the usual incentive to commit annually |
+| Monthly | **$2/mo** | Cancel anytime |
+| Yearly | **$19/yr** | ≈ $1.58/mo — about 21% off the monthly rate, the usual incentive to commit annually |
 
 This is deliberately aggressive — cheaper than nearly every competitor's
 entry tier (Elementor Pro ~$59+/yr, JetEngine $22–247/yr, Dynamic.ooo
