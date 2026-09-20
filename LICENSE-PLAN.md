@@ -21,7 +21,8 @@ storage, import/export) stays free forever — see §5.
 ### Free
 A complete, production-ready merge-tag plugin on its own — nothing here is
 a crippled trial.
-- Unlimited tags, groups, both storage backends (post type + custom table)
+- **Up to 15 dynamic tags** (Paid: unlimited) — groups, both storage
+  backends (post type + custom table)
 - All V1 Core placeholders (post, taxonomy, author, site, URL, date)
 - `{meta:key}` and scalar `{acf:field}`
 - All formatters (`|upper`, `|currency`, `|date`, etc. — including the
@@ -36,6 +37,7 @@ a crippled trial.
 
 ### Paid
 Everything in Free, plus the entire V2–V4 dynamic-data layer:
+- **Unlimited dynamic tags** (Free is capped at 15)
 - WooCommerce field placeholders (`{wc:*}`)
 - ACF repeater/gallery/relationship support (`{acf:field.subfield}`)
 - `{user_meta:}` / `{term_meta:}`
@@ -51,7 +53,7 @@ Everything in Free, plus the entire V2–V4 dynamic-data layer:
 
 | Feature | Free | Paid |
 |---|:---:|:---:|
-| Unlimited dynamic tags | ✅ | ✅ |
+| Dynamic tags | Up to 15 | Unlimited |
 | Groups / taxonomy organization | ✅ | ✅ |
 | Dual storage (post type + custom table) + migration | ✅ | ✅ |
 | Conflict detection between tag names/shortcodes | ✅ | ✅ |
@@ -133,6 +135,12 @@ Mirror `CG_License_Manager` almost exactly — same architecture, fewer plans:
     `heartbeat()` — same shapes as the CG equivalents, hitting the same
     `{backend}/api/payments/activate-remote` contract
   - WP-Cron heartbeat (twice daily) + `admin_init` fallback, exactly like CG
+- **Tag limit (Free = 15)**: check the count on tag *creation*, not on
+  read/render — a Free site that already has more than 15 (e.g. downgraded
+  from Paid, or bulk-imported) should keep every existing tag working,
+  just block creating new ones past the cap, with an admin notice and
+  upgrade link. Never delete or disable a user's existing content — same
+  non-destructive philosophy as CG's over-limit handling.
 - Gate points — wrap each Paid feature's registration/resolution with
   `DT_License_Manager::is_paid()`:
   - `includes/class-woocommerce-integration.php` — whole file inert unless paid
