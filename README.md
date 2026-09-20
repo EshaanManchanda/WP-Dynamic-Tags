@@ -2,7 +2,7 @@
 
 > Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/yourusername/wp-dynamic-tags)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-brightgreen.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPL%20v2%2B-red.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -69,12 +69,45 @@ Automatically inject real-time data into your tags:
 - `{post_date}` - Post publish date
 - And more...
 
+### 🧩 The Placeholder Engine (Meta, ACF, WooCommerce, Formatters, Conditionals)
+
+Beyond the flat placeholders above, every `{token}` supports:
+
+- **Parameterized fields**: `{meta:key}`, `{user_meta:key}`, `{term_meta:key}`,
+  `{acf:field}` (requires ACF; use `field.subfield` to pull a column out of a
+  repeater/group), `{wc:price}` and other WooCommerce fields (requires
+  WooCommerce), `{query:post_type=...&posts_per_page=...}` (query posts as
+  an array), `{api:https://...::json.path}` (fetch external JSON), and
+  `{func:name}` (call a function a developer explicitly registered in code
+  via `register_dynamic_tag_function()` — never arbitrary code from tag
+  content).
+- **Formatters**: `{token|upper}`, `{meta:price|currency}`,
+  `{post_title|upper|strip_html}`, plus array-aware formatters `|join:, `,
+  `|count`, `|first`, `|last` for any token that resolves to a list.
+- **Fallbacks**: `{token??Default text}` — shown when the token resolves empty.
+- **Conditionals**: `{if:condition}...{else}...{/if}`, where `condition` can
+  be a built-in check (`user_logged_in`, `is_mobile`, `user_role:admin`, …)
+  or a comparison against any token's value, e.g. `{if:wc:price>50}`.
+- **`[dt_loop source="..."]{item}[/dt_loop]`** — repeat a template once per
+  item of an array-returning source (an ACF repeater/gallery, `{query:...}`,
+  etc.).
+- **`[dt_if condition="..."][dt_else]...[/dt_if]`** — the block-level version
+  of `{if:}`: hides/shows a whole chunk of content (HTML, other shortcodes),
+  not just a token's own text. Note: write `&lt;`/`&gt;` instead of a literal
+  `<`/`>` inside the `condition="..."` attribute (a WordPress core shortcode-
+  parsing limitation, not specific to this plugin).
+- **`[dt_template tag="..." query="..."]`** — render an existing Dynamic Tag
+  once per post in a query, like a repeating card/list template.
+
+See `TESTING.md` for a full, runnable test case for every one of these, and
+`ROADMAP.md` for the complete feature list and what's still planned.
+
 ### 🔧 Special Shortcodes
 
-#### `[dt_fallback]` - Fallback Handling
-Display alternative content if a tag doesn't exist:
+#### `[dt]` - Fallback Handling
+Display alternative content if a tag doesn't exist (or resolves empty):
 ```
-[dt_fallback tag="promo_text" default="No promotion available"]
+[dt key="promo_text" default="No promotion available"]
 ```
 
 #### `[dt_group]` - Group Display
@@ -103,6 +136,25 @@ Display a formatted list of tags:
 ```
 [dt_list group="features" type="ul"]
 [dt_list group="team" type="ol"]
+```
+
+#### `[dt_loop]` - Repeat Per Item
+Render a template once per item of an array-returning source:
+```
+[dt_loop source="acf:gallery"]<img src="{item}">[/dt_loop]
+[dt_loop source="query:post_type=post&posts_per_page=3"]{item:title}[/dt_loop]
+```
+
+#### `[dt_if]` - Block-Level Visibility
+Hide/show a whole block of content based on a condition:
+```
+[dt_if condition="wc:price&gt;50"]On sale![dt_else]Regular price[/dt_if]
+```
+
+#### `[dt_template]` - Per-Record Template
+Render an existing Dynamic Tag once per post in a query:
+```
+[dt_template tag="product_card" query="post_type=product&posts_per_page=6"]
 ```
 
 ### 🛡️ Conflict Resolution System
@@ -350,13 +402,13 @@ $result = $table_manager->create_tag(array(
 
 ### Special Shortcodes
 
-#### dt_fallback
+#### dt
 ```
-[dt_fallback tag="tagname" default="Default text"]
+[dt key="tagname" default="Default text"]
 ```
 **Parameters:**
-- `tag` (required) - Tag name to display
-- `default` (required) - Fallback text if tag doesn't exist
+- `key` (required, `tag` also accepted as an alias) - Tag name to display
+- `default` (optional) - Fallback text shown if the tag doesn't exist, or resolves empty
 
 #### dt_group
 ```
@@ -434,39 +486,69 @@ $result = $table_manager->create_tag(array(
 
 ### Custom Table Schema
 
-**Table Name:** `wp_dynamic_tags`
+**Table Name:** `wp_dynamic_tags` (see `includes/class-database-manager.php` for the source of truth)
 
 ```sql
 CREATE TABLE wp_dynamic_tags (
-    id bigint(20) PRIMARY KEY AUTO_INCREMENT,
-    tag_key varchar(255) UNIQUE NOT NULL,
-    tag_value longtext,
-    tag_group varchar(255),
+    id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    tag_name varchar(255) NOT NULL,
+    shortcode varchar(255) NOT NULL,
+    content longtext,
+    description text,
+    category_id bigint(20) unsigned DEFAULT 0,
+    priority int(11) DEFAULT 0,
+    usage_count bigint(20) unsigned DEFAULT 0,
+    created_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_used_date datetime NULL,
     status varchar(20) DEFAULT 'active',
-    usage_count int(11) DEFAULT 0,
-    created_at datetime,
-    updated_at datetime,
-    INDEX idx_tag_key (tag_key),
-    INDEX idx_tag_group (tag_group),
-    INDEX idx_status (status)
+    meta_data longtext,
+    post_id bigint(20) unsigned DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY unique_tag_name (tag_name),
+    UNIQUE KEY unique_shortcode (shortcode),
+    KEY idx_category_id (category_id),
+    KEY idx_status (status),
+    KEY idx_priority (priority),
+    KEY idx_usage_count (usage_count),
+    KEY idx_created_date (created_date),
+    KEY idx_post_id (post_id)
 );
 ```
 
 **Fields:**
 - `id` - Unique identifier
-- `tag_key` - Shortcode name (unique)
-- `tag_value` - Tag content (supports HTML)
-- `tag_group` - Group assignment
-- `status` - active/inactive/trash
+- `tag_name` - Tag name (unique)
+- `shortcode` - Registered shortcode name (unique)
+- `content` - Tag content (supports HTML)
+- `description` - Optional free-text description
+- `category_id` - Group/category assignment
+- `priority` - Sort/precedence weight
 - `usage_count` - Number of times used
-- `created_at` - Creation timestamp
-- `updated_at` - Last modified timestamp
+- `created_date` / `modified_date` - Timestamps, auto-managed by MySQL
+- `last_used_date` - Last time the shortcode was rendered
+- `status` - active/inactive/trash
+- `meta_data` - Serialized extra metadata
+- `post_id` - Linked CPT post ID, when using the dual-storage bridge
 
 ---
 
 ## 🔄 Changelog
 
-### Version 2.0.0 (Current)
+### Version 3.0.0 (Current)
+**The Placeholder Engine: array data, WooCommerce/ACF, conditionals, external data**
+
+- ✨ 50+ new flat placeholders (post, taxonomy, author, site, URL, date)
+- ✨ Parameterized fields: `{meta:}`, `{user_meta:}`, `{term_meta:}`, `{acf:}` (with repeater/group/gallery/relationship support via dot notation), `{wc:}` WooCommerce fields
+- ✨ 15 formatters, including array-aware `|join`, `|count`, `|first`, `|last`
+- ✨ Fallback syntax `{token??default}`
+- ✨ Field-based conditionals (`{if:wc:price>50}`) alongside the existing built-in conditions
+- ✨ `[dt_loop]`, `[dt_if]`/`[dt_else]`, and `[dt_template]` shortcodes
+- ✨ `{query:...}` and `{api:...}` external/query data sources, and a whitelist-based `{func:...}` developer escape hatch (`register_dynamic_tag_function()` — never arbitrary code from tag content)
+- 🐛 Fixed several cache-invalidation bugs (a Dynamic Tag save/delete could transiently un-register the plugin's own shortcodes; a newly created tag could be served stale/empty data)
+- 📖 See `ROADMAP.md` for the full feature breakdown and `TESTING.md` for a complete test guide
+
+### Version 2.0.0
 **Major Update - Custom Table Support**
 
 #### New Features:
@@ -505,13 +587,11 @@ CREATE TABLE wp_dynamic_tags (
 
 **Documentation:**
 - 📚 Read this README
-- 💡 Check the [Wiki](https://github.com/yourusername/wp-dynamic-tags/wiki)
-- ❓ See [FAQ](https://github.com/yourusername/wp-dynamic-tags/wiki/FAQ)
+- 💡 Check the [Wiki](https://github.com/EshaanManchanda/WP-Dynamic-Tags/wiki)
+- ❓ See [FAQ](https://github.com/EshaanManchanda/WP-Dynamic-Tags/wiki/FAQ)
 
 **Support Channels:**
-- 🐛 [Report Issues](https://github.com/yourusername/wp-dynamic-tags/issues)
-- 💬 [Community Forum](https://wordpress.org/support/plugin/wp-dynamic-tags/)
-- 📧 Email: support@yourwebsite.com
+- 🐛 [Report Issues](https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues)
 
 ### Contributing
 
@@ -527,7 +607,7 @@ We welcome contributions! Here's how:
 
 **Development Setup:**
 ```bash
-git clone https://github.com/yourusername/wp-dynamic-tags.git
+git clone https://github.com/EshaanManchanda/WP-Dynamic-Tags.git
 cd wp-dynamic-tags
 # Install in WordPress plugins directory
 ```
@@ -566,9 +646,9 @@ Full license: [GPL v2 License](https://www.gnu.org/licenses/gpl-2.0.html)
 ## 👨‍💻 Author
 
 **Eshaan Manchanda**
-- Website: [https://yourwebsite.com](https://yourwebsite.com)
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Plugin URI: [https://github.com/yourusername/wp-dynamic-tags](https://github.com/yourusername/wp-dynamic-tags)
+- Website: [https://eshaanportfolio.vercel.app/](https://eshaanportfolio.vercel.app/)
+- GitHub: [@EshaanManchanda](https://github.com/EshaanManchanda)
+- Plugin URI: [https://github.com/EshaanManchanda/WP-Dynamic-Tags](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
 
 ---
 
@@ -597,6 +677,6 @@ Full license: [GPL v2 License](https://www.gnu.org/licenses/gpl-2.0.html)
 
 **Made with ❤️ for WordPress**
 
-[Report Bug](https://github.com/yourusername/wp-dynamic-tags/issues) · [Request Feature](https://github.com/yourusername/wp-dynamic-tags/issues) · [Documentation](https://github.com/yourusername/wp-dynamic-tags/wiki)
+[Report Bug](https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues) · [Request Feature](https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues) · [Documentation](https://github.com/EshaanManchanda/WP-Dynamic-Tags/wiki)
 
 </div>
