@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WP Dynamic Tags
- * Plugin URI: https://github.com/yourusername/wp-dynamic-tags
+ * Plugin URI: https://github.com/EshaanManchanda/WP-Dynamic-Tags
  * Description: Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders.
  * Version: 3.0.0
  * Author: Eshaan Manchanda
@@ -11,7 +11,7 @@
  * Text Domain: wp-dynamic-tags
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.3
+ * Tested up to: 7.1
  * Requires PHP: 7.4
  */
 
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('WP_DYNAMIC_TAGS_VERSION', '2.0.0');
+define('WP_DYNAMIC_TAGS_VERSION', '3.0.0');
 define('WP_DYNAMIC_TAGS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WP_DYNAMIC_TAGS_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -76,7 +76,7 @@ class WP_Dynamic_Tags_Plugin
 
     // Multi-level caching for performance optimization
     private static $static_cache = array();
-    private $cache_version = '2.0.1'; // Increment when cache structure changes
+    private $cache_version = '2.0.2'; // Increment when cache structure changes (bumped: cache-invalidation bug fixes)
 
     // Bumped by clear_all_plugin_caches() to invalidate fetch_dynamic_tags_from_db()'s
     // wp_cache entries on demand - that layer is keyed by md5($sql) with no group-flush
@@ -416,14 +416,18 @@ class WP_Dynamic_Tags_Plugin
     {
         $atts = shortcode_atts(array(
             'key' => '',
+            'tag' => '', // Alias for 'key', matching the README's [dt tag="..." default="..."] examples.
+            'default' => '',
         ), $atts, 'dt');
 
-        if (empty($atts['key'])) {
+        $key = !empty($atts['key']) ? $atts['key'] : $atts['tag'];
+
+        if (empty($key)) {
             return '';
         }
 
         $tags = $this->get_dynamic_tags();
-        $sanitized_key = $this->sanitize_tag_key($atts['key']);
+        $sanitized_key = $this->sanitize_tag_key($key);
 
         // Find tag by matching tag_key in the new structure
         foreach ($tags as $unique_key => $tag_data) {
@@ -433,11 +437,12 @@ class WP_Dynamic_Tags_Plugin
                 if ($this->placeholders) {
                     $value = apply_filters('dt_process_value', $value);
                 }
-                return wp_kses_post($value);
+                $value = wp_kses_post($value);
+                return $value !== '' ? $value : $atts['default'];
             }
         }
 
-        return '';
+        return $atts['default'];
     }
 
     /**
