@@ -66,6 +66,56 @@ class WP_Dynamic_Tags_Settings_Page {
             'wp_dynamic_tags_settings',
             'wp_dynamic_tags_general_section'
         );
+
+        // License server URL (advanced — leave blank to share Certificate Generator's server)
+        register_setting(
+            'wp_dynamic_tags_settings',
+            'dt_license_server_url',
+            array(
+                'type' => 'string',
+                'default' => '',
+                'sanitize_callback' => 'esc_url_raw'
+            )
+        );
+
+        add_settings_section(
+            'wp_dynamic_tags_license_section',
+            __('License', 'wp-dynamic-tags'),
+            array($this, 'license_section_callback'),
+            'wp_dynamic_tags_settings'
+        );
+
+        add_settings_field(
+            'dt_license_server_url',
+            __('License Server URL', 'wp-dynamic-tags'),
+            array($this, 'license_server_url_callback'),
+            'wp_dynamic_tags_settings',
+            'wp_dynamic_tags_license_section'
+        );
+    }
+
+    /**
+     * License section description
+     */
+    public function license_section_callback() {
+        echo '<p>' . esc_html__('Activate a license key to unlock the Paid plan (unlimited tags, WooCommerce/ACF arrays, dt_loop, dt_if, query/api data sources).', 'wp-dynamic-tags') . '</p>';
+    }
+
+    /**
+     * License server URL field callback
+     */
+    public function license_server_url_callback() {
+        $value = get_option('dt_license_server_url', '');
+        ?>
+        <input type="url"
+               name="dt_license_server_url"
+               value="<?php echo esc_attr($value); ?>"
+               placeholder="https://your-license-server.com"
+               class="regular-text">
+        <p class="description">
+            <?php esc_html_e('Leave blank to reuse the Certificate Generator plugin\'s configured license server, if any.', 'wp-dynamic-tags'); ?>
+        </p>
+        <?php
     }
 
     /**
@@ -137,6 +187,105 @@ class WP_Dynamic_Tags_Settings_Page {
             <h1><?php esc_html_e('WP Dynamic Tags - Settings', 'wp-dynamic-tags'); ?></h1>
 
             <?php settings_errors('wp_dynamic_tags_settings'); ?>
+
+            <!-- License -->
+            <div class="postbox" style="margin: 20px 0; padding: 15px;">
+                <h2 style="margin-top: 0;"><?php esc_html_e('License', 'wp-dynamic-tags'); ?></h2>
+                <?php
+                $is_paid    = DT_License_Manager::is_paid();
+                $plan_label = DT_License_Manager::get_plan_label();
+                $license_key = DT_License_Manager::get_license_key();
+                $expiry      = DT_License_Manager::get_expiry();
+                ?>
+                <p>
+                    <strong><?php esc_html_e('Current plan:', 'wp-dynamic-tags'); ?></strong>
+                    <span id="dt-plan-badge" style="padding:2px 10px;border-radius:3px;color:#fff;background:<?php echo $is_paid ? '#00a32a' : '#787c82'; ?>;">
+                        <?php echo esc_html($plan_label); ?>
+                    </span>
+                    <?php if ($is_paid && $expiry) : ?>
+                        <span class="description"><?php echo esc_html(sprintf(__('(expires %s)', 'wp-dynamic-tags'), $expiry)); ?></span>
+                    <?php endif; ?>
+                </p>
+
+                <div id="dt-license-notice"></div>
+
+                <p>
+                    <input type="text" id="dt-license-key" class="regular-text"
+                           placeholder="<?php esc_attr_e('Enter license key', 'wp-dynamic-tags'); ?>"
+                           value="<?php echo esc_attr($license_key); ?>"
+                           <?php disabled($is_paid); ?>>
+                    <button type="button" id="dt-license-activate" class="button button-primary" <?php echo $is_paid ? 'style="display:none;"' : ''; ?>>
+                        <?php esc_html_e('Activate', 'wp-dynamic-tags'); ?>
+                    </button>
+                    <button type="button" id="dt-license-deactivate" class="button" <?php echo $is_paid ? '' : 'style="display:none;"'; ?>>
+                        <?php esc_html_e('Deactivate', 'wp-dynamic-tags'); ?>
+                    </button>
+                    <span class="spinner" id="dt-license-spinner" style="float:none;"></span>
+                </p>
+
+                <table class="widefat" style="max-width: 700px;">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Feature', 'wp-dynamic-tags'); ?></th>
+                            <th><?php esc_html_e('Free', 'wp-dynamic-tags'); ?></th>
+                            <th><?php esc_html_e('Paid', 'wp-dynamic-tags'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach (DT_License_Manager::get_plan_features() as $row) : ?>
+                        <tr>
+                            <td><?php echo esc_html($row['label']); ?></td>
+                            <td><?php echo $row['free'] === true ? '✅' : ($row['free'] === false ? '❌' : esc_html($row['free'])); ?></td>
+                            <td><?php echo $row['paid'] === true ? '✅' : ($row['paid'] === false ? '❌' : esc_html($row['paid'])); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <script>
+            (function($){
+                var nonce = '<?php echo esc_js(wp_create_nonce('dt_license_nonce')); ?>';
+                var ajaxUrl = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+
+                function setBusy(busy) {
+                    $('#dt-license-spinner').toggleClass('is-active', busy);
+                    $('#dt-license-activate, #dt-license-deactivate').prop('disabled', busy);
+                }
+
+                function showNotice(message, isError) {
+                    var cls = isError ? 'notice-error' : 'notice-success';
+                    $('#dt-license-notice').html(
+                        '<div class="notice ' + cls + '" style="padding:8px 12px;"><p>' + message + '</p></div>'
+                    );
+                }
+
+                $('#dt-license-activate').on('click', function(){
+                    var key = $('#dt-license-key').val();
+                    if (!key) { return; }
+                    setBusy(true);
+                    $.post(ajaxUrl, { action: 'dt_activate_license', nonce: nonce, license_key: key })
+                        .done(function(res){
+                            showNotice(res.data && res.data.message ? res.data.message : '', !res.success);
+                            if (res.success) { location.reload(); }
+                        })
+                        .fail(function(){ showNotice('<?php echo esc_js(__('Request failed. Please try again.', 'wp-dynamic-tags')); ?>', true); })
+                        .always(function(){ setBusy(false); });
+                });
+
+                $('#dt-license-deactivate').on('click', function(){
+                    if (!confirm('<?php echo esc_js(__('Deactivate this license?', 'wp-dynamic-tags')); ?>')) { return; }
+                    setBusy(true);
+                    $.post(ajaxUrl, { action: 'dt_deactivate_license', nonce: nonce })
+                        .done(function(res){
+                            showNotice(res.data && res.data.message ? res.data.message : '', !res.success);
+                            if (res.success) { location.reload(); }
+                        })
+                        .fail(function(){ showNotice('<?php echo esc_js(__('Request failed. Please try again.', 'wp-dynamic-tags')); ?>', true); })
+                        .always(function(){ setBusy(false); });
+                });
+            })(jQuery);
+            </script>
 
             <!-- Current Data Status -->
             <div class="notice notice-info" style="padding: 15px; margin: 20px 0;">

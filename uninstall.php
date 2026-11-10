@@ -296,6 +296,12 @@ function wp_dynamic_tags_uninstall() {
         delete_option('wp_dynamic_tags_cache_version');
         delete_option('dt_menu_notice_dismissed');
 
+        // License state (see includes/class-license-manager.php)
+        foreach (array('dt_plan', 'dt_license_key', 'dt_license_expiry', 'dt_license_server_url', 'dt_last_heartbeat') as $license_option) {
+            delete_option($license_option);
+        }
+        wp_clear_scheduled_hook('dt_license_heartbeat');
+
         // 5. Delete all transients
         $transients = array(
             'wp_dynamic_tags_cache',
@@ -304,7 +310,8 @@ function wp_dynamic_tags_uninstall() {
             'dt_performance_stats',
             'dt_tag_groups_',
             'dt_migration_progress',
-            'dt_table_stats'
+            'dt_table_stats',
+            'dt_heartbeat_'
         );
 
         foreach ($transients as $transient_prefix) {

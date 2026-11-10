@@ -4558,6 +4558,10 @@ class WP_Dynamic_Tags_Plugin
 
         // Ensure the "certificates" tag group exists for Certificate-Generator integration
         $this->ensure_certificates_group();
+
+        if (class_exists('DT_License_Manager')) {
+            DT_License_Manager::schedule_cron();
+        }
     }
 
     /**
@@ -4647,6 +4651,10 @@ class WP_Dynamic_Tags_Plugin
      */
     public function deactivate()
     {
+        if (class_exists('DT_License_Manager')) {
+            DT_License_Manager::unschedule_cron();
+        }
+
         // Clear cache
         $this->clear_cache();
 
@@ -4722,6 +4730,10 @@ class WP_Dynamic_Tags_Plugin
     private function load_includes()
     {
         $includes_dir = WP_DYNAMIC_TAGS_PLUGIN_DIR . 'includes/';
+
+        if (file_exists($includes_dir . 'class-license-manager.php')) {
+            require_once $includes_dir . 'class-license-manager.php';
+        }
 
         // Load new table system classes first
         if (file_exists($includes_dir . 'class-database-manager.php')) {
