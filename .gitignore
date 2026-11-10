@@ -6,3 +6,5 @@
 /exported/
 /*.log
 .DS_Store
+.phpunit.result.cache
+/tests/golden-master/current/
