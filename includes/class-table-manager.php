@@ -13,13 +13,11 @@ class WP_Dynamic_Tags_Table_Manager {
 
     private static $instance = null;
     private $db_manager;
-    private $migration_manager;
     private $cache = array();
     private $cache_expiry = 3600; // 1 hour
 
     public function __construct() {
         $this->db_manager = WP_Dynamic_Tags_Database_Manager::get_instance();
-        $this->migration_manager = WP_Dynamic_Tags_Migration_Manager::get_instance();
 
         // Hook into WordPress actions
         add_action('init', array($this, 'init'));
@@ -57,13 +55,17 @@ class WP_Dynamic_Tags_Table_Manager {
             }
         }
 
-        // Run migration if needed
-        if ($this->migration_manager->is_migration_needed()) {
-            // Don't run automatically in admin, let user trigger it
-            if (!is_admin()) {
-                $this->migration_manager->migrate_posts_to_table();
-            }
-        }
+        // Migration of legacy posts is deliberately NOT started here. It used to run on frontend requests,
+        // which let any visitor trigger a bulk database write. It now runs only from the admin (batched,
+        // with a progress notice), WP-CLI or WP-Cron: see WP_Dynamic_Tags_Migration_Engine.
+    }
+
+    /**
+     * Drop every cached query result held by this request. Called after code that writes to the table
+     * without going through this facade (the migration engine, restores).
+     */
+    public function flush_cache() {
+        $this->cache = array();
     }
 
     /**

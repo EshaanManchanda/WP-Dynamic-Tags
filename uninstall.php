@@ -296,6 +296,19 @@ function wp_dynamic_tags_uninstall() {
         delete_option('wp_dynamic_tags_cache_version');
         delete_option('dt_menu_notice_dismissed');
 
+        // Migration state (see includes/class-migration-engine.php) and its own, now superseded, migration backups.
+        // The uninstall backup written above is deliberately left in place.
+        foreach (array('wp_dynamic_tags_migration', 'wp_dynamic_tags_migration_log', 'wp_dynamic_tags_migration_lock', 'wp_dynamic_tags_migration_status', 'wp_dynamic_tags_posts_cleaned') as $migration_option) {
+            delete_option($migration_option);
+        }
+        wp_clear_scheduled_hook('dt_migration_cron');
+        $migration_upload_dir = wp_upload_dir();
+        if (empty($migration_upload_dir['error']) && !empty($migration_upload_dir['basedir'])) {
+            foreach ((array) glob(trailingslashit($migration_upload_dir['basedir']) . 'wp-dynamic-tags-private/backup-*.json*') as $migration_backup) {
+                @unlink($migration_backup);
+            }
+        }
+
         // License state (see includes/class-license-manager.php)
         foreach (array('dt_plan', 'dt_license_key', 'dt_license_expiry', 'dt_license_server_url', 'dt_last_heartbeat') as $license_option) {
             delete_option($license_option);
@@ -442,13 +455,30 @@ function wp_dynamic_tags_create_backup_before_deletion() {
         // Store backup as an option (will be auto-deleted when options are deleted)
         update_option('wp_dynamic_tags_deletion_backup', $backup_data);
 
-        // Also try to write to uploads directory
+        // Also try to write to uploads, into the private, web-denied directory with an unguessable name
+        // (tag content can hold personal data such as names and e-mail addresses, so a predictable
+        // public file name is not acceptable).
         $upload_dir = wp_upload_dir();
-        if (!empty($upload_dir['basedir'])) {
-            $backup_file = $upload_dir['basedir'] . '/wp-dynamic-tags-backup-' . date('Y-m-d-His') . '.json';
+        if (empty($upload_dir['error']) && !empty($upload_dir['basedir'])) {
+            $private_dir = trailingslashit($upload_dir['basedir']) . 'wp-dynamic-tags-private';
+            $result      = false;
+            $backup_file = '';
 
-            // Use error suppression and check return value to prevent uninstall failure
-            $result = @file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
+            if (wp_mkdir_p($private_dir)) {
+                if (!is_file($private_dir . '/index.php')) {
+                    file_put_contents($private_dir . '/index.php', "<?php\n// Silence is golden.\n");
+                }
+                if (!is_file($private_dir . '/.htaccess')) {
+                    file_put_contents($private_dir . '/.htaccess', "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n");
+                }
+                $backup_file = $private_dir . '/uninstall-backup-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(16)) . '.json';
+
+                // Use error suppression and check return value to prevent uninstall failure
+                $result = @file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
+                if ($result !== false) {
+                    @chmod($backup_file, 0600);
+                }
+            }
 
             if ($result !== false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) {

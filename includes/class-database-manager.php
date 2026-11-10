@@ -607,8 +607,9 @@ class WP_Dynamic_Tags_Database_Manager {
         $wpdb->query('START TRANSACTION');
 
         try {
-            // Clear existing data
-            $wpdb->query("TRUNCATE TABLE {$this->table_name}");
+            // Clear existing data. DELETE, not TRUNCATE: TRUNCATE is DDL and commits implicitly in MySQL,
+            // which would leave an empty or half-restored table behind if an insert below failed.
+            $wpdb->query("DELETE FROM {$this->table_name}");
 
             // Restore data
             foreach ($backup_data['tags'] as $tag) {

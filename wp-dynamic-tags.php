@@ -61,6 +61,7 @@ class WP_Dynamic_Tags_Plugin
     private $shared_tags_timestamp = 0;
     private $db_manager;
     private $migration_manager;
+    private $migration_admin;
     private $table_manager;
     private $post_table_bridge;
     private $table_manager_admin;
@@ -4655,6 +4656,10 @@ class WP_Dynamic_Tags_Plugin
             DT_License_Manager::unschedule_cron();
         }
 
+        if (class_exists('WP_Dynamic_Tags_Migration_Admin')) {
+            WP_Dynamic_Tags_Migration_Admin::unschedule_cron();
+        }
+
         // Clear cache
         $this->clear_cache();
 
@@ -4740,6 +4745,16 @@ class WP_Dynamic_Tags_Plugin
             require_once $includes_dir . 'class-database-manager.php';
         }
 
+        // Posts -> table migration (planner is pure logic; the engine does the work; admin/CLI are the entry points)
+        foreach (array('class-migration-planner.php', 'class-migration-engine.php', 'class-migration-admin.php') as $migration_file) {
+            if (file_exists($includes_dir . $migration_file)) {
+                require_once $includes_dir . $migration_file;
+            }
+        }
+        if (defined('WP_CLI') && WP_CLI && file_exists($includes_dir . 'class-migration-cli.php')) {
+            require_once $includes_dir . 'class-migration-cli.php';
+        }
+
         if (file_exists($includes_dir . 'class-migration-manager.php')) {
             require_once $includes_dir . 'class-migration-manager.php';
         }
@@ -4823,6 +4838,12 @@ class WP_Dynamic_Tags_Plugin
 
         if (class_exists('WP_Dynamic_Tags_Migration_Manager')) {
             $this->migration_manager = WP_Dynamic_Tags_Migration_Manager::get_instance();
+        }
+
+        // Migration entry points: admin notice + AJAX, WP-Cron. Never triggered by a frontend request.
+        if (class_exists('WP_Dynamic_Tags_Migration_Admin') && class_exists('WP_Dynamic_Tags_Migration_Engine')) {
+            $this->migration_admin = new WP_Dynamic_Tags_Migration_Admin();
+            $this->migration_admin->register();
         }
 
         if (class_exists('WP_Dynamic_Tags_Table_Manager')) {

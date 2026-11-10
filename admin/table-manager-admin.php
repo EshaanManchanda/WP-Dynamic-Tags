@@ -827,34 +827,10 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
      * Render migration tools
      */
     private function render_migration_tools($migration_manager) {
-        $migration_status = $migration_manager->get_migration_status();
-        $migration_needed = $migration_manager->is_migration_needed();
-
-        echo '<p>' . __('Migrate data between the post type system and the custom table.', 'wp-dynamic-tags') . '</p>';
-
-        if ($migration_needed) {
-            echo '<div class="notice notice-warning inline">';
-            echo '<p><strong>' . __('Migration Recommended:', 'wp-dynamic-tags') . '</strong> ' .
-                 __('You have posts that haven\'t been migrated to the table yet.', 'wp-dynamic-tags') . '</p>';
-            echo '</div>';
-        }
-
-        echo '<div class="dt-action-buttons">';
-
-        if ($migration_status !== 'in_progress') {
-            echo '<button type="button" id="dt-migrate-button" class="button button-primary">';
-            echo __('Migrate Posts to Table', 'wp-dynamic-tags') . '</button>';
-
-            echo '<button type="button" class="dt-sync-button button" data-sync-type="table_to_posts">';
-            echo __('Migrate Table to Posts', 'wp-dynamic-tags') . '</button>';
-
-            echo '<button type="button" id="dt-reset-button" class="button button-secondary">';
-            echo __('Reset Migration', 'wp-dynamic-tags') . '</button>';
-        } else {
-            echo '<p><em>' . __('Migration is currently in progress...', 'wp-dynamic-tags') . '</em></p>';
-        }
-
-        echo '</div>';
+        // The posts -> table migration has its own panel (backup, dry run, verify, guarded cleanup).
+        // The old "Migrate Table to Posts" and "Reset Migration" buttons are gone: the table is the only
+        // storage now, and "Reset" used to TRUNCATE the table.
+        (new WP_Dynamic_Tags_Migration_Admin())->render_panel();
     }
 
     /**
