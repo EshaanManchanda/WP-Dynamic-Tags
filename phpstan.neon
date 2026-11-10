@@ -1,8 +1,14 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+  - phpstan-baseline.neon
+
 parameters:
   level: 5
+  phpVersion: 80200
   paths:
     - includes
-  bootstrapFiles:
-    - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+    - admin
+    - wp-dynamic-tags.php
   ignoreErrors:
-    - '#Unsafe usage of new static#'
+    # ACF is an optional third-party dependency; its stubs are not installed.
+    - '#Function get_field_object not found#'

@@ -1,0 +1,301 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Property WP_Dynamic_Tags_Conflict_Manager_Admin\\:\\:\\$taxonomy is never read, only written\\.$#"
+			count: 1
+			path: admin/conflict-manager.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 2
+			path: admin/conflict-manager.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of function esc_html expects string, int\\<0, max\\> given\\.$#"
+			count: 1
+			path: admin/settings-page.php
+
+		-
+			message: "#^If condition is always false\\.$#"
+			count: 1
+			path: admin/table-manager-admin.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Bulk_Manager\\:\\:get_filtered_tags_paginated\\(\\) is unused\\.$#"
+			count: 1
+			path: includes/class-bulk-manager.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Bulk_Manager\\:\\:get_tag_categories\\(\\) is unused\\.$#"
+			count: 1
+			path: includes/class-bulk-manager.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: includes/class-bulk-manager.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$term_id \\(int\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: includes/class-bulk-manager.php
+
+		-
+			message: "#^Result of \\|\\| is always false\\.$#"
+			count: 2
+			path: includes/class-bulk-manager.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with array\\{path\\: string, url\\: string, subdir\\: string, basedir\\: string, baseurl\\: string, error\\: string\\|false\\} will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Import_Export\\:\\:import_csv\\(\\) is unused\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Import_Export\\:\\:import_json\\(\\) is unused\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int given\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Import_Export\\:\\:\\$cache_version is never read, only written\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Static property WP_Dynamic_Tags_Import_Export\\:\\:\\$static_cache is never read, only written\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Variable \\$group_name might not be defined\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^is_wp_error\\(array\\<string, string\\|false\\>\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-import-export.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with int\\<0, max\\> will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-migration-manager.php
+
+		-
+			message: "#^is_wp_error\\(int\\<0, max\\>\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-migration-manager.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with int\\<0, max\\> will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-post-table-bridge.php
+
+		-
+			message: "#^is_wp_error\\(int\\<0, max\\>\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-post-table-bridge.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of function implode expects array\\<string\\>, array\\<int, array\\<int, string\\>\\|string\\> given\\.$#"
+			count: 1
+			path: includes/class-table-import-export.php
+
+		-
+			message: "#^Parameter \\#2 \\$value of method SimpleXMLElement\\:\\:addChild\\(\\) expects string\\|null, int\\<0, max\\> given\\.$#"
+			count: 1
+			path: includes/class-table-import-export.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with int\\<0, max\\> will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-table-manager.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Table_Manager\\:\\:\\$cache_expiry is never read, only written\\.$#"
+			count: 1
+			path: includes/class-table-manager.php
+
+		-
+			message: "#^is_wp_error\\(int\\<0, max\\>\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/class-table-manager.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
+			count: 1
+			path: includes/class-table-shortcode-processor.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Table_Shortcode_Processor\\:\\:\\$db_manager is never read, only written\\.$#"
+			count: 1
+			path: includes/class-table-shortcode-processor.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$children\\.$#"
+			count: 1
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int given\\.$#"
+			count: 2
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Groups\\:\\:\\$cache_version is never read, only written\\.$#"
+			count: 1
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 3
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$term_id \\(int\\) in isset\\(\\) is not nullable\\.$#"
+			count: 4
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Result of && is always true\\.$#"
+			count: 1
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Result of \\|\\| is always false\\.$#"
+			count: 6
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between 1\\|2 and \\-1 will always evaluate to false\\.$#"
+			count: 3
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 5
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Variable \\$group_badges in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: includes/class-tag-groups.php
+
+		-
+			message: "#^Else branch is unreachable because ternary operator condition is always true\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^If condition is always false\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Plugin\\:\\:cleanup_tracked_shortcodes\\(\\) is unused\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Plugin\\:\\:enforce_single_shortcode_per_tag\\(\\) is unused\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Plugin\\:\\:find_grouped_alternative\\(\\) is unused\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Method WP_Dynamic_Tags_Plugin\\:\\:generate_tags_fingerprint\\(\\) is unused\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Parameter \\#1 \\$text of function esc_html expects string, int given\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$bulk_manager is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$conflict_manager_admin is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$import_export is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$shared_tags_cache is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$shared_tags_timestamp is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$table_manager_admin is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$tag_groups is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$slug \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Property WP_Term\\:\\:\\$term_id \\(int\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Result of \\|\\| is always false\\.$#"
+			count: 3
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Static property WP_Dynamic_Tags_Plugin\\:\\:\\$performance_stats is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Static property WP_Dynamic_Tags_Plugin\\:\\:\\$registration_state is never read, only written\\.$#"
+			count: 1
+			path: wp-dynamic-tags.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 2
+			path: wp-dynamic-tags.php
