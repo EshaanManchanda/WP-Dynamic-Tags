@@ -87,6 +87,8 @@ class WP_Dynamic_Tags_Table_Manager {
         if (is_wp_error($table_check)) {
             return $table_check;
         }
+        $data = $this->normalize_input($data);
+
         // Validate input
         $validation = $this->validate_tag_data($data);
         if (is_wp_error($validation)) {
@@ -149,8 +151,9 @@ class WP_Dynamic_Tags_Table_Manager {
             return new WP_Error('tag_not_found', 'Tag not found.');
         }
 
-        // Validate input
-        $validation = $this->validate_tag_data($data, $id);
+        // Validate input. A partial update sends only the fields it changes, so the name is not required here (B1).
+        $data = $this->normalize_input($data);
+        $validation = $this->validate_tag_data($data, $id, false);
         if (is_wp_error($validation)) {
             return $validation;
         }
@@ -390,14 +393,42 @@ class WP_Dynamic_Tags_Table_Manager {
         return $result;
     }
 
+    /** Columns a caller may set through create_tag()/update_tag(); everything else (notably `id`) is dropped. */
+    private static $writable_fields = array(
+        'tag_name', 'shortcode', 'content', 'description', 'category_id', 'priority', 'usage_count', 'status',
+        'post_id', 'meta_data', 'created_date', 'modified_date', 'last_used_date',
+    );
+
+    /**
+     * Normalizes the data array of create_tag()/update_tag(): the legacy keys `title` (= tag_name) and `group_id`
+     * (= category_id) used by chatbot-by-eshaan are accepted as aliases (B4), and keys that are not table columns are
+     * dropped so a caller cannot choose the row id or inject columns. When both an alias and the real field are given, the
+     * real field wins.
+     *
+     * @param mixed $data
+     * @return array<string, mixed>
+     */
+    private function normalize_input($data) {
+        if (!is_array($data)) {
+            return array();
+        }
+        if (!array_key_exists('tag_name', $data) && array_key_exists('title', $data)) {
+            $data['tag_name'] = $data['title'];
+        }
+        if (!array_key_exists('category_id', $data) && array_key_exists('group_id', $data)) {
+            $data['category_id'] = $data['group_id'];
+        }
+        return array_intersect_key($data, array_flip(self::$writable_fields));
+    }
+
     /**
      * Validate tag data
      */
-    private function validate_tag_data($data, $exclude_id = 0) {
+    private function validate_tag_data($data, $exclude_id = 0, $require_name = true) {
         $errors = array();
 
-        // Required fields
-        if (empty($data['tag_name'])) {
+        // Required fields: a new tag needs a name; an update only has to be valid for the fields it sends (B1).
+        if (empty($data['tag_name']) && ($require_name || array_key_exists('tag_name', $data))) {
             $errors[] = 'Tag name is required.';
         }
 

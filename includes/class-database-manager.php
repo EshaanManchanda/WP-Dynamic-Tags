@@ -419,8 +419,10 @@ class WP_Dynamic_Tags_Database_Manager {
 
         // Search filter
         if (!empty($args['search'])) {
-            $where_clauses[] = "(tag_name LIKE %s OR content LIKE %s OR description LIKE %s)";
+            // The shortcode is searchable too (B3): that is what people copy into content.
+            $where_clauses[] = "(tag_name LIKE %s OR shortcode LIKE %s OR content LIKE %s OR description LIKE %s)";
             $search_term = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where_values[] = $search_term;
             $where_values[] = $search_term;
             $where_values[] = $search_term;
             $where_values[] = $search_term;
@@ -440,9 +442,10 @@ class WP_Dynamic_Tags_Database_Manager {
 
         // Build LIMIT clause
         $limit_sql = '';
-        if (!is_null($args['limit'])) {
+        // A limit of 0 (or less) means "no limit" (B2): LIMIT 0,0 used to return nothing at all.
+        if (!is_null($args['limit']) && intval($args['limit']) > 0) {
             $limit = intval($args['limit']);
-            $offset = intval($args['offset']);
+            $offset = max(0, intval($args['offset']));
             $limit_sql = "LIMIT {$offset}, {$limit}";
         }
 
@@ -498,8 +501,10 @@ class WP_Dynamic_Tags_Database_Manager {
 
         // Search filter
         if (!empty($args['search'])) {
-            $where_clauses[] = "(tag_name LIKE %s OR content LIKE %s OR description LIKE %s)";
+            // The shortcode is searchable too (B3): that is what people copy into content.
+            $where_clauses[] = "(tag_name LIKE %s OR shortcode LIKE %s OR content LIKE %s OR description LIKE %s)";
             $search_term = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where_values[] = $search_term;
             $where_values[] = $search_term;
             $where_values[] = $search_term;
             $where_values[] = $search_term;
