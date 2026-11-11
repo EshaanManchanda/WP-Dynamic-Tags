@@ -710,12 +710,68 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         }
     }
 
+    /** @var array<int|string, int> Renders per tag id of this request, waiting for the shutdown flush. */
+    private $usage_counts = array();
+
+    /** @var bool */
+    private $usage_flush_hooked = false;
+
+    /**
+     * Whether this request counts tag usage: off by default (option wp_dynamic_tags_track_usage, filter dt_track_usage),
+     * and never on admin, AJAX, cron or REST requests or in a preview, whatever the setting says.
+     */
+    public static function usage_tracking_enabled() {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron() || (defined('REST_REQUEST') && REST_REQUEST) || is_preview()) {
+            return false;
+        }
+        return (bool) apply_filters('dt_track_usage', (bool) get_option('wp_dynamic_tags_track_usage', false));
+    }
+
+    /**
+     * Writes the counts of this request: one UPDATE per distinct tag (usage_count + n), at shutdown. The modification date
+     * is left alone (a view is not an edit). A failing write is swallowed: it must never reach the page that was rendered.
+     */
+    public function flush_usage() {
+        if (!$this->usage_counts) {
+            return;
+        }
+        global $wpdb;
+        $counts = $this->usage_counts;
+        $this->usage_counts = array();
+        $table = $this->db_manager->get_table_name();
+        $previous = $wpdb->suppress_errors(true);
+        try {
+            $now = current_time('mysql');
+            foreach ($counts as $tag_id => $n) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$table} SET usage_count = usage_count + %d, last_used_date = %s, modified_date = modified_date WHERE id = %d",
+                    $n,
+                    $now,
+                    (int) $tag_id
+                ));
+            }
+        } catch (Throwable $e) {
+            // swallowed on purpose
+        } finally {
+            $wpdb->suppress_errors($previous);
+        }
+    }
+
     /**
      * Track shortcode usage
      */
     private function track_usage($tag_id) {
-        // Update usage count in table
-        $this->table_manager->track_usage($tag_id);
+        // Counted in memory and written once at shutdown, and only when counting is switched on: this used to be an UPDATE
+        // on every render (40 renders = 40 writes). The facade method Table_Manager::track_usage() still writes at once for
+        // callers that ask for it.
+        if (self::usage_tracking_enabled()) {
+            $this->usage_counts[$tag_id] = ($this->usage_counts[$tag_id] ?? 0) + 1;
+            if (!$this->usage_flush_hooked) {
+                add_action('shutdown', array($this, 'flush_usage'));
+                $this->usage_flush_hooked = true;
+            }
+        }
+        do_action('wp_dynamic_tags_tag_used', $tag_id); // in memory, as before; listeners decide what to do with it
 
         // Track in performance stats
         if (!isset($this->performance_stats['usage_tracking'])) {

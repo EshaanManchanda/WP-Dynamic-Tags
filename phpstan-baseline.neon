@@ -116,11 +116,6 @@ parameters:
 			path: includes/class-table-shortcode-processor.php
 
 		-
-			message: "#^Property WP_Dynamic_Tags_Table_Shortcode_Processor\\:\\:\\$db_manager is never read, only written\\.$#"
-			count: 1
-			path: includes/class-table-shortcode-processor.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$children\\.$#"
 			count: 1
 			path: includes/class-tag-groups.php

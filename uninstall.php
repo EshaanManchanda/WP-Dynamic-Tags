@@ -291,6 +291,7 @@ function wp_dynamic_tags_uninstall() {
         delete_option('wp_dynamic_tags_version');
         delete_option('wp_dynamic_tags_db_version');
         delete_option('wp_dynamic_tags_table_version'); // the schema version vouches for the table, which was just dropped
+        delete_option('wp_dynamic_tags_track_usage');
         delete_option('wp_dynamic_tags_delete_on_uninstall');
         delete_option('wp_dynamic_tags_storage_mode');
         delete_option('wp_dynamic_tags_migration_status');

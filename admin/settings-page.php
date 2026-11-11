@@ -67,6 +67,24 @@ class WP_Dynamic_Tags_Settings_Page {
             'wp_dynamic_tags_general_section'
         );
 
+        // Usage counting: off by default, because counting means a database write for every page that shows a tag
+        register_setting(
+            'wp_dynamic_tags_settings',
+            'wp_dynamic_tags_track_usage',
+            array(
+                'type' => 'boolean',
+                'default' => false,
+                'sanitize_callback' => array($this, 'sanitize_checkbox')
+            )
+        );
+        add_settings_field(
+            'wp_dynamic_tags_track_usage',
+            __('Count Tag Usage', 'wp-dynamic-tags'),
+            array($this, 'track_usage_callback'),
+            'wp_dynamic_tags_settings',
+            'wp_dynamic_tags_general_section'
+        );
+
         // License server URL (advanced — leave blank to share Certificate Generator's server)
         register_setting(
             'wp_dynamic_tags_settings',
@@ -147,6 +165,25 @@ class WP_Dynamic_Tags_Settings_Page {
         </label>
         <p class="description">
             <?php esc_html_e('If unchecked (recommended), your tags and groups will be preserved if you reinstall the plugin later.', 'wp-dynamic-tags'); ?>
+        </p>
+        <?php
+    }
+
+    /**
+     * Usage counting field callback
+     */
+    public function track_usage_callback() {
+        $value = get_option('wp_dynamic_tags_track_usage', false);
+        ?>
+        <label>
+            <input type="checkbox"
+                   name="wp_dynamic_tags_track_usage"
+                   value="1"
+                   <?php checked($value, true); ?>>
+            <?php esc_html_e('Count how often each tag is shown', 'wp-dynamic-tags'); ?>
+        </label>
+        <p class="description">
+            <?php esc_html_e('Off by default. When on, visits are counted in memory and written once at the end of each page request (one database update per tag shown); admin, AJAX, cron and REST requests are never counted. Usage columns show a dash while this is off.', 'wp-dynamic-tags'); ?>
         </p>
         <?php
     }
