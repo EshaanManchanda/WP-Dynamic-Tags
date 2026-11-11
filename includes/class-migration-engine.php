@@ -1289,8 +1289,8 @@ class WP_Dynamic_Tags_Migration_Engine
         $this->save_state($state, false);
         $this->log(sprintf('Cleanup finished: %d legacy posts deleted, %d kept.', $state['cleanup']['deleted'], $state['cleanup']['kept']), 'success');
 
-        // The post path caches its tag list for an hour; make it forget the posts that are gone.
-        delete_transient('dt_registration_lock');
+        // The core [dt] shortcodes still read the post path's cached tag list (until plan Phase 3): make it forget the
+        // posts that are gone. (The registration lock this used to clear no longer exists.)
         if (class_exists('WP_Dynamic_Tags_Plugin')) {
             $plugin = WP_Dynamic_Tags_Plugin::get_instance();
             if (method_exists($plugin, 'force_refresh_shortcodes')) {
@@ -1380,7 +1380,6 @@ class WP_Dynamic_Tags_Migration_Engine
 
     private function flush_table_caches(): void
     {
-        delete_transient('dt_table_registration_lock');
         if (class_exists('WP_Dynamic_Tags_Table_Manager')) {
             $manager = WP_Dynamic_Tags_Table_Manager::get_instance();
             if (method_exists($manager, 'flush_cache')) {

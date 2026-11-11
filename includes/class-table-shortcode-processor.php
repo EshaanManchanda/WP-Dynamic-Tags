@@ -60,23 +60,16 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             return;
         }
 
-        // Lock mechanism to prevent duplicate registration calls
-        $lock_key = 'dt_table_registration_lock';
-        if (get_transient($lock_key)) {
-            return; // Registration already in progress or recently completed
-        }
-
-        // Set lock for 3 seconds
-        set_transient($lock_key, true, 3);
-
+        // No lock: registering twice is harmless (a name this class registered is skipped) and the lock cost two database
+        // writes per request. The tags are the one registry query of the request; the order does not matter (the shortcode
+        // column is unique), so the primary key is used.
         $start_time = microtime(true);
 
         try {
-            // Get active tags from table
             $tags = $this->table_manager->get_tags(array(
                 'status' => 'active',
-                'orderby' => 'usage_count',
-                'order' => 'DESC'
+                'orderby' => 'id',
+                'order' => 'ASC'
             ));
 
             $registered_count = 0;

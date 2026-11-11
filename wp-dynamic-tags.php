@@ -300,50 +300,33 @@ class WP_Dynamic_Tags_Plugin
             return;
         }
 
-        // Lock mechanism to prevent duplicate registration calls
-        $lock_key = 'dt_registration_lock';
-        if (get_transient($lock_key)) {
-            // Registration already in progress or recently completed
-            return;
-        }
+        // The core [dt_*] shortcodes. Per-tag shortcodes are registered by one class only, the table processor
+        // (WP_Dynamic_Tags_Table_Shortcode_Processor). This method used to register the tag posts as well, behind a
+        // 3-second transient lock against the processor registering the same names (two database writes per request),
+        // and then rendered every tag once to validate it. Registering twice is harmless, it writes nothing.
+        add_shortcode('dt', array($this, 'fallback_shortcode'));
+        add_shortcode('dt_group', array($this, 'group_shortcode'));
+        add_shortcode('dt_random', array($this, 'random_shortcode'));
+        add_shortcode('dt_count', array($this, 'count_shortcode'));
+        add_shortcode('dt_list', array($this, 'list_shortcode'));
+        add_shortcode('dt_loop', array($this, 'loop_shortcode'));
+        add_shortcode('dt_if', array($this, 'if_shortcode'));
+        add_shortcode('dt_template', array($this, 'template_shortcode'));
 
-        // Set lock for 3 seconds
-        set_transient($lock_key, true, 3);
-
-        try {
-            if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-                error_log('WP Dynamic Tags: Starting shortcode registration...');
-            }
-
-            // Register fallback shortcode
-            add_shortcode('dt', array($this, 'fallback_shortcode'));
-
-            // Register new group-based shortcodes
-            add_shortcode('dt_group', array($this, 'group_shortcode'));
-            add_shortcode('dt_random', array($this, 'random_shortcode'));
-            add_shortcode('dt_count', array($this, 'count_shortcode'));
-            add_shortcode('dt_list', array($this, 'list_shortcode'));
-            add_shortcode('dt_loop', array($this, 'loop_shortcode'));
-            add_shortcode('dt_if', array($this, 'if_shortcode'));
-            add_shortcode('dt_template', array($this, 'template_shortcode'));
-
-            // Register individual tag shortcodes
+        // Legacy registrar of dynamic_tag posts, disconnected: off unless a site turns it on while it still depends on
+        // it. It is deleted with the rest of the post path (plan Phase 5).
+        if (self::legacy_post_registration_enabled()) {
             $this->register_simple_shortcodes();
-
-            // REMOVED: clear_shortcode_cache() call that was deleting registered shortcodes
-
-            // Production validation - ensure registration was successful
             $this->validate_all_registrations();
-
-            if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-                error_log('WP Dynamic Tags: Shortcode registration completed');
-            }
-
-        } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('WP Dynamic Tags Registration Error: ' . $e->getMessage());
-            }
         }
+    }
+
+    /**
+     * Whether the old registrar of dynamic_tag posts is switched on (filter dt_register_legacy_post_tags, default off).
+     */
+    public static function legacy_post_registration_enabled()
+    {
+        return (bool) apply_filters('dt_register_legacy_post_tags', false);
     }
 
     /**
@@ -1485,10 +1468,13 @@ class WP_Dynamic_Tags_Plugin
                 error_log("WP Dynamic Tags: Refreshing shortcodes after post {$post_id} deletion");
             }
 
-            // Clear cache and precisely re-register shortcodes
+            // Forget the legacy tag-list cache. Per-tag shortcodes come from the table (the processor drops a deleted
+            // row's shortcode itself); only the disconnected legacy registrar has anything to re-register.
             delete_transient($this->transient_key);
-            $this->clear_dynamic_tag_shortcodes();
-            $this->register_shortcodes();
+            if (self::legacy_post_registration_enabled()) {
+                $this->clear_dynamic_tag_shortcodes();
+                $this->register_shortcodes();
+            }
         }
     }
 
@@ -1511,26 +1497,15 @@ class WP_Dynamic_Tags_Plugin
             return;
         }
 
-        // Prevent duplicate processing for the same post within 3 seconds
-        $refresh_lock = 'dt_refresh_lock_' . $post_id;
-        if (get_transient($refresh_lock)) {
-            return; // Already processed recently
-        }
-        set_transient($refresh_lock, true, 3);
-
-        if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-            error_log("WP Dynamic Tags: Refreshing shortcodes after post {$post_id} save");
-        }
-
-        // Clear cache and refresh shortcodes
+        // Forget the legacy tag-list cache (the core [dt] shortcodes still read posts until plan Phase 3). The per-request
+        // transient lock that skipped a second save within 3 seconds is gone: this only clears caches now.
         $this->clear_all_plugin_caches();
 
-        // Only re-register if this is a published post
-        if (get_post_status($post_id) === 'publish') {
+        // Only the disconnected legacy registrar re-registers anything: per-tag shortcodes come from the table, which the
+        // post to table bridge updates on this same save.
+        if (self::legacy_post_registration_enabled() && get_post_status($post_id) === 'publish') {
             $this->clear_dynamic_tag_shortcodes();
             $this->register_shortcodes();
-
-            // Validate registration worked
             $this->validate_shortcode_registration($post_id);
         }
     }
@@ -1668,7 +1643,8 @@ class WP_Dynamic_Tags_Plugin
      */
     public function show_validation_errors()
     {
-        if (!current_user_can('manage_options')) {
+        // The data comes from validate_all_registrations(), which only the disconnected legacy registrar still runs.
+        if (!self::legacy_post_registration_enabled() || !current_user_can('manage_options')) {
             return;
         }
 
@@ -2262,8 +2238,10 @@ class WP_Dynamic_Tags_Plugin
         if ($taxonomy === 'tag_groups' && get_post_type($object_id) === $this->post_type) {
             $this->clear_cache();
             $this->clear_admin_cache();
-            // Re-register shortcodes with fresh data since group assignments changed
-            $this->register_simple_shortcodes();
+            // Group assignments changed: only the disconnected legacy registrar names shortcodes after groups
+            if (self::legacy_post_registration_enabled()) {
+                $this->register_simple_shortcodes();
+            }
         }
     }
 
