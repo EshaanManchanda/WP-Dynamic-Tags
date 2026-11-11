@@ -74,13 +74,27 @@ class DT_Api_Hardening_Test extends WP_UnitTestCase
         $this->assertLessThanOrEqual(3, $args['redirection']);
     }
 
-    public function test_private_and_metadata_addresses_are_refused_without_a_mock(): void
+    /**
+     * WordPress 7.0's wp_http_validate_url() refuses 127/8, 10/8, 0/8, 172.16/12 and 192.168/16 but lets link-local and cloud
+     * metadata (169.254/16) and CGNAT (100.64/10) through; 7.1 added them. The plugin declares 7.0 as its minimum, so it
+     * checks the host itself. The mock answers any request that gets past the plugin: none may. (Multicast is not in this
+     * list on purpose: PHP's global-range check does not cover it, TCP cannot connect to it, and WordPress 7.1 refuses it.)
+     */
+    public function test_private_reserved_and_metadata_addresses_are_never_contacted(): void
     {
-        $this->assertFalse(wp_http_validate_url('http://127.0.0.1/x.json'), 'WordPress must refuse loopback');
-        $this->assertFalse(wp_http_validate_url('http://169.254.169.254/latest/meta-data/'), 'WordPress must refuse the cloud metadata address');
+        $this->respond('{"a":"b"}');
 
-        $this->assertSame('', $this->render('{api:http://127.0.0.1/x.json::a}'));
-        $this->assertSame('', $this->render('{api:http://169.254.169.254/latest/meta-data/::a}'));
+        // IPv6 literals are written in full: the token syntax {api:URL::path} splits on the first double colon.
+        foreach (array('127.0.0.1', '10.1.2.3', '192.168.0.9', '169.254.169.254', '100.64.0.1', '0.0.0.0', '[0:0:0:0:0:0:0:1]', '[fe80:0:0:0:0:0:0:1]') as $host) {
+            $this->assertSame('', $this->render('{api:http://' . $host . '/x.json::a}'), "$host must be refused");
+        }
+        $this->assertSame(array(), $this->calls, 'no request may reach the HTTP layer');
+    }
+
+    public function test_a_public_address_is_still_allowed(): void
+    {
+        $this->respond('{"a":"b"}');
+        $this->assertSame('b', $this->render('{api:https://93.184.216.34/x.json::a}'));
     }
 
     // ------------------------------------------------------------------ size and content type

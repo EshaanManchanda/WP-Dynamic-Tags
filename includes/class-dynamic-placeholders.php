@@ -641,6 +641,10 @@ class WP_Dynamic_Tags_Placeholders {
             if (self::$api_fetches >= (int) apply_filters('dt_api_max_fetches', 5)) {
                 return ''; // not remembered: the cap belongs to this request, not to the URL
             }
+            if (!self::api_host_is_public(wp_parse_url($url, PHP_URL_HOST))) {
+                set_transient($cache_key, array(), MINUTE_IN_SECONDS);
+                return '';
+            }
             self::$api_fetches++;
 
             $response = wp_safe_remote_get($url, array('timeout' => 5, 'redirection' => 3, 'limit_response_size' => self::API_MAX_BYTES));
@@ -666,6 +670,30 @@ class WP_Dynamic_Tags_Placeholders {
         }
 
         return self::walk_path($data, $path);
+    }
+
+    /**
+     * Whether {api:} may contact this host: an IP literal, or a name that resolves to an address, on the public internet (S11).
+     * wp_safe_remote_get() already refuses private addresses, but WordPress 7.0 (this plugin's minimum) lets link-local and
+     * cloud metadata addresses (169.254.0.0/16) and CGNAT through; 7.1 refuses them. FILTER_FLAG_GLOBAL_RANGE (PHP 8.2)
+     * rejects the non-global ranges of the IANA special-purpose registry for IPv4 and IPv6, so the answer no longer depends
+     * on the WordPress version (multicast is not in that registry; TCP cannot connect to it and 7.1 refuses it).
+     * A name that does not resolve is passed on: there is nothing to contact and WordPress reports the failure. The check
+     * and the connection resolve the name separately, so DNS rebinding stays a residual risk, as with wp_safe_remote_get().
+     *
+     * @param string|false|null $host
+     */
+    private static function api_host_is_public($host) {
+        $host = trim((string) $host, '[]'); // an IPv6 literal comes back as [::1]
+        if ($host === '') {
+            return false;
+        }
+        $is_ip = filter_var($host, FILTER_VALIDATE_IP) !== false;
+        $ip = $is_ip ? $host : gethostbyname($host);
+        if (!$is_ip && $ip === $host) {
+            return true;
+        }
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE) !== false;
     }
 
     /**
