@@ -20,3 +20,9 @@ Known limits found while setting up (also in `docs/BUG-REGISTER.md`):
 * Psalm taint analysis (humanmade WordPress plugin) flags HTML sinks (`echo $_GET[...]`) but does **not** model
   `$wpdb->query()` as an SQL sink (negative control `negctl/taint-neg.php`). SQL risks are covered by PHPCS
   `WordPress.DB.PreparedSQL` and manual review instead.
+
+Fuzzing (`fuzz/`): `targets/conditional-parser.php` and `targets/token-parsers.php` (token body, condition expression, comparison, path walk,
+formatter spec, `decode_meta`) each ran 1.5 million inputs with php-fuzzer (about 2 and 0.6 minutes) without a crash, warning or timeout.
+Seeds live in `seeds-*`; start from a corpus directory outside the repository: `cp -r tools/fuzz/seeds-parser <scratch>/corpus` then
+`php tools/fuzz/vendor/bin/php-fuzzer fuzz tools/fuzz/targets/conditional-parser.php <scratch>/corpus --max-runs 1500000`.
+Limit: a negative control (a planted crash for inputs starting with `{if:`) was **not** found in two attempts of 60 seconds, so this setup is not proven to find deep bugs; it did grow its corpus (363 and 120 coverage features), which shows it explores the code, and it turns warnings into failures. Treat "no crash in 1.5 million inputs" as moderate evidence, backed by the unit tests and the mutation check.
