@@ -30,6 +30,15 @@ class WP_Dynamic_Tags_Placeholders {
     /** Tracks the active instance so external code can call get_instance(). */
     private static $_instance = null;
 
+    /** {api:} responses larger than this are refused; WordPress stops reading the body at this size (S11). */
+    private const API_MAX_BYTES = MB_IN_BYTES;
+
+    /** {api:} payloads larger than this are used but not stored in a transient (wp_options) (S11). */
+    private const API_CACHE_MAX_BYTES = 256 * KB_IN_BYTES;
+
+    /** Remote fetches made by this request; capped by filter dt_api_max_fetches (default 5) (S11). */
+    private static $api_fetches = 0;
+
     public function __construct() {
         self::$_instance = $this; // Register self so get_instance() works
         $this->register_default_placeholders();
@@ -606,6 +615,10 @@ class WP_Dynamic_Tags_Placeholders {
      * mitigation against SSRF via a user-suppliable URL. Responses are cached
      * (success and failure) so this can't be used to hammer an external
      * endpoint or a broken one from slowing down every page load.
+     *
+     * Further limits (S11): at most dt_api_max_fetches (5) remote fetches per request, responses capped at 1 MB, a JSON
+     * (or plain text) content type, no transient for payloads over 256 KB, and an optional host allow-list through the
+     * filter dt_api_allowed_hosts (empty = any public host). Redirect hops are validated by WordPress itself (at most 3).
      */
     private function get_api_value($arg) {
         list($url, $path) = array_pad(explode('::', $arg, 2), 2, null);
@@ -614,19 +627,35 @@ class WP_Dynamic_Tags_Placeholders {
             return '';
         }
 
+        $allowed_hosts = array_filter(array_map('strtolower', (array) apply_filters('dt_api_allowed_hosts', array())));
+        if ($allowed_hosts && !in_array(strtolower((string) wp_parse_url($url, PHP_URL_HOST)), $allowed_hosts, true)) {
+            return '';
+        }
+
         $cache_key = 'dt_api_' . md5($url);
         $data = get_transient($cache_key);
         if ($data === false) {
-            $response = wp_safe_remote_get($url, array('timeout' => 5));
-            if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            if (self::$api_fetches >= (int) apply_filters('dt_api_max_fetches', 5)) {
+                return ''; // not remembered: the cap belongs to this request, not to the URL
+            }
+            self::$api_fetches++;
+
+            $response = wp_safe_remote_get($url, array('timeout' => 5, 'redirection' => 3, 'limit_response_size' => self::API_MAX_BYTES));
+            $body = is_wp_error($response) ? '' : (string) wp_remote_retrieve_body($response);
+            $type = is_wp_error($response) ? '' : strtolower((string) wp_remote_retrieve_header($response, 'content-type'));
+            // A body as long as the limit was cut off, so it is not valid data: treated like a failed request.
+            if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
+                || strlen($body) >= self::API_MAX_BYTES || !preg_match('#json|^text/plain#', $type)) {
                 set_transient($cache_key, array(), MINUTE_IN_SECONDS);
                 return '';
             }
-            $data = json_decode(wp_remote_retrieve_body($response), true);
+            $data = json_decode($body, true);
             if (!is_array($data)) {
                 $data = array();
             }
-            set_transient($cache_key, $data, 5 * MINUTE_IN_SECONDS);
+            if (strlen($body) <= self::API_CACHE_MAX_BYTES) {
+                set_transient($cache_key, $data, 5 * MINUTE_IN_SECONDS);
+            }
         }
 
         if (empty($data)) {
