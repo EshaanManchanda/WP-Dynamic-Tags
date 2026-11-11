@@ -1065,13 +1065,100 @@ class WP_Dynamic_Tags_Plugin
      */
     private static $registered_shortcodes = array();
 
+    /** @var array<string, string> shortcode name => plugin folder (or "core") that owns it, recorded when we skipped a name */
+    private static $shortcode_conflicts = array();
+
+    /**
+     * Whether the callback currently registered for a shortcode name belongs to this plugin (F1, L10). Decided by where the
+     * callback's code lives (the main file, includes/ or admin/), not by the shape of the name: the old name patterns
+     * matched every lowercase word, so "ours" meant "any shortcode".
+     */
+    public static function shortcode_is_ours($name)
+    {
+        global $shortcode_tags;
+        if (!isset($shortcode_tags[$name])) {
+            return false;
+        }
+        $file = self::callback_file($shortcode_tags[$name]);
+        if ($file === null) {
+            return false;
+        }
+        $file = wp_normalize_path($file);
+        $dir = wp_normalize_path(WP_DYNAMIC_TAGS_PLUGIN_DIR);
+        return $file === wp_normalize_path(__FILE__)
+            || strpos($file, $dir . 'includes/') === 0
+            || strpos($file, $dir . 'admin/') === 0;
+    }
+
+    /** The file a callable is defined in, or null when it cannot be determined. */
+    private static function callback_file($callback)
+    {
+        try {
+            if ($callback instanceof Closure) {
+                return (new ReflectionFunction($callback))->getFileName() ?: null;
+            }
+            if (is_array($callback) && isset($callback[0])) {
+                return (new ReflectionClass(is_object($callback[0]) ? get_class($callback[0]) : $callback[0]))->getFileName() ?: null;
+            }
+            if (is_string($callback) && strpos($callback, '::') !== false) {
+                return (new ReflectionClass(explode('::', $callback, 2)[0]))->getFileName() ?: null;
+            }
+            if (is_string($callback) && function_exists($callback)) {
+                return (new ReflectionFunction($callback))->getFileName() ?: null;
+            }
+        } catch (ReflectionException $e) {
+            return null;
+        }
+        return null;
+    }
+
+    /** Remembers that a tag could not be registered because the name belongs to someone else. */
+    private static function record_shortcode_conflict($name)
+    {
+        global $shortcode_tags;
+        $file = isset($shortcode_tags[$name]) ? self::callback_file($shortcode_tags[$name]) : null;
+        $owner = 'core';
+        if ($file) {
+            $file = wp_normalize_path($file);
+            $plugins = wp_normalize_path(WP_PLUGIN_DIR) . '/';
+            if (strpos($file, $plugins) === 0) {
+                $owner = explode('/', substr($file, strlen($plugins)))[0];
+            } elseif (strpos($file, wp_normalize_path(ABSPATH) . 'wp-includes/') !== 0) {
+                $owner = basename(dirname($file));
+            }
+        }
+        self::$shortcode_conflicts[$name] = $owner;
+        do_action('dt_shortcode_conflict', $name, $owner);
+    }
+
+    /** Public entry for the table registrar, which lives in another class. */
+    public static function note_shortcode_conflict($name)
+    {
+        self::record_shortcode_conflict($name);
+    }
+
+    /**
+     * Tag shortcodes this request could not register because the name is already used.
+     *
+     * @return array<string, string> shortcode => owner (plugin folder, or "core")
+     */
+    public static function get_shortcode_conflicts()
+    {
+        return self::$shortcode_conflicts;
+    }
+
     /**
      * Register a shortcode with conflict prevention
      */
     private function register_shortcode_safely($shortcode_name, $callback)
     {
-        // Remove if already exists
+        // A name that another plugin (or WordPress) already registered is theirs: skip it and record the conflict instead of
+        // removing their shortcode (F1). Filter dt_allow_shortcode_override restores the old "last one wins" on purpose.
         if (shortcode_exists($shortcode_name)) {
+            if (!self::shortcode_is_ours($shortcode_name) && !apply_filters('dt_allow_shortcode_override', false, $shortcode_name)) {
+                self::record_shortcode_conflict($shortcode_name);
+                return false;
+            }
             remove_shortcode($shortcode_name);
         }
 
@@ -1095,7 +1182,7 @@ class WP_Dynamic_Tags_Plugin
     {
         $removed_count = 0;
         foreach (self::$registered_shortcodes as $shortcode => $status) {
-            if (shortcode_exists($shortcode)) {
+            if (shortcode_exists($shortcode) && self::shortcode_is_ours($shortcode)) {
                 remove_shortcode($shortcode);
                 $removed_count++;
             }
@@ -1118,7 +1205,7 @@ class WP_Dynamic_Tags_Plugin
 
         // For grouped tags: remove base shortcode
         if ($has_groups) {
-            if (shortcode_exists($tag_key)) {
+            if (shortcode_exists($tag_key) && self::shortcode_is_ours($tag_key)) {
                 remove_shortcode($tag_key);
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log("WP Dynamic Tags: Removed conflicting base shortcode [{$tag_key}] for grouped tag '{$tag_title}'");
@@ -1135,7 +1222,7 @@ class WP_Dynamic_Tags_Plugin
             );
 
             foreach ($potential_group_shortcodes as $group_shortcode) {
-                if (shortcode_exists($group_shortcode)) {
+                if (shortcode_exists($group_shortcode) && self::shortcode_is_ours($group_shortcode)) {
                     remove_shortcode($group_shortcode);
                     if (defined('WP_DEBUG') && WP_DEBUG) {
                         error_log("WP Dynamic Tags: Removed conflicting group shortcode [{$group_shortcode}] for ungrouped tag '{$tag_title}'");
@@ -1266,22 +1353,7 @@ class WP_Dynamic_Tags_Plugin
      */
     private function is_our_shortcode($shortcode_key)
     {
-        // Check if shortcode matches our patterns
-        $our_patterns = array(
-            '/^[a-z0-9_]+$/',  // Basic tag pattern
-            '/^[a-z0-9_]+_[a-z0-9_]+$/',  // Group_tag pattern
-            '/^dt_/',  // Our special shortcodes
-            '/^math_olympiad_/',  // Known group prefix
-            '/^science_olympiad_/',  // Known group prefix
-        );
-
-        foreach ($our_patterns as $pattern) {
-            if (preg_match($pattern, $shortcode_key)) {
-                return true;
-            }
-        }
-
-        return false;
+        return self::shortcode_is_ours($shortcode_key);
     }
 
     /**
@@ -1352,7 +1424,8 @@ class WP_Dynamic_Tags_Plugin
                 $should_remove = true;
             }
 
-            if ($should_remove) {
+            // Only ever remove what this plugin registered (F1): a foreign dt_* or *_olympiad_* shortcode stays.
+            if ($should_remove && self::shortcode_is_ours($shortcode)) {
                 remove_shortcode($shortcode);
                 $removed_count++;
 

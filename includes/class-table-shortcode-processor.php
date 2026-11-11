@@ -135,8 +135,13 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             return $this->process_shortcode($tag, $atts);
         };
 
-        // Register shortcode
+        // Register shortcode. A name that another plugin (or WordPress) owns is skipped and recorded, never removed (F1);
+        // filter dt_allow_shortcode_override restores the old "last one wins" on purpose.
         if (shortcode_exists($tag->shortcode)) {
+            if (!WP_Dynamic_Tags_Plugin::shortcode_is_ours($tag->shortcode) && !apply_filters('dt_allow_shortcode_override', false, $tag->shortcode)) {
+                WP_Dynamic_Tags_Plugin::note_shortcode_conflict($tag->shortcode);
+                return false;
+            }
             remove_shortcode($tag->shortcode);
         }
 
@@ -743,7 +748,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         // If shortcode changed, update registration
         if (isset($data['shortcode']) && $data['shortcode'] !== $old_data->shortcode) {
             // Remove old shortcode
-            if (shortcode_exists($old_data->shortcode)) {
+            if (shortcode_exists($old_data->shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_data->shortcode)) {
                 remove_shortcode($old_data->shortcode);
                 unset($this->registered_shortcodes[$old_data->shortcode]);
             }
@@ -764,7 +769,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      */
     public function on_tag_deleted($tag_id, $old_data) {
         // Remove shortcode
-        if (!empty($old_data->shortcode) && shortcode_exists($old_data->shortcode)) {
+        if (!empty($old_data->shortcode) && shortcode_exists($old_data->shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_data->shortcode)) {
             remove_shortcode($old_data->shortcode);
             unset($this->registered_shortcodes[$old_data->shortcode]);
         }
@@ -830,7 +835,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     public function force_reregister() {
         // Remove existing shortcodes
         foreach ($this->registered_shortcodes as $shortcode => $tag_id) {
-            if (shortcode_exists($shortcode)) {
+            if (shortcode_exists($shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($shortcode)) {
                 remove_shortcode($shortcode);
             }
         }
