@@ -87,8 +87,9 @@ class DT_Registration_Test extends WP_UnitTestCase
             'post_modified_gmt' => current_time('mysql', true), 'to_ping' => '', 'pinged' => '', 'post_content_filtered' => '',
         ));
 
-        delete_transient('dt_registration_lock'); // an older version's lock would make the registration a no-op and hide the result
-        WP_Dynamic_Tags_Plugin::get_instance()->force_refresh_shortcodes();
+        update_option('wp_dynamic_tags_legacy_pending', '0'); // the read-only loader is off
+        WP_Dynamic_Tags_Plugin::get_instance()->register_shortcodes();
+        WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance()->register_table_shortcodes();
 
         $this->assertFalse(shortcode_exists('post_only_probe'), 'the table processor is the only registrar of per-tag shortcodes');
     }

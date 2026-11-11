@@ -91,8 +91,6 @@ $cleanup = function () use (&$created, $tbl, $wpdb, $admin_id, $plugin) {
     // Rebuild the cache from the real database now that the fixtures are gone.
     delete_transient('dt_registration_lock');
     delete_transient('dt_table_registration_lock');
-    $plugin->force_refresh_shortcodes();
-    // force_refresh_shortcodes() re-arms the plugin's 3-second registration lock; leave none behind for the next process.
     delete_transient('dt_registration_lock');
     delete_transient('dt_table_registration_lock');
     // The post path writes usage meta against a tag's post ID during rendering; sweep it by ID so nothing is orphaned.

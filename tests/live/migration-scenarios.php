@@ -114,11 +114,10 @@ if ($orig_posts !== 0 || $had_state !== null) {
 
 // While seeding fixtures, keep the legacy save/term sync out of the way. The legacy DELETE hooks are
 // deliberately left in place: cleanup has to suspend them itself, and scenario 7 proves it does.
-$bridge = WP_Dynamic_Tags_Post_Table_Bridge::get_instance();
 $plugin = WP_Dynamic_Tags_Plugin::get_instance();
-foreach ([['save_post', 'sync_post_to_table', 20], ['set_object_terms', 'sync_post_terms', 10]] as [$h, $m, $p]) {
-    remove_action($h, [$bridge, $m], $p);
-}
+$capture = WP_Dynamic_Tags_Migration_Engine::class;
+remove_action('save_post_dynamic_tag', [$capture, 'handle_save'], 20);   // the fixtures must stay posts without rows
+remove_action('set_object_terms', [$capture, 'handle_terms'], 20);
 
 $engine->reset_state();
 delete_option(WP_Dynamic_Tags_Migration_Engine::OPTION_LOCK);
@@ -149,7 +148,6 @@ function restore_site(): void
     delete_option(WP_Dynamic_Tags_Migration_Engine::OPTION_LOCK);
     delete_option(WP_Dynamic_Tags_Migration_Engine::OPTION_LOG);
     delete_option(WP_Dynamic_Tags_Migration_Engine::OPTION_CLEANED);
-    delete_option('wp_dynamic_tags_hard_delete_on_post_delete');
     if (is_dir($private)) {
         foreach ((array) scandir($private) as $f) {                                  // scandir, not glob: glob('*') skips dotfiles such as .htaccess
             if ($f !== '.' && $f !== '..' && !in_array($private . '/' . $f, $files_before, true)) {
@@ -160,11 +158,6 @@ function restore_site(): void
             @rmdir($private);                                                        // the directory did not exist before the run
         }
     }
-    delete_transient('dt_registration_lock');
-    delete_transient('dt_table_registration_lock');
-    $plugin->force_refresh_shortcodes();                                             // do not leave the post path's hour-long tag cache pointing at fixtures
-    delete_transient('dt_registration_lock');
-    delete_transient('dt_table_registration_lock');
     $wpdb->query("DELETE pm FROM {$wpdb->postmeta} pm LEFT JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE p.ID IS NULL AND pm.post_id > 343 AND pm.meta_key IN ('_dt_usage_count','_dt_last_used','foo','_edit_lock','_dt_priority','_dt_shortcode')");
 }
 register_shutdown_function('restore_site');
@@ -301,13 +294,11 @@ $status_before = [];
 foreach (['echo_dup', 'beta_tag'] as $sc) {
     $status_before[$sc] = row_by_shortcode($sc)['status'];
 }
-// With this option on, the legacy bridge DELETES a tag's row when its post is deleted. If cleanup did not
-// suspend that hook, the rows of every deleted post would vanish below.
-update_option('wp_dynamic_tags_hard_delete_on_post_delete', true);
-ok(has_action('before_delete_post', [$bridge, 'sync_post_deletion']) !== false && has_action('delete_post', [$plugin, 'refresh_shortcodes_on_delete']) !== false, 'precondition: both legacy delete hooks are active');
+// The capture hook switches a tag's row off when its post is deleted. If cleanup did not suspend it, the rows of
+// every deleted post would be deactivated below.
+ok(has_action('before_delete_post', [$capture, 'handle_delete']) !== false, 'precondition: the capture hook for deleted posts is active');
 $r1 = $engine->cleanup_batch(4);
 $res = $engine->cleanup_batch(4);
-delete_option('wp_dynamic_tags_hard_delete_on_post_delete');
 ok(!is_wp_error($r1) && $r1['done'] === false, 'first batch of 4 reports more to do');
 ok(!is_wp_error($res) && $res['done'] === true, 'the batch that handles the last post finishes cleanup by itself (no extra empty call needed)');
 ok(get_option(WP_Dynamic_Tags_Migration_Engine::OPTION_CLEANED) !== false && state()['cleanup']['status'] === 'done', 'the completion marker is set and the cleanup state is "done"');
@@ -322,8 +313,8 @@ ok((int) row_by_shortcode('hotel')['post_id'] === 0 && row_by_shortcode('hotel')
 ok((int) row_by_shortcode('alpha_tag')['post_id'] === $A && row_by_shortcode('alpha_tag')['content'] === 'Alpha body {site_name}', 'the kept post\'s row is still linked and unchanged');
 ok(do_shortcode('[cg_gamma_1]') === 'Gamma body' && do_shortcode('[hotel]') === 'Hotel NEW', 'migrated tags still render after their posts are gone');
 ok((int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} pm LEFT JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE p.ID IS NULL") === $orig_orphans, 'no orphaned post meta was left behind');
-ok((int) $wpdb->get_var("SELECT COUNT(*) FROM {$T} WHERE shortcode IN ('beta_tag','cg_gamma_1','delta_{$D}','echo_dup','hotel','india')") === 6, 'with the bridge\'s hard-delete option on, no row was deleted along with its post: cleanup suspended the legacy delete hook');
-ok(has_action('before_delete_post', [$bridge, 'sync_post_deletion']) !== false && has_action('delete_post', [$plugin, 'refresh_shortcodes_on_delete']) !== false, 'and both legacy delete hooks were put back afterwards');
+ok((int) $wpdb->get_var("SELECT COUNT(*) FROM {$T} WHERE shortcode IN ('beta_tag','cg_gamma_1','delta_{$D}','echo_dup','hotel','india')") === 6, 'no row was deleted along with its post: cleanup suspended the capture hook');
+ok(has_action('before_delete_post', [$capture, 'handle_delete']) !== false, 'and the capture hook was put back afterwards');
 
 // ================================================================== 8. backup tamper + restore
 section('8. A tampered backup is rejected; a genuine one restores exactly');

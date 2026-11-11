@@ -39,7 +39,7 @@ $cleanup = function () use ($wpdb, $tbl, $admin_id, $plugin) {
     foreach (['cg_gm_teacher_999', 'cg_gm_school_998', 'event_gm_title', 'gm_chat_evt'] as $sc) { remove_shortcode($sc); }
     // The post path's one-hour tag-list cache must not keep listing the mirror posts that were just removed.
     delete_transient('dt_registration_lock');
-    $plugin->force_refresh_shortcodes();
+    if (method_exists($plugin, 'force_refresh_shortcodes')) { $plugin->force_refresh_shortcodes(); }   // pre-refactor code only
     delete_transient('dt_registration_lock');            // force_refresh re-arms the 3-second lock; leave none behind
     delete_transient('dt_table_registration_lock');
 };

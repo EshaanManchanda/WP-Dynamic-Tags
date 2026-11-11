@@ -54,17 +54,4 @@ class DT_Foreign_Shortcode_Test extends WP_UnitTestCase
         $this->assertSame('OURS', do_shortcode('[foreign_two]'));
     }
 
-    public function test_the_post_path_cleanup_does_not_remove_hardcoded_names_owned_by_others(): void
-    {
-        add_shortcode('math_olympiad_foo', static fn() => 'FOREIGN-MO');
-        add_shortcode('general_foo', static fn() => 'FOREIGN-GEN');
-
-        wp_set_current_user(self::factory()->user->create(['role' => 'administrator']));
-        wp_insert_post(['post_title' => 'foo', 'post_content' => 'x', 'post_status' => 'publish', 'post_type' => 'dynamic_tag']);
-        delete_transient('dt_registration_lock');
-        WP_Dynamic_Tags_Plugin::get_instance()->force_refresh_shortcodes();
-
-        $this->assertSame('FOREIGN-MO', do_shortcode('[math_olympiad_foo]'));
-        $this->assertSame('FOREIGN-GEN', do_shortcode('[general_foo]'));
-    }
 }

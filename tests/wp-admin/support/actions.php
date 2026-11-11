@@ -29,21 +29,9 @@ return [
     'dt_table_get_tags'        => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_table_bulk_action'     => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
 
-    // --- Main plugin file
-    'dt_dismiss_menu_notice'   => ['nonce' => 'dt_dismiss_notice', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_test_shortcode'        => ['nonce' => 'dt_test_shortcode', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_check_duplicate'       => ['nonce' => 'dt_check_duplicate', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_duplicate_tag'         => ['nonce' => 'dt_duplicate', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-
-    // --- Bulk manager / old import-export (deleted in Phase 4)
-    'dt_inline_edit'           => ['nonce' => 'dt_inline_edit', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_bulk_delete'           => ['nonce' => 'dt_bulk_delete', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
+    // --- Old import-export (replaced in Phase 7)
     'dt_export_json'           => ['nonce' => 'dt_export', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'stream'],
     'dt_export_csv'            => ['nonce' => 'dt_export', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'stream'],
-
-    // --- Conflict tools (deleted in Phase 4)
-    'dt_auto_resolve_conflicts' => ['nonce' => 'dt_auto_resolve_conflicts', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_resolve_conflict'      => ['nonce' => 'dt_resolve_conflict', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
 
     // --- Tag groups
     'dt_create_group'          => ['nonce' => 'dt_group_operation', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],

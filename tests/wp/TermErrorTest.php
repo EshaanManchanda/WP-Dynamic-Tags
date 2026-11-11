@@ -36,17 +36,6 @@ class DT_Term_Error_Test extends WP_UnitTestCase
         $this->assertSame(array(), WP_Dynamic_Tags_Plugin::post_terms($post, 'tag_groups'));
     }
 
-    public function test_merging_tags_with_a_missing_taxonomy_does_not_throw(): void
-    {
-        $primary = $this->tag_post('merge_primary');
-        $other = $this->tag_post('merge_other');
-        unregister_taxonomy('tag_groups');
-
-        $resolver = WP_Dynamic_Tags_Plugin::get_instance()->conflict_resolver;
-        $result = $resolver->merge_tags(array($other), $primary);
-
-        $this->assertIsArray($result, 'merge_tags used to throw a TypeError from array_merge()/count() on a WP_Error');
-    }
 
     public function test_saving_a_tag_post_with_a_missing_taxonomy_does_not_throw(): void
     {

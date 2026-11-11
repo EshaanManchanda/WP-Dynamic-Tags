@@ -1436,14 +1436,6 @@ class WP_Dynamic_Tags_Migration_Engine
         $this->save_state($state, false);
         $this->log(sprintf('Cleanup finished: %d legacy posts deleted, %d kept.', $state['cleanup']['deleted'], $state['cleanup']['kept']), 'success');
 
-        // The core [dt] shortcodes still read the post path's cached tag list (until plan Phase 3): make it forget the
-        // posts that are gone. (The registration lock this used to clear no longer exists.)
-        if (class_exists('WP_Dynamic_Tags_Plugin')) {
-            $plugin = WP_Dynamic_Tags_Plugin::get_instance();
-            if (method_exists($plugin, 'force_refresh_shortcodes')) {
-                $plugin->force_refresh_shortcodes();
-            }
-        }
         $this->flush_table_caches();
         $this->refresh_pending_flag();
 
@@ -1464,22 +1456,6 @@ class WP_Dynamic_Tags_Migration_Engine
         $candidates = [];
         $candidates[] = ['before_delete_post', [self::class, 'handle_delete']]; // capture: cleanup is not a user deleting a tag
 
-        // A post <-> table Bridge that somebody started anyway (the plugin no longer does): it would deactivate the row of
-        // every post cleanup deletes. Found through the registered hooks, so none is created just to be suspended.
-        global $wp_filter;
-        if (class_exists('WP_Dynamic_Tags_Post_Table_Bridge') && isset($wp_filter['before_delete_post'])) {
-            foreach ($wp_filter['before_delete_post']->callbacks as $callbacks) {
-                foreach ($callbacks as $registered) {
-                    $function = $registered['function'];
-                    if (is_array($function) && is_object($function[0]) && $function[0] instanceof WP_Dynamic_Tags_Post_Table_Bridge) {
-                        $candidates[] = ['before_delete_post', $function];
-                    }
-                }
-            }
-        }
-        if (class_exists('WP_Dynamic_Tags_Plugin')) {
-            $candidates[] = ['delete_post', [WP_Dynamic_Tags_Plugin::get_instance(), 'refresh_shortcodes_on_delete']];
-        }
 
         $removed = [];
         foreach ($candidates as [$hook, $callback]) {
