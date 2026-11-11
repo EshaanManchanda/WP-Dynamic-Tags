@@ -13,7 +13,8 @@
  * (a security or bug fix is never approved in bulk). The run fails on
  *   - a difference that is not listed (or listed with a different output), and
  *   - a listed difference that no longer occurs (a stale entry hides future regressions).
- * Entries are matched on pathB, ctx and the invocation text; pathA is the baseline side.
+ * Entries are matched on pathB, ctx and the invocation text; pathA is the baseline side. An entry may add "from" (the
+ * pathA it applies to); without it the entry applies to any baseline path.
  */
 [$s, $dirA, $pa, $dirB, $pb, $ctx] = $argv + [null, 'baseline', 'post', 'baseline', 'table', 'out_singular'];
 $all = in_array('--all', $argv, true);
@@ -31,7 +32,9 @@ $allowed = [];
 if ($allowFile !== null) {
     $doc = json_decode(file_get_contents(str_contains($allowFile, DIRECTORY_SEPARATOR) || str_contains($allowFile, '/') ? $allowFile : __DIR__ . '/' . $allowFile), true);
     foreach ($doc['differences'] ?? [] as $e) {
-        if (($e['path'] ?? null) === $pb && ($e['ctx'] ?? null) === $ctx) {
+        // "from" (optional) names the baseline path (side A) the entry applies to: after the refactor the same invocation
+        // is compared once against the post baseline and once against the table baseline and may differ differently.
+        if (($e['path'] ?? null) === $pb && ($e['ctx'] ?? null) === $ctx && (!isset($e['from']) || $e['from'] === $pa)) {
             $allowed[$e['invocation']] = $e;
         }
     }
