@@ -111,6 +111,14 @@ class WP_Dynamic_Tags_Table_Manager {
 
         $data = wp_parse_args($data, $defaults);
 
+        // The Tag Service: reserved and foreign shortcode names, circular references, the creation limit, and markup the
+        // writing user may not post unfiltered (plan Phase 6).
+        $guard = WP_Dynamic_Tags_Tag_Service::guard_create($data);
+        if (is_wp_error($guard)) {
+            return $guard;
+        }
+        $data['content'] = WP_Dynamic_Tags_Tag_Service::prepare_content($data['content'] ?? '');
+
         // Insert into database
         $result = $this->db_manager->insert_tag($data);
 
@@ -151,6 +159,15 @@ class WP_Dynamic_Tags_Table_Manager {
         $validation = $this->validate_tag_data($data, $id, false);
         if (is_wp_error($validation)) {
             return $validation;
+        }
+
+        // The Tag Service checks what changes only (a new shortcode name, new content) and filters markup by capability.
+        $guard = WP_Dynamic_Tags_Tag_Service::guard_update($existing_tag, $data);
+        if (is_wp_error($guard)) {
+            return $guard;
+        }
+        if (array_key_exists('content', $data)) {
+            $data['content'] = WP_Dynamic_Tags_Tag_Service::prepare_content($data['content']);
         }
 
         // Update in database

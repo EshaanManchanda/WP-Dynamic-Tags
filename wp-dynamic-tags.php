@@ -1126,6 +1126,10 @@ class WP_Dynamic_Tags_Plugin
             require_once $includes_dir . 'class-migration-manager.php';
         }
 
+        if (file_exists($includes_dir . 'class-tag-service.php')) {
+            require_once $includes_dir . 'class-tag-service.php';
+        }
+
         if (file_exists($includes_dir . 'class-table-manager.php')) {
             require_once $includes_dir . 'class-table-manager.php';
         }
