@@ -283,6 +283,16 @@ ok($v['passed'], 'all five checks pass: ' . json_encode(array_map(fn($c) => $c['
 $s = $engine->status();
 ok($s['can_cleanup'] === true && $s['verification_fresh'] === true, 'cleanup is now allowed');
 
+// M1: a legacy post written AFTER the verification (an old script, a sibling plugin) is not migrated yet. Status used to keep
+// offering cleanup ("Cleanup possible: yes" in WP-CLI, an enabled button in the panel) while such a post existed. Cleanup itself
+// kept the post (it only deletes verified, unchanged ones), but the offer was misleading.
+$late = mk_post('Late arrival', 'Late body', 'publish', '2026-07-02 00:00:00');
+$s = $engine->status();
+ok($s['unlinked'] >= 1 && $s['can_cleanup'] === false, 'a legacy post that appeared after verification switches the cleanup offer off (unlinked=' . $s['unlinked'] . ')');
+$wpdb->delete($wpdb->posts, ['ID' => $late]);
+$s = $engine->status();
+ok($s['can_cleanup'] === true, 'cleanup is offered again once no unmigrated legacy post is left');
+
 // ================================================================== 7. cleanup is safe
 section('7. Cleanup deletes only what is safe');
 edit_post_sql($A, 'Alpha EDITED AFTER VERIFY', '2026-07-01 00:00:00');   // a post edited between verification and cleanup

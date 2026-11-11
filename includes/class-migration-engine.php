@@ -233,7 +233,9 @@ class WP_Dynamic_Tags_Migration_Engine
             'backup'              => $state['backup'],
             'verification'        => $verification,
             'verification_fresh'  => $fresh,
-            'can_cleanup'         => $legacy > 0 && $fresh && !empty($verification['passed']) && $open === 0,
+            // A legacy post that is not migrated yet (written after the verification) switches the offer off (M1): cleanup
+            // would keep it anyway, but reporting "possible" while unmigrated posts exist is misleading.
+            'can_cleanup'         => $legacy > 0 && $unlinked === 0 && $fresh && !empty($verification['passed']) && $open === 0,
             'cleanup'             => $state['cleanup'],
             'conflicts'           => $state['conflicts'],
         ];

@@ -51,3 +51,17 @@ The migration notice, panel and AJAX endpoints were exercised in a real browser 
 throwaway `php -S 127.0.0.1:8089` with an `auto_prepend_file` that defines `DB_NAME`, `WP_HOME` and `WP_SITEURL`.
 Note: the Participation Portal plugin replaces `wp-login.php` with a custom slug (`/gema-login`) and returns 404
 for the default login URL, so log in there.
+
+## WP-CLI commands (executed 2026-11-11)
+
+`wp dynamic-tags status|migrate [--dry-run]|verify|cleanup|conflicts|resolve|restore|rescan` were run for real with
+`wp-cli.phar` (sha512 verified against the wp-cli/builds repository) against a **throwaway WordPress** (an extracted WP 7.1.4 in the
+scratch folder, the plugin copied in, `wp-config.php` pointing at the disposable database `local_cli`, a copy of the site's data):
+
+* three raw legacy posts inserted by SQL: `migrate --dry-run` planned 3 inserts; `migrate` inserted 3; a second `migrate` processed 0 (idempotent);
+  `verify` passed all 5 checks; a legacy post written after the verification was **kept** by `cleanup` (3 deleted, 1 kept);
+* `restore <file> --yes` brought 8 rows back and reverted a tampered row, writing a safety backup first; a path-traversal argument
+  (`../../wp-config.php`) was refused ("That backup file was not found"); `rescan` queued the late post again.
+
+Recipe: create `local_cli` from a dump of the site, copy the plugin (no `vendor`/`tools`/`tests`) into the throwaway site's
+`wp-content/plugins`, write a `wp-config.php` for it, `wp plugin activate Dynamic-tags-v4/wp-dynamic-tags.php`. Never point WP-CLI at the live site for this.
