@@ -222,6 +222,12 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
                 $content = $this->process_content($content, $tag, $atts);
             }
 
+            // S10: the output of a tag is not run through wp_kses_post by default (an administrator writes tags and may
+            // add scripts or iframes on purpose); the filter turns it on, per tag.
+            if (apply_filters('dt_kses_tag_output', false, $tag)) {
+                $content = wp_kses_post($content);
+            }
+
             // Apply formatting
             $content = $this->apply_formatting($content, $atts['format'], $tag);
 
@@ -261,98 +267,21 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Process content with placeholders and dynamic features
      */
     private function process_content($content, $tag, $atts) {
-        // Basic placeholder processing
-        $placeholders = array(
-            '{current_date}' => current_time('Y-m-d'),
-            '{current_time}' => current_time('H:i:s'),
-            '{current_year}' => current_time('Y'),
-            '{site_name}' => get_bloginfo('name'),
-            '{site_url}' => get_site_url(),
-            '{admin_email}' => get_option('admin_email'),
-            '{tag_name}' => $tag->tag_name,
-            '{tag_id}' => $tag->id,
-            '{usage_count}' => $tag->usage_count
+        // Tokens only a table row can answer: the placeholder engine has no tag context. Everything else ({site_name},
+        // {user_name}, {meta:}, {acf:}, {wc:}, formatters, {if}{else}{/if} blocks, ...) belongs to the engine, so a tag
+        // renders the same whatever it came from. (Table-native tags never went through the engine before: {meta:} and
+        // formatters stayed raw in them, and this class kept its own, smaller list of tokens and conditions.)
+        $content = str_replace(
+            array('{tag_name}', '{tag_id}', '{usage_count}', '{user_id}'),
+            array($tag->tag_name, $tag->id, $tag->usage_count, get_current_user_id()),
+            (string) $content
         );
 
-        // User-specific placeholders (if user is logged in)
-        if (is_user_logged_in()) {
-            $current_user = wp_get_current_user();
-            $placeholders['{user_name}'] = $current_user->display_name;
-            $placeholders['{user_email}'] = $current_user->user_email;
-            $placeholders['{user_id}'] = $current_user->ID;
-        } else {
-            $placeholders['{user_name}'] = 'Guest';
-            $placeholders['{user_email}'] = '';
-            $placeholders['{user_id}'] = '0';
-        }
+        // Placeholders, formatters and conditional blocks (filter dt_process_value, hooked by WP_Dynamic_Tags_Placeholders)
+        $content = apply_filters('dt_process_value', $content);
 
-        // Post-specific placeholders (if in post context)
-        if (is_singular()) {
-            global $post;
-            if ($post) {
-                $placeholders['{post_title}'] = $post->post_title;
-                $placeholders['{post_id}'] = $post->ID;
-                $placeholders['{post_url}'] = get_permalink($post->ID);
-                $placeholders['{post_author}'] = get_the_author_meta('display_name', $post->post_author);
-            }
-        }
-
-        // Apply placeholders
-        $content = str_replace(array_keys($placeholders), array_values($placeholders), $content);
-
-        // Process conditional content
-        $content = $this->process_conditionals($content);
-
-        // Process nested shortcodes
-        $content = do_shortcode($content);
-
-        return $content;
-    }
-
-    /**
-     * Process conditional content blocks
-     */
-    private function process_conditionals($content) {
-        // {if:condition}content{/if}, now also with {else} and nesting, through the shared parser (L1).
-        return WP_Dynamic_Tags_Conditional_Parser::process((string) $content, function ($condition) {
-            return $this->evaluate_condition(trim($condition));
-        });
-    }
-
-    /**
-     * Evaluate conditional expressions
-     */
-    private function evaluate_condition($condition) {
-        $condition = trim((string) $condition);
-
-        // "!condition" negates (L2): it used to be ignored, so {if:!user_logged_in} behaved like {if:user_logged_in}.
-        if ($condition !== '' && $condition[0] === '!') {
-            return !$this->evaluate_condition(substr($condition, 1));
-        }
-
-        // Exact names, not substrings: the old strpos() matched any text that merely contained the word.
-        switch ($condition) {
-            case 'user_logged_in':
-                return is_user_logged_in();
-            case 'user_not_logged_in':
-                return !is_user_logged_in();
-            case 'is_admin':
-                return current_user_can('manage_options');
-            case 'is_mobile':
-                return wp_is_mobile();
-        }
-
-        if (preg_match('/^time_between\(\s*(\d{1,2}):(\d{2})\s*,\s*(\d{1,2}):(\d{2})\s*\)$/', $condition, $matches)) {
-            $now = explode(':', current_time('H:i'));
-            return self::time_in_window(
-                (int) $now[0] * 60 + (int) $now[1],
-                (int) $matches[1] * 60 + (int) $matches[2],
-                (int) $matches[3] * 60 + (int) $matches[4]
-            );
-        }
-
-        // Default to false for unknown conditions
-        return false;
+        // Nested shortcodes
+        return do_shortcode($content);
     }
 
     /**

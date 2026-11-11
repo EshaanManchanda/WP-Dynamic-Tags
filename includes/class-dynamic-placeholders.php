@@ -768,6 +768,13 @@ class WP_Dynamic_Tags_Placeholders {
      * Evaluate condition
      */
     private function evaluate_condition($condition) {
+        $condition = trim((string) $condition);
+
+        // "!condition" negates (L2): {if:!user_logged_in}
+        if ($condition !== '' && $condition[0] === '!') {
+            return !$this->evaluate_condition(substr($condition, 1));
+        }
+
         switch ($condition) {
             case 'user_logged_in':
                 return is_user_logged_in();
@@ -794,6 +801,17 @@ class WP_Dynamic_Tags_Placeholders {
                 return is_page();
                 
             default:
+                // time_between(HH:MM,HH:MM): both ends inclusive; an end before the start is a window through midnight
+                // (22:00-06:00). The table renderer's own condition code is gone, this is its last condition (L2).
+                if (preg_match('/^time_between\(\s*(\d{1,2}):(\d{2})\s*,\s*(\d{1,2}):(\d{2})\s*\)$/', $condition, $matches)) {
+                    $now = explode(':', current_time('H:i'));
+                    return WP_Dynamic_Tags_Table_Shortcode_Processor::time_in_window(
+                        (int) $now[0] * 60 + (int) $now[1],
+                        (int) $matches[1] * 60 + (int) $matches[2],
+                        (int) $matches[3] * 60 + (int) $matches[4]
+                    );
+                }
+
                 // Check for user role conditions
                 if (strpos($condition, 'user_role:') === 0) {
                     $role = substr($condition, 10);
