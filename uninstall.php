@@ -276,11 +276,11 @@ function wp_dynamic_tags_uninstall() {
         // 3. Delete custom table if it exists
         $table_name = $wpdb->prefix . 'dynamic_tags';
 
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
             // Count records before deletion
-            $table_record_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            $table_record_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$table_name}`");
 
-            $wpdb->query("DROP TABLE IF EXISTS $table_name");
+            $wpdb->query("DROP TABLE IF EXISTS `{$table_name}`");
 
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log("WP Dynamic Tags: Dropped custom table with {$table_record_count} records");
@@ -329,23 +329,21 @@ function wp_dynamic_tags_uninstall() {
 
         foreach ($transients as $transient_prefix) {
             // Delete transients that match the prefix
+            // esc_like(): the underscores in these names are LIKE wildcards and would also match other plugins' rows (S8).
             $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$wpdb->options}
                     WHERE option_name LIKE %s
                     OR option_name LIKE %s",
-                    '_transient_' . $transient_prefix . '%',
-                    '_transient_timeout_' . $transient_prefix . '%'
+                    $wpdb->esc_like('_transient_' . $transient_prefix) . '%',
+                    $wpdb->esc_like('_transient_timeout_' . $transient_prefix) . '%'
                 )
             );
         }
 
-        // 6. Delete user meta
-        $wpdb->query(
-            "DELETE FROM {$wpdb->usermeta}
-            WHERE meta_key LIKE '_dt_%'
-            OR meta_key LIKE 'dt_%'"
-        );
+        // 6. Delete user meta: the exact key(s) this plugin writes. Pattern deletes (LIKE 'dt_%') removed other plugins'
+        // user meta for every user on the site (S8).
+        delete_metadata('user', 0, 'dt_menu_consolidation_dismissed', '', true);
 
         // 7. Clear any cached data
         wp_cache_flush();
@@ -365,7 +363,7 @@ function wp_dynamic_tags_uninstall() {
             )
         );
 
-        $final_table_exists = ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name);
+        $final_table_exists = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name);
 
         // 9. Log uninstall completion with summary
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -428,8 +426,8 @@ function wp_dynamic_tags_create_backup_before_deletion() {
 
         // Backup custom table
         $table_name = $wpdb->prefix . 'dynamic_tags';
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
-            $table_data = $wpdb->get_results("SELECT * FROM {$table_name}", ARRAY_A);
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
+            $table_data = $wpdb->get_results("SELECT * FROM `{$table_name}`", ARRAY_A);
             if (!empty($table_data)) {
                 $backup_data['data']['table'] = $table_data;
             }

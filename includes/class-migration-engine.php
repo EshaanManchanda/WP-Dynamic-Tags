@@ -258,7 +258,7 @@ class WP_Dynamic_Tags_Migration_Engine
         if (!is_string($raw)) {
             return $this->insert_lock($value) ? $token : null;
         }
-        $held = maybe_unserialize($raw);
+        $held = WP_Dynamic_Tags_Database_Manager::decode_meta($raw);
         if (is_array($held) && !WP_Dynamic_Tags_Migration_Planner::lock_is_stale((int) ($held['at'] ?? 0), time())) {
             return null;
         }
@@ -692,7 +692,7 @@ class WP_Dynamic_Tags_Migration_Engine
     {
         global $wpdb;
         $raw  = $wpdb->get_var($wpdb->prepare("SELECT meta_data FROM {$this->db->get_table_name()} WHERE id = %d", $row_id));
-        $meta = is_string($raw) && $raw !== '' ? maybe_unserialize($raw) : [];
+        $meta = is_string($raw) && $raw !== '' ? WP_Dynamic_Tags_Database_Manager::decode_meta($raw) : [];
         $meta = is_array($meta) ? $meta : [];
         $meta['legacy'] = WP_Dynamic_Tags_Migration_Planner::legacy_record($post, $aliases);
         return maybe_serialize($meta);
@@ -708,7 +708,7 @@ class WP_Dynamic_Tags_Migration_Engine
         global $wpdb;
         $table = $this->db->get_table_name();
         $raw   = $wpdb->get_var($wpdb->prepare("SELECT meta_data FROM {$table} WHERE id = %d", $row_id));
-        $meta  = is_string($raw) && $raw !== '' ? maybe_unserialize($raw) : [];
+        $meta  = is_string($raw) && $raw !== '' ? WP_Dynamic_Tags_Database_Manager::decode_meta($raw) : [];
         $meta  = is_array($meta) ? $meta : [];
         if (isset($meta['legacy']['aliases']) && $meta['legacy']['aliases'] === $plan['aliases']) {
             return;

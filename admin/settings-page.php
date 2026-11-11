@@ -178,7 +178,7 @@ class WP_Dynamic_Tags_Settings_Page {
         $groups_count = is_array($groups) ? count($groups) : 0;
 
         $table_tags_count = 0;
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
             $table_tags_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
         }
 

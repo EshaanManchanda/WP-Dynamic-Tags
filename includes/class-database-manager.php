@@ -149,7 +149,7 @@ class WP_Dynamic_Tags_Database_Manager {
     public function table_exists() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'dynamic_tags';
-        return $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+        return $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name;
     }
 
     /**
@@ -307,10 +307,47 @@ class WP_Dynamic_Tags_Database_Manager {
         );
 
         if ($tag && !empty($tag->meta_data)) {
-            $tag->meta_data = maybe_unserialize($tag->meta_data);
+            $tag->meta_data = self::decode_meta($tag->meta_data);
         }
 
         return $tag;
+    }
+
+    /**
+     * Decodes a stored meta_data value (S9). Rows hold either a PHP-serialized array (written by the facade) or JSON.
+     * maybe_unserialize() would instantiate any class named in the string, so a serialized object smuggled into a row by an
+     * import or a direct write could run code through its magic methods; here objects are never created
+     * (allowed_classes is false) and only arrays are returned for serialized/JSON data. A plain string that is neither
+     * serialized nor JSON is returned unchanged, exactly as maybe_unserialize() did.
+     *
+     * Pure (no WordPress calls) so it is unit tested directly.
+     *
+     * @param mixed $raw
+     * @return mixed
+     */
+    public static function decode_meta($raw) {
+        if (!is_string($raw) || $raw === '') {
+            return $raw;
+        }
+
+        $trimmed = trim($raw);
+        if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+            $decoded = json_decode($trimmed, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Serialized values look like a:1:{...}, O:8:"stdClass":0:{}, s:3:"abc";, b:1; i:5; d:1.5; N;
+        if (preg_match('/^(?:[aOCsbidE]:|N;)/', $trimmed) === 1) {
+            $value = @unserialize($trimmed, array('allowed_classes' => false));
+            if ($value === false && $trimmed !== 'b:0;') {
+                return array();
+            }
+            return is_array($value) ? $value : array();
+        }
+
+        return $raw;
     }
 
     /**
@@ -324,7 +361,7 @@ class WP_Dynamic_Tags_Database_Manager {
         );
 
         if ($tag && !empty($tag->meta_data)) {
-            $tag->meta_data = maybe_unserialize($tag->meta_data);
+            $tag->meta_data = self::decode_meta($tag->meta_data);
         }
 
         return $tag;
@@ -341,7 +378,7 @@ class WP_Dynamic_Tags_Database_Manager {
         );
 
         if ($tag && !empty($tag->meta_data)) {
-            $tag->meta_data = maybe_unserialize($tag->meta_data);
+            $tag->meta_data = self::decode_meta($tag->meta_data);
         }
 
         return $tag;
@@ -422,7 +459,7 @@ class WP_Dynamic_Tags_Database_Manager {
         if ($tags) {
             foreach ($tags as $tag) {
                 if (!empty($tag->meta_data)) {
-                    $tag->meta_data = maybe_unserialize($tag->meta_data);
+                    $tag->meta_data = self::decode_meta($tag->meta_data);
                 }
             }
         }

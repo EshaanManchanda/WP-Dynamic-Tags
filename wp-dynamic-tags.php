@@ -114,6 +114,7 @@ class WP_Dynamic_Tags_Plugin
     private function __construct()
     {
         add_action('init', array($this, 'init'));
+        add_filter('user_has_cap', array($this, 'grant_tag_capabilities'));
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_init', array($this, 'handle_quick_create'));
         add_action('admin_init', array($this, 'handle_conflict_resolution_actions'));
@@ -205,6 +206,28 @@ class WP_Dynamic_Tags_Plugin
     }
 
     /**
+     * Grants the tag post type's own capabilities to everyone who holds the management capability (S4).
+     * Filter dt_manage_capability (default manage_options) lets a site hand tag management to another capability.
+     *
+     * @param array<string, bool> $allcaps All capabilities of the user being checked.
+     * @return array<string, bool>
+     */
+    public function grant_tag_capabilities($allcaps)
+    {
+        $manage = (string) apply_filters('dt_manage_capability', 'manage_options');
+        if (!empty($allcaps[$manage])) {
+            foreach (array(
+                'edit_dynamic_tags', 'edit_others_dynamic_tags', 'publish_dynamic_tags', 'read_private_dynamic_tags',
+                'delete_dynamic_tags', 'delete_private_dynamic_tags', 'delete_published_dynamic_tags',
+                'delete_others_dynamic_tags', 'edit_private_dynamic_tags', 'edit_published_dynamic_tags',
+            ) as $cap) {
+                $allcaps[$cap] = true;
+            }
+        }
+        return $allcaps;
+    }
+
+    /**
      * Register Custom Post Type for Dynamic Tags
      */
     public function register_post_type()
@@ -224,6 +247,11 @@ class WP_Dynamic_Tags_Plugin
             'not_found_in_trash' => __('No tags found in trash', 'wp-dynamic-tags'),
         );
 
+        // A tag registers a site-wide shortcode and can read data through tokens, so creating one is an administrator
+        // capability (S4). With capability_type "post" every Author could publish tags. The type gets its own
+        // capabilities (edit_dynamic_tags, ...), granted to whoever holds manage_options by grant_tag_capabilities().
+        // They must NOT be mapped onto manage_options itself: with map_meta_cap WordPress then treats manage_options
+        // as the meta capability edit_post and denies it to everybody (found by the test for this change).
         $args = array(
             'labels' => $labels,
             'public' => false,
@@ -232,7 +260,8 @@ class WP_Dynamic_Tags_Plugin
             'show_in_menu' => true,
             'query_var' => false,
             'rewrite' => false,
-            'capability_type' => 'post',
+            'capability_type' => array('dynamic_tag', 'dynamic_tags'),
+            'map_meta_cap' => true,
             'has_archive' => false,
             'hierarchical' => false,
             'menu_position' => 30,
@@ -4653,7 +4682,7 @@ class WP_Dynamic_Tags_Plugin
 
         // Check for existing custom table data
         $table_name = $wpdb->prefix . 'dynamic_tags';
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
             $table_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'active'");
             $existing_data['table_tags_count'] = intval($table_count);
         }
@@ -4978,7 +5007,7 @@ class WP_Dynamic_Tags_Plugin
 
         // Check if we have existing data in custom table
         $table_name = $wpdb->prefix . 'dynamic_tags';
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") !== $table_name) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) !== $table_name) {
             return; // Table doesn't exist, nothing to restore
         }
 

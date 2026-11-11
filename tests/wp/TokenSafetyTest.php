@@ -147,6 +147,31 @@ class DT_Token_Safety_Test extends WP_UnitTestCase
         $this->assertSame('', $this->engine()->process_placeholders('{user_meta:' . $GLOBALS['wpdb']->prefix . 'capabilities}'));
     }
 
+    // ------------------------------------------------------------------ S4 (who may create tags)
+
+    public function test_only_administrators_can_create_publish_or_edit_tag_posts(): void
+    {
+        $author = self::factory()->user->create(['role' => 'author']);
+        $contributor = self::factory()->user->create(['role' => 'contributor']);
+        $editor = self::factory()->user->create(['role' => 'editor']);
+        $admin = self::factory()->user->create(['role' => 'administrator']);
+
+        $pt = get_post_type_object('dynamic_tag');
+        wp_set_current_user($admin);
+        $tag = wp_insert_post(['post_title' => 's4 tag', 'post_content' => 'x', 'post_status' => 'publish', 'post_type' => 'dynamic_tag']);
+
+        foreach (['author' => $author, 'contributor' => $contributor, 'editor' => $editor] as $role => $id) {
+            $this->assertFalse(user_can($id, $pt->cap->create_posts), "$role must not create tags");
+            $this->assertFalse(user_can($id, $pt->cap->publish_posts), "$role must not publish tags");
+            $this->assertFalse(user_can($id, $pt->cap->edit_posts), "$role must not edit tags");
+            $this->assertFalse(user_can($id, 'edit_post', $tag), "$role must not edit an existing tag");
+            $this->assertFalse(user_can($id, 'delete_post', $tag), "$role must not delete an existing tag");
+        }
+        $this->assertTrue(user_can($admin, $pt->cap->create_posts), "an administrator must create tags");
+        $this->assertTrue(user_can($admin, "manage_options"), "registering the type must not take manage_options away from administrators");
+        $this->assertTrue(user_can($admin, 'edit_post', $tag));
+    }
+
     // ------------------------------------------------------------------ S1 ([dt_loop] substitution)
 
     /** Registers a data source whose rows are attacker-controlled, like the JSON of a remote {api:} call. */

@@ -272,14 +272,9 @@ class WP_Dynamic_Tags_Placeholders {
         // Generic placeholder pass: {key}, {key:arg}, {key|formatter}, {key??fallback}, etc.
         $content = preg_replace_callback('/\{([a-z_][^{}]*)\}/i', array($this, 'replace_generic_token'), $content);
 
-        // Handle square bracket placeholders (for backward compatibility)
-        $original_content = $content;
+        // Handle square bracket placeholders (for backward compatibility). The per-call debug logging that wrote the whole
+        // tag content (which can contain personal data) to debug.log is gone (L3).
         $content = preg_replace_callback('/\[([a-z_]+[0-9]*)\]/', array($this, 'replace_square_bracket_placeholder'), $content);
-
-        // Debug logging for square bracket replacements
-        if (defined('WP_DEBUG') && WP_DEBUG && $original_content !== $content) {
-            error_log("WP Dynamic Tags: Square bracket replacement - Before: " . $original_content . " | After: " . $content);
-        }
 
         return $content;
     }
@@ -685,37 +680,13 @@ class WP_Dynamic_Tags_Placeholders {
     private function replace_square_bracket_placeholder($matches) {
         $placeholder = $matches[1];
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WP Dynamic Tags: Attempting to replace square bracket placeholder: [$placeholder]");
-        }
-
-        // Handle specific date placeholders
-        $date_mappings = array(
-            'date1' => '25th Aug 2056',
-            'date2' => '26 Aug 2025',
-            'tagname' => 'dynamic_tag_name' // This could be dynamically replaced
-        );
-
-        if (isset($date_mappings[$placeholder])) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("WP Dynamic Tags: Found mapping for [$placeholder] -> " . $date_mappings[$placeholder]);
-            }
-            return $date_mappings[$placeholder];
-        }
-
-        // Check if it exists in the regular placeholder system
+        // Check if it exists in the regular placeholder system. (Hardcoded demo values for [date1], [date2] and
+        // [tagname] that were once mapped here replaced real text in production content; removed, L3.)
         if (isset($this->placeholders[$placeholder])) {
             $callback = $this->placeholders[$placeholder];
             if (is_callable($callback)) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log("WP Dynamic Tags: Using callback for placeholder: $placeholder");
-                }
                 return call_user_func($callback);
             }
-        }
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WP Dynamic Tags: No replacement found for placeholder: [$placeholder], returning original");
         }
 
         // Return original if not found

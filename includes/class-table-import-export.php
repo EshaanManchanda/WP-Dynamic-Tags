@@ -205,7 +205,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
                 'priority' => $tag->priority,
                 'usage_count' => $tag->usage_count,
                 'status' => $tag->status,
-                'meta_data' => is_string($tag->meta_data) ? maybe_unserialize($tag->meta_data) : $tag->meta_data,
+                'meta_data' => WP_Dynamic_Tags_Database_Manager::decode_meta($tag->meta_data),
                 'created_date' => $tag->created_date,
                 'modified_date' => $tag->modified_date,
                 'last_used_date' => $tag->last_used_date
