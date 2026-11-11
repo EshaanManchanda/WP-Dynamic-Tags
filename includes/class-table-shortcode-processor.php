@@ -647,7 +647,9 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Generate cache key
      */
     private function get_cache_key($tag, $atts) {
-        return 'dt_cache_' . $tag->id . '_' . md5(serialize($atts));
+        // The output depends on where and for whom a tag is rendered ({post_title}, {meta:}, {user_role}, ...): the same tag
+        // shown in several posts of one archive page, or after the current user changed, must not reuse the first output.
+        return 'dt_cache_' . $tag->id . '_' . md5(serialize($atts)) . '_' . (int) get_the_ID() . '_' . get_current_user_id();
     }
 
     /**

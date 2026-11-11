@@ -67,6 +67,36 @@ class DT_Unified_Render_Test extends WP_UnitTestCase
         $this->assertSame('see inner-' . strtolower(get_bloginfo('name')), do_shortcode('[u_outer cache="false"]'));
     }
 
+    // ------------------------------------------------------------------ the per-request output cache must know who and where
+
+    /**
+     * Post-origin tags never had an output cache; now that every tag goes through the table processor's per-request cache,
+     * its key has to include the current post and user, or an archive page that shows the same tag in several posts would
+     * print the first post's {post_title} everywhere.
+     */
+    public function test_the_output_cache_does_not_leak_one_posts_output_into_another(): void
+    {
+        $a = self::factory()->post->create(array('post_title' => 'Post A'));
+        $b = self::factory()->post->create(array('post_title' => 'Post B'));
+        $this->seed('u_ctx', '{post_title}');
+
+        foreach (array($a => 'Post A', $b => 'Post B', $a . '' => 'Post A') as $id => $title) {
+            $this->go_to(get_permalink((int) $id));
+            $GLOBALS['post'] = get_post((int) $id);
+            setup_postdata($GLOBALS['post']);
+            $this->assertSame($title, do_shortcode('[u_ctx]'), 'default cache="true"');
+        }
+    }
+
+    public function test_the_output_cache_does_not_leak_one_users_output_into_another(): void
+    {
+        $this->seed('u_who', '{user_role}');
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
+        $this->assertSame('editor', do_shortcode('[u_who]'));
+        wp_set_current_user(self::factory()->user->create(array('role' => 'subscriber')));
+        $this->assertSame('subscriber', do_shortcode('[u_who]'));
+    }
+
     // ------------------------------------------------------------------ one condition set, in the engine
 
     public function test_the_engine_understands_negation(): void
