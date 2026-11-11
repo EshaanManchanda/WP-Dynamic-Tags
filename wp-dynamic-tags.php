@@ -5118,38 +5118,8 @@ class WP_Dynamic_Tags_Plugin
             $this->table_manager_admin = new WP_Dynamic_Tags_Table_Manager_Admin();
         }
 
-        // Ensure shortcodes are registered from existing data (important for reinstalls)
-        $this->ensure_existing_shortcodes_registered();
-    }
-
-    /**
-     * Ensure existing shortcodes from database are registered
-     * Important for when plugin is reinstalled with existing data
-     */
-    private function ensure_existing_shortcodes_registered()
-    {
-        global $wpdb;
-
-        // Check if we have existing data in custom table
-        $table_name = $wpdb->prefix . 'dynamic_tags';
-        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) !== $table_name) {
-            return; // Table doesn't exist, nothing to restore
-        }
-
-        // Count active tags in table
-        $tag_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'active'");
-
-        if ($tag_count > 0) {
-            // We have existing data - ensure shortcodes will be registered
-            // The table_shortcode_processor will handle this automatically via its 'init' hook
-            // But we'll clear any locks to ensure registration happens
-            delete_transient('dt_registration_lock');
-            delete_transient('dt_table_registration_lock');
-
-            if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-                error_log("WP Dynamic Tags: Found {$tag_count} existing tags in database, shortcodes will be auto-registered");
-            }
-        }
+        // Shortcodes of existing tags are registered by the table processor on init (also after a reinstall). A SHOW TABLES
+        // and a COUNT(*) used to run here on every request just to clear two registration locks; the locks are gone.
     }
 
     /**

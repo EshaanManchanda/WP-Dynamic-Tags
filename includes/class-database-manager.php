@@ -16,6 +16,9 @@ class WP_Dynamic_Tags_Database_Manager {
     private $table_version = '1.0.0';
     private $charset_collate;
 
+    /** @var bool|null The answer of the one SHOW TABLES this request made; null until asked. */
+    private $table_found = null;
+
     public function __construct() {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'dynamic_tags';
@@ -117,8 +120,8 @@ class WP_Dynamic_Tags_Database_Manager {
         try {
             $result = dbDelta($sql);
 
-            // Verify table was created successfully
-            if ($this->table_exists()) {
+            // Verify table was created successfully (a real check, not the stored version)
+            if ($this->table_exists(true)) {
                 // Update table version
                 update_option('wp_dynamic_tags_table_version', $this->table_version);
 
@@ -146,10 +149,21 @@ class WP_Dynamic_Tags_Database_Manager {
     /**
      * Check if table exists
      */
-    public function table_exists() {
+    public function table_exists($verify = false) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'dynamic_tags';
-        return $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name;
+
+        // The schema version that create_table() stores after it saw the table is trusted: a normal request never asks
+        // the database (it did, with SHOW TABLES, on every facade call: 26 times per request). Without a stored version
+        // the table is checked once per request. $verify = true always asks (admin health check, create_table()).
+        if (!$verify && get_option('wp_dynamic_tags_table_version') === $this->table_version) {
+            return true;
+        }
+
+        if ($verify || $this->table_found === null) {
+            $table_name = $wpdb->prefix . 'dynamic_tags';
+            $this->table_found = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name;
+        }
+        return $this->table_found;
     }
 
     /**
@@ -173,6 +187,7 @@ class WP_Dynamic_Tags_Database_Manager {
         global $wpdb;
         $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
         delete_option('wp_dynamic_tags_table_version');
+        $this->table_found = null;
     }
 
     /**

@@ -685,7 +685,7 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
      * Render status overview
      */
     private function render_status_overview($db_manager, $migration_manager, $bridge) {
-        $table_exists = $db_manager->table_exists();
+        $table_exists = $db_manager->table_exists(true);
         $migration_status = $migration_manager->get_migration_status();
         $sync_stats = $bridge ? $bridge->get_sync_statistics() : null;
 
@@ -1252,7 +1252,7 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
         }
 
         // Check if table already exists
-        if ($db_manager->table_exists()) {
+        if ($db_manager->table_exists(true)) {
             wp_send_json_success(array(
                 'message' => __('Table already exists.', 'wp-dynamic-tags'),
                 'already_exists' => true
@@ -1267,7 +1267,7 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
         }
 
         // Verify table was created
-        if ($db_manager->table_exists()) {
+        if ($db_manager->table_exists(true)) {
             // Clear any previous error flags
             delete_option('wp_dynamic_tags_table_creation_error');
 
@@ -1300,7 +1300,7 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
         $health_report = array();
 
         // Check if table exists
-        $table_exists = $db_manager->table_exists();
+        $table_exists = $db_manager->table_exists(true);
         $health_report['table_exists'] = $table_exists;
 
         if ($table_exists) {

@@ -40,6 +40,7 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         update_option('_transient_dt_tag_groups_demo', 'drop');
 
         update_option('wp_dynamic_tags_delete_on_uninstall', true);
+        update_option('wp_dynamic_tags_table_version', '1.0.0');
         define('WP_UNINSTALL_PLUGIN', true);
         require dirname(__DIR__, 2) . '/uninstall.php';
 
@@ -49,5 +50,6 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         $this->assertSame('keep', get_user_meta($user, 'xdt_foo', true));
         $this->assertSame('keep', get_option('_transient_dtxtagxgroupsx_foreign'), 'a foreign transient survives');
         $this->assertFalse(get_option('_transient_dt_tag_groups_demo'), 'our transient is removed');
+        $this->assertFalse(get_option('wp_dynamic_tags_table_version'), 'the stored schema version must not outlive the dropped table');
     }
 }

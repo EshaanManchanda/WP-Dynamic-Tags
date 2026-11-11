@@ -25,23 +25,32 @@ global $wpdb, $shortcode_tags;
 
 /** Classifies the queries recorded so far. */
 $classify = static function (array $queries): array {
+    // The clone runs every plugin of the site, so the totals include the sibling plugins' queries (the Certificate
+    // Generator alone issues 22 SHOW TABLES per boot). The ours_* counters keep only queries whose call stack passes
+    // through this plugin (class names start with WP_Dynamic_Tags): that is what gate 4 is about.
     $out = ['total' => 0, 'select' => 0, 'insert' => 0, 'update' => 0, 'delete' => 0, 'show' => 0, 'other' => 0,
-            'writes' => 0, 'transient_writes' => 0, 'schema_checks' => 0, 'time_ms' => 0.0];
+            'writes' => 0, 'transient_writes' => 0, 'schema_checks' => 0, 'time_ms' => 0.0,
+            'ours_total' => 0, 'ours_writes' => 0, 'ours_transient_writes' => 0, 'ours_schema_checks' => 0];
     foreach ($queries as $q) {
         $sql = ltrim($q[0]);
+        $ours = stripos((string) ($q[2] ?? ''), 'WP_Dynamic_Tags') !== false;
         $out['total']++;
+        $out['ours_total'] += $ours ? 1 : 0;
         $out['time_ms'] += $q[1] * 1000;
         $verb = strtolower(strtok($sql, " \t\n("));
         $key = in_array($verb, ['select', 'insert', 'update', 'delete', 'show'], true) ? $verb : 'other';
         $out[$key]++;
         if (in_array($verb, ['insert', 'update', 'delete', 'replace'], true)) {
             $out['writes']++;
+            $out['ours_writes'] += $ours ? 1 : 0;
             if (str_contains($sql, '_transient_') || str_contains($sql, '_site_transient_')) {
                 $out['transient_writes']++;
+                $out['ours_transient_writes'] += $ours ? 1 : 0;
             }
         }
         if ($verb === 'show' || str_contains(strtolower($sql), 'information_schema') || str_starts_with(strtolower($sql), 'create table')) {
             $out['schema_checks']++;
+            $out['ours_schema_checks'] += $ours ? 1 : 0;
         }
     }
     $out['time_ms'] = round($out['time_ms'], 2);

@@ -38,7 +38,10 @@ $med = [ordered]@{
     boot_writes = Med ($runs | ForEach-Object { $_.boot.queries.writes }); boot_transient_writes = Med ($runs | ForEach-Object { $_.boot.queries.transient_writes })
     boot_schema_checks = Med ($runs | ForEach-Object { $_.boot.queries.schema_checks }); perf_shortcodes_registered = Med ($runs | ForEach-Object { $_.boot.perf_shortcodes_registered })
     render_calls = $runs[0].render.calls; render_ms = Med ($runs | ForEach-Object { $_.render.ms }); render_mem_growth_kb = Med ($runs | ForEach-Object { $_.render.mem_growth_kb })
+    boot_ours_queries = Med ($runs | ForEach-Object { $_.boot.queries.ours_total }); boot_ours_writes = Med ($runs | ForEach-Object { $_.boot.queries.ours_writes })
+    boot_ours_transient_writes = Med ($runs | ForEach-Object { $_.boot.queries.ours_transient_writes }); boot_ours_schema_checks = Med ($runs | ForEach-Object { $_.boot.queries.ours_schema_checks })
     render_queries_total = Med ($runs | ForEach-Object { $_.render.queries.total }); render_writes = Med ($runs | ForEach-Object { $_.render.queries.writes })
+    render_ours_writes = Med ($runs | ForEach-Object { $_.render.queries.ours_writes })
     render_rendered_non_empty = Med ($runs | ForEach-Object { $_.render.rendered_non_empty })
 }
 $doc = [ordered]@{ medians = $med; runs = $runs }
