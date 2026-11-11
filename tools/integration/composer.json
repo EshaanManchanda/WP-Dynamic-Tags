@@ -1,0 +1,11 @@
+{
+  "name": "eshaanmanchanda/wp-dynamic-tags-tools-integration",
+  "description": "WordPress core test suite (needs PHPUnit 9.6), isolated from the PHPUnit 10 unit suite. Not shipped.",
+  "type": "project",
+  "require-dev": {
+    "wp-phpunit/wp-phpunit": "*",
+    "yoast/phpunit-polyfills": "^2.0",
+    "phpunit/phpunit": "^9.6"
+  },
+  "config": { "platform": { "php": "8.2.29" }, "sort-packages": true }
+}

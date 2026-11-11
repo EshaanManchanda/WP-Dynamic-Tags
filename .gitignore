@@ -8,3 +8,9 @@
 .DS_Store
 .phpunit.result.cache
 /tests/golden-master/current/
+
+/tools/*/vendor/
+/tools/*/composer.lock.bak
+/tests/e2e/node_modules/
+/tests/e2e/test-results/
+/tests/e2e/playwright-report/

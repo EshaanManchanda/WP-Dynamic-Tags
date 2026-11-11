@@ -1,0 +1,234 @@
+﻿{
+    "medians":  {
+                    "label":  "baseline-pre-refactor",
+                    "php":  "8.2.29",
+                    "tag_rows":  5000,
+                    "samples":  5,
+                    "boot_ms":  1561.8,
+                    "boot_peak_mb":  78,
+                    "boot_queries_total":  68,
+                    "boot_selects":  34,
+                    "boot_writes":  8,
+                    "boot_transient_writes":  8,
+                    "boot_schema_checks":  26,
+                    "perf_shortcodes_registered":  5000,
+                    "render_calls":  40,
+                    "render_ms":  169.82,
+                    "render_mem_growth_kb":  60.7,
+                    "render_queries_total":  40,
+                    "render_writes":  40,
+                    "render_rendered_non_empty":  40
+                },
+    "runs":  [
+                 {
+                     "db":  "local_perf",
+                     "php":  "8.2.29",
+                     "tag_rows":  5000,
+                     "boot":  {
+                                  "ms":  1328.7,
+                                  "peak_mb":  78,
+                                  "queries":  {
+                                                  "total":  68,
+                                                  "select":  34,
+                                                  "insert":  4,
+                                                  "update":  0,
+                                                  "delete":  4,
+                                                  "show":  26,
+                                                  "other":  0,
+                                                  "writes":  8,
+                                                  "transient_writes":  8,
+                                                  "schema_checks":  26,
+                                                  "time_ms":  101.43
+                                              },
+                                  "perf_shortcodes_registered":  5000
+                              },
+                     "render":  {
+                                    "calls":  40,
+                                    "ms":  145.62,
+                                    "mem_growth_kb":  60.7,
+                                    "queries":  {
+                                                    "total":  40,
+                                                    "select":  0,
+                                                    "insert":  0,
+                                                    "update":  40,
+                                                    "delete":  0,
+                                                    "show":  0,
+                                                    "other":  0,
+                                                    "writes":  40,
+                                                    "transient_writes":  0,
+                                                    "schema_checks":  0,
+                                                    "time_ms":  95.99
+                                                },
+                                    "rendered_non_empty":  40
+                                }
+                 },
+                 {
+                     "db":  "local_perf",
+                     "php":  "8.2.29",
+                     "tag_rows":  5000,
+                     "boot":  {
+                                  "ms":  1531.4,
+                                  "peak_mb":  78,
+                                  "queries":  {
+                                                  "total":  68,
+                                                  "select":  34,
+                                                  "insert":  4,
+                                                  "update":  0,
+                                                  "delete":  4,
+                                                  "show":  26,
+                                                  "other":  0,
+                                                  "writes":  8,
+                                                  "transient_writes":  8,
+                                                  "schema_checks":  26,
+                                                  "time_ms":  156.96
+                                              },
+                                  "perf_shortcodes_registered":  5000
+                              },
+                     "render":  {
+                                    "calls":  40,
+                                    "ms":  207.47,
+                                    "mem_growth_kb":  60.7,
+                                    "queries":  {
+                                                    "total":  40,
+                                                    "select":  0,
+                                                    "insert":  0,
+                                                    "update":  40,
+                                                    "delete":  0,
+                                                    "show":  0,
+                                                    "other":  0,
+                                                    "writes":  40,
+                                                    "transient_writes":  0,
+                                                    "schema_checks":  0,
+                                                    "time_ms":  153.96
+                                                },
+                                    "rendered_non_empty":  40
+                                }
+                 },
+                 {
+                     "db":  "local_perf",
+                     "php":  "8.2.29",
+                     "tag_rows":  5000,
+                     "boot":  {
+                                  "ms":  1597.7,
+                                  "peak_mb":  78,
+                                  "queries":  {
+                                                  "total":  68,
+                                                  "select":  34,
+                                                  "insert":  4,
+                                                  "update":  0,
+                                                  "delete":  4,
+                                                  "show":  26,
+                                                  "other":  0,
+                                                  "writes":  8,
+                                                  "transient_writes":  8,
+                                                  "schema_checks":  26,
+                                                  "time_ms":  107.68
+                                              },
+                                  "perf_shortcodes_registered":  5000
+                              },
+                     "render":  {
+                                    "calls":  40,
+                                    "ms":  166.9,
+                                    "mem_growth_kb":  60.7,
+                                    "queries":  {
+                                                    "total":  40,
+                                                    "select":  0,
+                                                    "insert":  0,
+                                                    "update":  40,
+                                                    "delete":  0,
+                                                    "show":  0,
+                                                    "other":  0,
+                                                    "writes":  40,
+                                                    "transient_writes":  0,
+                                                    "schema_checks":  0,
+                                                    "time_ms":  113.56
+                                                },
+                                    "rendered_non_empty":  40
+                                }
+                 },
+                 {
+                     "db":  "local_perf",
+                     "php":  "8.2.29",
+                     "tag_rows":  5000,
+                     "boot":  {
+                                  "ms":  1561.8,
+                                  "peak_mb":  78,
+                                  "queries":  {
+                                                  "total":  68,
+                                                  "select":  34,
+                                                  "insert":  4,
+                                                  "update":  0,
+                                                  "delete":  4,
+                                                  "show":  26,
+                                                  "other":  0,
+                                                  "writes":  8,
+                                                  "transient_writes":  8,
+                                                  "schema_checks":  26,
+                                                  "time_ms":  265.95
+                                              },
+                                  "perf_shortcodes_registered":  5000
+                              },
+                     "render":  {
+                                    "calls":  40,
+                                    "ms":  169.82,
+                                    "mem_growth_kb":  60.7,
+                                    "queries":  {
+                                                    "total":  40,
+                                                    "select":  0,
+                                                    "insert":  0,
+                                                    "update":  40,
+                                                    "delete":  0,
+                                                    "show":  0,
+                                                    "other":  0,
+                                                    "writes":  40,
+                                                    "transient_writes":  0,
+                                                    "schema_checks":  0,
+                                                    "time_ms":  116.54
+                                                },
+                                    "rendered_non_empty":  40
+                                }
+                 },
+                 {
+                     "db":  "local_perf",
+                     "php":  "8.2.29",
+                     "tag_rows":  5000,
+                     "boot":  {
+                                  "ms":  1611.7,
+                                  "peak_mb":  78,
+                                  "queries":  {
+                                                  "total":  68,
+                                                  "select":  34,
+                                                  "insert":  4,
+                                                  "update":  0,
+                                                  "delete":  4,
+                                                  "show":  26,
+                                                  "other":  0,
+                                                  "writes":  8,
+                                                  "transient_writes":  8,
+                                                  "schema_checks":  26,
+                                                  "time_ms":  120.78
+                                              },
+                                  "perf_shortcodes_registered":  5000
+                              },
+                     "render":  {
+                                    "calls":  40,
+                                    "ms":  181.34,
+                                    "mem_growth_kb":  60.7,
+                                    "queries":  {
+                                                    "total":  40,
+                                                    "select":  0,
+                                                    "insert":  0,
+                                                    "update":  40,
+                                                    "delete":  0,
+                                                    "show":  0,
+                                                    "other":  0,
+                                                    "writes":  40,
+                                                    "transient_writes":  0,
+                                                    "schema_checks":  0,
+                                                    "time_ms":  127.4
+                                                },
+                                    "rendered_non_empty":  40
+                                }
+                 }
+             ]
+}

@@ -1,0 +1,25 @@
+{
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "name": "eshaanmanchanda/wp-dynamic-tags-tools-static",
+  "description": "Isolated static-analysis toolchain (not shipped with the plugin).",
+  "type": "project",
+  "require-dev": {
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
+    "phpcompatibility/php-compatibility": "10.x-dev as 9.99.0",
+    "squizlabs/php_codesniffer": "^4.0",
+    "vimeo/psalm": "^5.26",
+    "humanmade/psalm-plugin-wordpress": "^3.1",
+    "johnbillion/wp-compat": "^1.0",
+    "phpstan/phpstan": "^2.0",
+    "szepeviktor/phpstan-wordpress": "^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "composer/package-versions-deprecated": true
+    },
+    "platform": { "php": "8.2.29" },
+    "sort-packages": true
+  }
+}
