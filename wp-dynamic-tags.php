@@ -440,7 +440,9 @@ class WP_Dynamic_Tags_Plugin
     // REMOVED: All alias registration to ensure single shortcode per tag
 
     /**
-     * Fallback shortcode handler - UPDATED to work with new data structure
+     * Fallback shortcode handler - [dt tag="name" default="..."]. The tag is looked up in the table (its shortcode, the key
+     * normalized, its name, a legacy alias) and rendered like its own shortcode; the output is filtered with wp_kses_post
+     * as it always was.
      */
     public function fallback_shortcode($atts)
     {
@@ -456,27 +458,30 @@ class WP_Dynamic_Tags_Plugin
             return '';
         }
 
-        $tags = $this->get_dynamic_tags();
-        $sanitized_key = $this->sanitize_tag_key($key);
-
-        // Find tag by matching tag_key in the new structure
-        foreach ($tags as $unique_key => $tag_data) {
-            if ($tag_data['tag_key'] === $sanitized_key) {
-                $value = $tag_data['content'];
-                // Process dynamic placeholders if available
-                if ($this->placeholders) {
-                    $value = apply_filters('dt_process_value', $value);
-                }
-                $value = wp_kses_post($value);
-                return $value !== '' ? $value : $atts['default'];
-            }
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+        $tag = $processor->find_tag($key);
+        if (!$tag) {
+            return $atts['default'];
         }
 
-        return $atts['default'];
+        $value = wp_kses_post($processor->render_row($tag));
+        return $value !== '' ? $value : $atts['default'];
     }
 
     /**
-     * Group shortcode handler - [dt_group group="contact"]
+     * Term id of a tag group given by name or slug, 0 when there is none.
+     */
+    private function group_term_id($group)
+    {
+        $term = get_term_by('name', $group, 'tag_groups');
+        if (!$term) {
+            $term = get_term_by('slug', $group, 'tag_groups');
+        }
+        return $term ? (int) $term->term_id : 0;
+    }
+
+    /**
+     * Group shortcode handler - [dt_group group="contact"]: the active tags of a group, from the table.
      */
     public function group_shortcode($atts)
     {
@@ -495,48 +500,21 @@ class WP_Dynamic_Tags_Plugin
             return '';
         }
 
-        // Get group by name or slug
-        $group = get_term_by('name', $atts['group'], 'tag_groups');
-        if (!$group) {
-            $group = get_term_by('slug', $atts['group'], 'tag_groups');
-        }
-
-        if (!$group) {
+        $term_id = $this->group_term_id($atts['group']);
+        if (!$term_id) {
             return '';
         }
 
-        // Get tags in this group
-        $posts = get_posts(array(
-            'post_type' => $this->post_type,
-            'post_status' => 'publish',
-            'posts_per_page' => intval($atts['limit']),
-            'orderby' => $atts['orderby'],
-            'order' => strtoupper($atts['order']),
-            'tax_query' => array(
-                array(
-                    'taxonomy' => 'tag_groups',
-                    'field' => 'term_id',
-                    'terms' => $group->term_id
-                )
-            )
-        ));
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+        $tags = $processor->active_tags($term_id, $atts['orderby'], $atts['order'], intval($atts['limit']));
 
-        if (empty($posts)) {
+        if (empty($tags)) {
             return '';
         }
 
         $values = array();
-        foreach ($posts as $post) {
-            $value = $post->post_content;
-            // Process dynamic placeholders if available
-            if ($this->placeholders) {
-                $value = apply_filters('dt_process_value', $value);
-            }
-            $values[] = wp_kses_post($value);
-
-            // Update usage statistics
-            $tag_key = $this->sanitize_tag_key($post->post_title);
-            $this->update_tag_usage($tag_key);
+        foreach ($tags as $tag) {
+            $values[] = wp_kses_post($processor->render_row($tag));
         }
 
         // Format output
@@ -569,57 +547,27 @@ class WP_Dynamic_Tags_Plugin
 
         $count = max(1, intval($atts['count']));
 
-        // Build query args
-        $query_args = array(
-            'post_type' => $this->post_type,
-            'post_status' => 'publish',
-            'posts_per_page' => $count,
-            'orderby' => 'rand'
-        );
+        // A group name that does not exist filters nothing (as before): every active tag is a candidate.
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+        $term_id = !empty($atts['group']) ? $this->group_term_id($atts['group']) : 0;
+        $tags = $term_id ? $processor->active_tags($term_id) : $processor->all_active_tags();
 
-        // Add group filter if specified
-        if (!empty($atts['group'])) {
-            $group = get_term_by('name', $atts['group'], 'tag_groups');
-            if (!$group) {
-                $group = get_term_by('slug', $atts['group'], 'tag_groups');
-            }
-
-            if ($group) {
-                $query_args['tax_query'] = array(
-                    array(
-                        'taxonomy' => 'tag_groups',
-                        'field' => 'term_id',
-                        'terms' => $group->term_id
-                    )
-                );
-            }
-        }
-
-        $posts = get_posts($query_args);
-
-        if (empty($posts)) {
+        if (empty($tags)) {
             return '';
         }
 
-        $values = array();
-        foreach ($posts as $post) {
-            $value = $post->post_content;
-            // Process dynamic placeholders if available
-            if ($this->placeholders) {
-                $value = apply_filters('dt_process_value', $value);
-            }
-            $values[] = wp_kses_post($value);
+        shuffle($tags);
 
-            // Update usage statistics
-            $tag_key = $this->sanitize_tag_key($post->post_title);
-            $this->update_tag_usage($tag_key);
+        $values = array();
+        foreach (array_slice($tags, 0, $count) as $tag) {
+            $values[] = wp_kses_post($processor->render_row($tag));
         }
 
         return $count === 1 ? $values[0] : implode(' ', $values);
     }
 
     /**
-     * Optimized count shortcode - [dt_count group="seo"]
+     * Count shortcode - [dt_count group="seo"]
      */
     public function count_shortcode($atts)
     {
@@ -628,7 +576,6 @@ class WP_Dynamic_Tags_Plugin
             'format' => 'number' // number, text
         ), $atts, 'dt_count');
 
-        // Use optimized counting method
         $count = $this->get_dynamic_tags_count($atts['group']);
 
         if ($atts['format'] === 'text') {
@@ -639,56 +586,21 @@ class WP_Dynamic_Tags_Plugin
     }
 
     /**
-     * Optimized counting method using direct SQL
+     * Number of active tags, in every group or in one group (name or slug; an unknown group has none). The registry of the
+     * request is already loaded, a group costs one COUNT query.
      */
     private function get_dynamic_tags_count($group_name = '')
     {
-        global $wpdb;
-
-        $cache_key = 'count_' . ($group_name ? md5($group_name) : 'all');
-
-        // Check static cache first
-        if (isset(self::$static_cache[$cache_key])) {
-            return self::$static_cache[$cache_key];
-        }
-
         if (empty($group_name)) {
-            // Count all dynamic tags
-            $sql = $wpdb->prepare("
-                SELECT COUNT(*)
-                FROM {$wpdb->posts}
-                WHERE post_type = %s
-                AND post_status = 'publish'
-            ", $this->post_type);
-        } else {
-            // Count tags in specific group
-            $group = get_term_by('name', $group_name, 'tag_groups');
-            if (!$group) {
-                $group = get_term_by('slug', $group_name, 'tag_groups');
-            }
-
-            if (!$group) {
-                return 0;
-            }
-
-            $sql = $wpdb->prepare("
-                SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-                INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                WHERE p.post_type = %s
-                AND p.post_status = 'publish'
-                AND tt.taxonomy = 'tag_groups'
-                AND tt.term_id = %d
-            ", $this->post_type, $group->term_id);
+            return count(WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance()->all_active_tags());
         }
 
-        $count = (int) $wpdb->get_var($sql);
+        $term_id = $this->group_term_id($group_name);
+        if (!$term_id || !$this->db_manager) {
+            return 0;
+        }
 
-        // Cache the result
-        self::$static_cache[$cache_key] = $count;
-
-        return $count;
+        return (int) $this->db_manager->get_tags_count(array('status' => 'active', 'category_id' => $term_id));
     }
 
     /**
@@ -719,64 +631,28 @@ class WP_Dynamic_Tags_Plugin
             'orderby' => 'title'
         ), $atts, 'dt_list');
 
-        $query_args = array(
-            'post_type' => $this->post_type,
-            'post_status' => 'publish',
-            'posts_per_page' => intval($atts['limit']),
-            'orderby' => $atts['orderby'],
-            'order' => strtoupper($atts['order'])
-        );
+        // A group name that does not exist filters nothing (as before).
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+        $term_id = !empty($atts['group']) ? $this->group_term_id($atts['group']) : 0;
+        $tags = $processor->active_tags($term_id ?: null, $atts['orderby'], $atts['order'], intval($atts['limit']));
 
-        // Add group filter if specified
-        if (!empty($atts['group'])) {
-            $group = get_term_by('name', $atts['group'], 'tag_groups');
-            if (!$group) {
-                $group = get_term_by('slug', $atts['group'], 'tag_groups');
-            }
-
-            if ($group) {
-                $query_args['tax_query'] = array(
-                    array(
-                        'taxonomy' => 'tag_groups',
-                        'field' => 'term_id',
-                        'terms' => $group->term_id
-                    )
-                );
-            }
-        }
-
-        $posts = get_posts($query_args);
-
-        if (empty($posts)) {
+        if (empty($tags)) {
             return '';
         }
 
         $items = array();
-        foreach ($posts as $post) {
-            $tag_key = $this->sanitize_tag_key($post->post_title);
-            $value = $post->post_content;
-
-            // Process dynamic placeholders if available
-            if ($this->placeholders) {
-                $value = apply_filters('dt_process_value', $value);
-            }
-
+        foreach ($tags as $tag) {
             // Replace template variables
-            $item = str_replace(
+            $items[] = str_replace(
                 array('{key}', '{value}', '{title}', '{shortcode}'),
                 array(
-                    esc_html($tag_key),
-                    wp_kses_post($value),
-                    esc_html($post->post_title),
-                    '[' . esc_html($tag_key) . ']'
+                    esc_html($tag->shortcode),
+                    wp_kses_post($processor->render_row($tag)),
+                    esc_html($tag->tag_name),
+                    '[' . esc_html($tag->shortcode) . ']'
                 ),
                 $atts['template']
             );
-
-            $items[] = $item;
-
-            // Update usage statistics
-            $this->update_tag_usage($tag_key);
         }
 
         return implode($atts['separator'], $items);
@@ -918,16 +794,10 @@ class WP_Dynamic_Tags_Plugin
             return $atts['empty'];
         }
 
-        $sanitized_key = $this->sanitize_tag_key($atts['tag']);
-        $template_content = '';
-        foreach ($this->get_dynamic_tags() as $tag_data) {
-            if ($tag_data['tag_key'] === $sanitized_key) {
-                $template_content = $tag_data['content'];
-                break;
-            }
-        }
-
-        if ($template_content === '') {
+        // The template is a tag of the table; an empty one renders nothing.
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+        $tag = $processor->find_tag($atts['tag']);
+        if (!$tag || (string) $tag->content === '') {
             return $atts['empty'];
         }
 
@@ -947,11 +817,11 @@ class WP_Dynamic_Tags_Plugin
             return $atts['empty'];
         }
 
+        // One render per queried post: the output depends on the current post, and the per-request output cache is keyed by it.
         $rendered = array();
         while ($query->have_posts()) {
             $query->the_post();
-            $value = apply_filters('dt_process_value', $template_content);
-            $rendered[] = wp_kses_post($value);
+            $rendered[] = wp_kses_post($processor->render_row($tag));
         }
         wp_reset_postdata();
 
@@ -1910,41 +1780,6 @@ class WP_Dynamic_Tags_Plugin
         }
 
         return true; // All existing tags with this name are grouped
-    }
-
-    /**
-     * Optimized tag usage tracking with caching
-     */
-    private function update_tag_usage($tag_key)
-    {
-        // Skip usage tracking if not needed (performance optimization)
-        if (!is_admin() && (!defined('WP_DEBUG') || !WP_DEBUG)) {
-            return;
-        }
-
-        $cache_key = 'post_id_' . md5($tag_key);
-
-        // Check static cache first
-        if (!isset(self::$static_cache[$cache_key])) {
-            global $wpdb;
-
-            // Use direct SQL for better performance
-            $post_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_title = %s AND post_status = 'publish' LIMIT 1",
-                $this->post_type,
-                $tag_key
-            ));
-
-            self::$static_cache[$cache_key] = $post_id ? (int) $post_id : null;
-        }
-
-        $post_id = self::$static_cache[$cache_key];
-        if ($post_id) {
-            // Update usage statistics
-            $current_count = get_post_meta($post_id, '_dt_usage_count', true) ?: 0;
-            update_post_meta($post_id, '_dt_usage_count', $current_count + 1);
-            update_post_meta($post_id, '_dt_last_used', current_time('mysql'));
-        }
     }
 
     /**

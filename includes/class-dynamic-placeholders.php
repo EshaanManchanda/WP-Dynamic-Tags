@@ -538,6 +538,11 @@ class WP_Dynamic_Tags_Placeholders {
         $allowed = (array) apply_filters('dt_query_allowed_args', self::$query_allowed_args);
         foreach ($parsed as $name => $value) {
             if (in_array($name, $allowed, true)) {
+                // post__in=1,2 arrives as a string, but WP_Query wants an array of ids for every *__in / *__not_in
+                // argument and dies with a TypeError on a string: an author's comma list must not take the page down.
+                if (is_string($value) && (substr($name, -4) === '__in' || substr($name, -8) === '__not_in')) {
+                    $value = wp_parse_id_list($value);
+                }
                 $args[$name] = $value;
             }
         }

@@ -23,6 +23,13 @@ live WordPress site and compares the output before and after the refactor.
 | `table` | tags exist only as `wp_dynamic_tags` rows, rendered by the table registrar |
 | `unified` | after the refactor: rows only, rendered by the single registrar (same setup as `table`) |
 
+**Since the table-only refactor** (plan Phase 2c) the post registrar is disconnected, so `post` can no longer be produced; the
+live path is `unified`, compared with `baseline post` and `baseline table`. `allowed-differences.json` holds 331 entries with
+`path: unified` and `from: post|table`, each tagged with a class (`classes` at the top of the file explains C1-C10 and L1); the
+older `post`/`table` entries pin the Phase B fixes against the files of that time. After a change, regenerate with
+`.\run.ps1 -Label current -Paths unified` and run `php diff.php baseline post current unified <ctx> --all --allow=allowed-differences.json`
+for the three contexts, then the same with `baseline table`: 0 unlisted and 0 stale is the bar.
+
 `post` and `table` can only be produced on the pre-refactor code. After the refactor run
 `.\run.ps1 -Label current -Paths unified` and compare:
 

@@ -64,13 +64,10 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         // writes per request. The tags are the one registry query of the request; the order does not matter (the shortcode
         // column is unique), so the primary key is used.
         $start_time = microtime(true);
+        $this->tag_index = null; // the registry is read again, so the lookup index of the core shortcodes is rebuilt too
 
         try {
-            $tags = $this->table_manager->get_tags(array(
-                'status' => 'active',
-                'orderby' => 'id',
-                'order' => 'ASC'
-            ));
+            $tags = $this->all_active_tags();
 
             $registered_count = 0;
             $failed_count = 0;
@@ -108,6 +105,95 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         } catch (Exception $e) {
             error_log('WP Dynamic Tags Table: Shortcode registration error: ' . $e->getMessage());
         }
+    }
+
+    /** @var array<string, array<string, object>>|null Lookup index of the core shortcodes, built from the registry on first use. */
+    private $tag_index = null;
+
+    /**
+     * Every active tag: the registry of the request. Registration and the core shortcodes ask with exactly these
+     * arguments, so the table is read once (the facade caches by arguments).
+     *
+     * @return object[]
+     */
+    public function all_active_tags() {
+        return $this->table_manager->get_tags(array('status' => 'active', 'orderby' => 'id', 'order' => 'ASC'));
+    }
+
+    /**
+     * Active tags for the list shortcodes ([dt_group], [dt_list], [dt_random]).
+     *
+     * @param int|null $category_id Group (term id), null for every group.
+     * @param string   $orderby     title|name, date, modified, id, priority, usage_count (the old post-based names are accepted).
+     * @param string   $order       ASC or DESC.
+     * @param int      $limit       0 or less: no limit.
+     * @return object[]
+     */
+    public function active_tags($category_id = null, $orderby = 'title', $order = 'ASC', $limit = 0) {
+        $columns = array(
+            'title' => 'tag_name', 'name' => 'tag_name', 'date' => 'created_date', 'modified' => 'modified_date',
+            'id' => 'id', 'priority' => 'priority', 'usage_count' => 'usage_count',
+        );
+        $orderby = $columns[strtolower((string) $orderby)] ?? 'tag_name';
+        $order = strtoupper((string) $order) === 'DESC' ? 'DESC' : 'ASC';
+
+        if ($category_id === null && $orderby === 'id' && $order === 'ASC' && (int) $limit <= 0) {
+            return $this->all_active_tags();
+        }
+
+        $args = array('status' => 'active', 'orderby' => $orderby, 'order' => $order, 'limit' => (int) $limit);
+        if ($category_id !== null) {
+            $args['category_id'] = (int) $category_id;
+        }
+        return $this->table_manager->get_tags($args);
+    }
+
+    /**
+     * The active tag a [dt tag="..."] style key points at: its shortcode as written, the key normalized the way tag keys
+     * always were (lower case, other characters to underscores), its name, or a legacy alias recorded by the migration.
+     * Read from the registry, no extra query.
+     *
+     * @return object|null
+     */
+    public function find_tag($key) {
+        $key = trim((string) $key);
+        if ($key === '') {
+            return null;
+        }
+
+        if ($this->tag_index === null) {
+            $this->tag_index = array('shortcode' => array(), 'name' => array(), 'alias' => array());
+            foreach ($this->all_active_tags() as $tag) {
+                $this->tag_index['shortcode'][$tag->shortcode] = $tag;
+                $this->tag_index['name'][strtolower($tag->tag_name)] = $tag;
+                $aliases = (is_array($tag->meta_data) && isset($tag->meta_data['legacy']['aliases'])) ? (array) $tag->meta_data['legacy']['aliases'] : array();
+                foreach ($aliases as $alias) {
+                    $this->tag_index['alias'][strtolower((string) $alias)] = $tag;
+                }
+            }
+        }
+
+        $normalized = trim((string) preg_replace('/_{2,}/', '_', (string) preg_replace('/[^a-z0-9]/', '_', strtolower($key))), '_');
+        $lower = strtolower($key);
+
+        return $this->tag_index['shortcode'][$key]
+            ?? $this->tag_index['shortcode'][$normalized]
+            ?? $this->tag_index['name'][$lower]
+            ?? $this->tag_index['alias'][$lower]
+            ?? $this->tag_index['alias'][$normalized]
+            ?? null;
+    }
+
+    /**
+     * Renders one tag the way its own shortcode does (render stack, depth and size guard, the unified pipeline). The core
+     * shortcodes use this, so [dt tag="x"] and [x] cannot drift apart.
+     *
+     * @param object              $tag
+     * @param array<string,mixed> $atts Shortcode attributes (format, default, cache, processing).
+     * @return string
+     */
+    public function render_row($tag, $atts = array()) {
+        return (string) $this->process_shortcode($tag, $atts);
     }
 
     /**
@@ -656,6 +742,8 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Handle tag creation
      */
     public function on_tag_created($tag_id, $data) {
+        $this->tag_index = null;
+
         // Register new shortcode if it has one
         if (!empty($data['shortcode'])) {
             $tag = $this->table_manager->get_tag($tag_id);
@@ -706,6 +794,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Clear cache for specific tag
      */
     private function clear_tag_cache($tag_id) {
+        $this->tag_index = null;
         $keys_to_remove = array();
 
         foreach ($this->cache as $key => $value) {
@@ -751,6 +840,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      */
     public function clear_all_caches() {
         $this->cache = array();
+        $this->tag_index = null;
     }
 
     /**
