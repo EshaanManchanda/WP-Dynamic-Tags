@@ -827,8 +827,9 @@ class WP_Dynamic_Tags_Table_Manager {
             wp_send_json_error('Unauthorized');
         }
 
-        $action = sanitize_text_field($_POST['action']);
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
+        // A request without these keys used to be a TypeError (array_map() on null) and PHP warnings (S7).
+        $action = isset($_POST['action']) ? sanitize_text_field($_POST['action']) : '';
+        $tag_ids = isset($_POST['tag_ids']) ? array_map('intval', (array) $_POST['tag_ids']) : array();
         $data = array();
 
         if (isset($_POST['category_id'])) {

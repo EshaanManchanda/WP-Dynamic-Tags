@@ -208,6 +208,7 @@ class DT_Action_Security_Test extends WP_Ajax_UnitTestCase
             'dt_dismiss_menu_notice', 'dt_test_shortcode', 'dt_check_duplicate', 'dt_duplicate_tag', 'dt_bulk_delete', 'dt_inline_edit',
             'dt_create_group', 'dt_edit_group', 'dt_delete_group', 'dt_assign_groups', 'dt_get_group_details',
             'dt_get_group_edit_data', 'dt_resolve_conflict', 'dt_table_export', 'dt_table_import', 'dt_table_validate_import',
+            'dt_table_create_tag', 'dt_table_update_tag', 'dt_table_delete_tag', 'dt_table_get_tags', 'dt_table_bulk_action',
         ];
         return array_combine($names, array_map(static fn(string $n): array => [$n], $names));
     }

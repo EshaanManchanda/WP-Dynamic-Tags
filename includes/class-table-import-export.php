@@ -716,7 +716,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
             wp_send_json_error('Unauthorized');
         }
 
-        $format = sanitize_text_field($_POST['format']);
+        $format = isset($_POST['format']) ? sanitize_text_field($_POST['format']) : '';
         $filters = isset($_POST['filters']) ? $_POST['filters'] : array();
 
         $result = $this->export_data($format, $filters);
