@@ -690,7 +690,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
             }
 
             $export_id = sanitize_text_field($_GET['dt_download_export']);
-            $export_data = get_transient('dt_export_' . $export_id);
+            $export_data = $this->take_export($export_id, get_current_user_id());
 
             if (!$export_data) {
                 wp_die('Export data not found or expired');
@@ -704,6 +704,27 @@ class WP_Dynamic_Tags_Table_Import_Export {
             echo $export_data['data'];
             exit;
         }
+    }
+
+    /**
+     * Returns a stored export and deletes it, but only for the user who created it (I1). An export holds every tag
+     * (certificate tags carry student data): it used to sit in a transient for an hour under a uniqid() that any
+     * administrator could guess, and could be downloaded repeatedly.
+     *
+     * @param string $export_id
+     * @param int    $user_id   The user asking for the download.
+     * @return array{data: string, filename: string}|null Null when it does not exist, expired, or belongs to someone else.
+     */
+    public function take_export($export_id, $user_id) {
+        $key = 'dt_export_' . $export_id;
+        $stored = get_transient($key);
+
+        if (!is_array($stored) || (int) $user_id < 1 || (int) ($stored['user_id'] ?? 0) !== (int) $user_id) {
+            return null;
+        }
+
+        delete_transient($key);
+        return array('data' => (string) $stored['data'], 'filename' => (string) $stored['filename']);
     }
 
     /**
@@ -725,12 +746,13 @@ class WP_Dynamic_Tags_Table_Import_Export {
             wp_send_json_error($result->get_error_message());
         }
 
-        // Store export data temporarily for download
-        $export_id = uniqid();
+        // Store export data temporarily for download: an unguessable id, bound to this user, ten minutes (I1)
+        $export_id = wp_generate_password(32, false);
         set_transient('dt_export_' . $export_id, array(
             'data' => $result['data'],
-            'filename' => $result['filename']
-        ), HOUR_IN_SECONDS);
+            'filename' => $result['filename'],
+            'user_id' => get_current_user_id()
+        ), 10 * MINUTE_IN_SECONDS);
 
         wp_send_json_success(array(
             'export_id' => $export_id,

@@ -791,7 +791,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
         // Validate file type
         if (!in_array($extension, array('json', 'csv'))) {
             add_action('admin_notices', function() {
-                echo '<div class="notice notice-error"><p>' . __('Unsupported file format. Please upload JSON or CSV files only.', 'wp-dynamic-tags') . '</p></div>';
+                echo '<div class="notice notice-error"><p>' . esc_html__('Unsupported file format. Please upload JSON or CSV files only.', 'wp-dynamic-tags') . '</p></div>';
             });
             return;
         }
@@ -799,13 +799,13 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
         // Validate file size (32MB limit)
         if ($file['size'] > 32 * 1024 * 1024) {
             add_action('admin_notices', function() {
-                echo '<div class="notice notice-error"><p>' . __('File size exceeds 32MB limit.', 'wp-dynamic-tags') . '</p></div>';
+                echo '<div class="notice notice-error"><p>' . esc_html__('File size exceeds 32MB limit.', 'wp-dynamic-tags') . '</p></div>';
             });
             return;
         }
 
         // Get import options
-        $conflict_resolution = sanitize_text_field($_POST['conflict_resolution']);
+        $conflict_resolution = isset($_POST['conflict_resolution']) ? sanitize_text_field($_POST['conflict_resolution']) : 'skip';
         $validate_keys = isset($_POST['validate_keys']);
         $create_backup = isset($_POST['create_backup']);
         $detailed_logging = isset($_POST['detailed_logging']);
@@ -817,7 +817,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
             $backup_created = $backup_result['success'];
             if (!$backup_created) {
                 add_action('admin_notices', function() use ($backup_result) {
-                    echo '<div class="notice notice-warning"><p>' . __('Warning: Backup creation failed - ', 'wp-dynamic-tags') . esc_html($backup_result['message']) . '</p></div>';
+                    echo '<div class="notice notice-warning"><p>' . esc_html__('Warning: Backup creation failed - ', 'wp-dynamic-tags') . esc_html($backup_result['message']) . '</p></div>';
                 });
             }
         }
