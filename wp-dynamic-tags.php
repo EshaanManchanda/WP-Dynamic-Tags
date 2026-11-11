@@ -1263,17 +1263,14 @@ class WP_Dynamic_Tags_Plugin
         }
 
         // Create optimized callback with reduced overhead
-        $callback = function ($atts) use ($tag_content, $post_id, $shortcode_key) {
+        // Neither the content of a tag nor its rendered output is ever logged (L11: it can hold personal data), and
+        // rendering writes nothing to the database (L12: the callback used to update two post meta rows per render when
+        // WP_DEBUG was on and counted nothing in production).
+        $callback = function ($atts) use ($tag_content, $shortcode_key) {
             // Frontend debug logging - only in verbose mode
             if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
                 $context = is_admin() ? 'ADMIN' : 'FRONTEND';
                 error_log("WP Dynamic Tags: [{$shortcode_key}] called in {$context} context");
-                error_log("WP Dynamic Tags: Raw content for [{$shortcode_key}]: " . $tag_content);
-            }
-
-            // Track usage (only if needed)
-            if (is_admin() || (defined('WP_DEBUG') && WP_DEBUG)) {
-                $this->track_shortcode_usage($post_id);
             }
 
             // Process the tag content through the placeholder system
@@ -1290,7 +1287,7 @@ class WP_Dynamic_Tags_Plugin
             // Frontend debug logging for processed content - only in verbose mode
             if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
                 $changed = ($processed_content !== $tag_content) ? 'CHANGED' : 'UNCHANGED';
-                error_log("WP Dynamic Tags: Processed content for [{$shortcode_key}] ({$changed}): " . $processed_content);
+                error_log("WP Dynamic Tags: [{$shortcode_key}] rendered ({$changed}), " . strlen((string) $processed_content) . ' bytes');
             }
 
             // Return the processed content
@@ -1299,16 +1296,6 @@ class WP_Dynamic_Tags_Plugin
 
         // Use safe registration method
         return $this->register_shortcode_safely($shortcode_key, Closure::bind($callback, $this));
-    }
-
-    /**
-     * Track shortcode usage for analytics
-     */
-    private function track_shortcode_usage($post_id)
-    {
-        $current_count = get_post_meta($post_id, '_dt_usage_count', true) ?: 0;
-        update_post_meta($post_id, '_dt_usage_count', $current_count + 1);
-        update_post_meta($post_id, '_dt_last_used', current_time('mysql'));
     }
 
     /**
