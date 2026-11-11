@@ -702,10 +702,16 @@ class WP_Dynamic_Tags_Bulk_Manager {
             wp_die('Unauthorized');
         }
         
-        $tag_id = intval($_POST['tag_id']);
-        $tag_value = wp_kses_post($_POST['tag_value']);
-        $category = sanitize_text_field($_POST['category']);
-        
+        $tag_id = isset($_POST['tag_id']) ? absint($_POST['tag_id']) : 0;
+        $tag_value = isset($_POST['tag_value']) ? wp_kses_post(wp_unslash($_POST['tag_value'])) : '';
+        $category = isset($_POST['category']) ? sanitize_text_field(wp_unslash($_POST['category'])) : '';
+
+        // Only a real tag post may be edited here: ID 0 would make wp_update_post() insert a new post, and any other
+        // post ID would let this endpoint rewrite arbitrary posts.
+        if ($tag_id < 1 || get_post_type($tag_id) !== $this->post_type) {
+            wp_send_json_error('Invalid tag');
+        }
+
         // Update post content
         wp_update_post(array(
             'ID' => $tag_id,
@@ -734,10 +740,13 @@ class WP_Dynamic_Tags_Bulk_Manager {
             wp_die('Unauthorized');
         }
         
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
-        
+        $tag_ids = isset($_POST['tag_ids']) ? array_filter(array_map('absint', (array) $_POST['tag_ids'])) : array();
+
+        // Delete only tag posts: this endpoint must not be able to delete a page or product by ID.
         foreach ($tag_ids as $tag_id) {
-            wp_delete_post($tag_id, true);
+            if (get_post_type($tag_id) === $this->post_type) {
+                wp_delete_post($tag_id, true);
+            }
         }
         
         // Clear cache

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WordPress core test suite for the plugin. PHPUnit 9.6 (the WP suite does not support PHPUnit 10).
+     Run with tools/integration/run.ps1; the database is destroyed, use a local_wpunit* database only. -->
+<phpunit bootstrap="../../tests/wp/bootstrap.php" colors="true" convertDeprecationsToExceptions="false"
+         beStrictAboutTestsThatDoNotTestAnything="true">
+  <testsuites>
+    <testsuite name="wp">
+      <directory suffix="Test.php">../../tests/wp</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

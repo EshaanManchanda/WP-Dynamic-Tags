@@ -23,7 +23,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
 
         // AJAX handlers for conflict resolution
         add_action('wp_ajax_dt_resolve_conflict', array($this, 'ajax_resolve_conflict'));
-        add_action('wp_ajax_dt_merge_tags', array($this, 'ajax_merge_tags'));
+        // wp_ajax_dt_merge_tags was registered with no ajax_merge_tags() method behind it (L13); removed.
     }
 
     /**
@@ -403,8 +403,8 @@ class WP_Dynamic_Tags_Conflict_Resolver {
             wp_send_json_error('Insufficient permissions');
         }
 
-        $action = sanitize_text_field($_POST['resolution_action']);
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
+        $action = isset($_POST['resolution_action']) ? sanitize_text_field(wp_unslash($_POST['resolution_action'])) : '';
+        $tag_ids = isset($_POST['tag_ids']) ? array_filter(array_map('absint', (array) $_POST['tag_ids'])) : array();
 
         $result = array('success' => false, 'message' => 'Unknown action');
 
@@ -413,11 +413,11 @@ class WP_Dynamic_Tags_Conflict_Resolver {
                 $result = $this->handle_delete_ungrouped($tag_ids);
                 break;
             case 'merge_tags':
-                $primary_id = intval($_POST['primary_tag_id']);
+                $primary_id = isset($_POST['primary_tag_id']) ? absint($_POST['primary_tag_id']) : 0;
                 $result = $this->merge_tags($tag_ids, $primary_id);
                 break;
             case 'assign_to_group':
-                $group_id = intval($_POST['group_id']);
+                $group_id = isset($_POST['group_id']) ? absint($_POST['group_id']) : 0;
                 $result = $this->handle_assign_to_group($tag_ids, $group_id);
                 break;
         }

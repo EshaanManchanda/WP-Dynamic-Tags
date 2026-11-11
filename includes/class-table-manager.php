@@ -756,6 +756,11 @@ class WP_Dynamic_Tags_Table_Manager {
     public function ajax_get_tags() {
         check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
 
+        // Tag content can hold personal data (certificate tags); listing it is administrator-only (S5).
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
         $args = array(
             'status' => sanitize_text_field($_POST['status'] ?? 'active'),
             'orderby' => sanitize_text_field($_POST['orderby'] ?? 'priority'),

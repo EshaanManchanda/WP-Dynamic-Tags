@@ -21,8 +21,8 @@ class WP_Dynamic_Tags_Conflict_Manager_Admin {
 
         // AJAX handlers
         add_action('wp_ajax_dt_auto_resolve_conflicts', array($this, 'ajax_auto_resolve_conflicts'));
-        add_action('wp_ajax_dt_merge_duplicate_tags', array($this, 'ajax_merge_duplicate_tags'));
-        add_action('wp_ajax_dt_delete_duplicate_tags', array($this, 'ajax_delete_duplicate_tags'));
+        // wp_ajax_dt_merge_duplicate_tags and wp_ajax_dt_delete_duplicate_tags were registered with no methods behind
+        // them (L13): calling either was a fatal error, and no UI used them, so the registrations are gone.
     }
 
     /**

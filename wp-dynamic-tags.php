@@ -2305,7 +2305,8 @@ class WP_Dynamic_Tags_Plugin
      */
     public function dismiss_menu_notice()
     {
-        if (!wp_verify_nonce($_POST['nonce'], 'dt_dismiss_notice')) {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'dt_dismiss_notice')) {
             wp_die('Security check failed');
         }
 
@@ -2453,7 +2454,8 @@ class WP_Dynamic_Tags_Plugin
      */
     public function test_shortcode_ajax()
     {
-        if (!wp_verify_nonce($_POST['nonce'], 'dt_test_shortcode')) {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'dt_test_shortcode')) {
             wp_die('Security check failed');
         }
 
@@ -2461,7 +2463,7 @@ class WP_Dynamic_Tags_Plugin
             wp_die('Insufficient permissions');
         }
 
-        $shortcode = sanitize_text_field($_POST['shortcode']);
+        $shortcode = isset($_POST['shortcode']) ? sanitize_text_field(wp_unslash($_POST['shortcode'])) : '';
         if (empty($shortcode)) {
             wp_die('No shortcode provided');
         }
@@ -2495,12 +2497,13 @@ class WP_Dynamic_Tags_Plugin
     {
         check_ajax_referer('dt_check_duplicate', 'nonce');
 
-        if (!current_user_can('edit_posts')) {
+        // Tags are administrator-managed (S5): edit_posts is held by contributors and authors.
+        if (!current_user_can('manage_options')) {
             wp_send_json_error(__('Insufficient permissions', 'wp-dynamic-tags'));
         }
 
-        $tag_key = sanitize_text_field($_POST['tag_key']);
-        $post_id = intval($_POST['post_id']);
+        $tag_key = isset($_POST['tag_key']) ? sanitize_text_field(wp_unslash($_POST['tag_key'])) : '';
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
 
         if (empty($tag_key)) {
             wp_send_json_success(array(
@@ -2979,7 +2982,7 @@ class WP_Dynamic_Tags_Plugin
         $post_id = intval($_GET['post_id']);
         check_admin_referer('dt_duplicate_tag_' . $post_id);
 
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can('manage_options')) {
             wp_die(__('You do not have permission to duplicate tags.', 'wp-dynamic-tags'));
         }
 
@@ -3012,7 +3015,7 @@ class WP_Dynamic_Tags_Plugin
             }
 
             // Redirect back to list with success message
-            wp_redirect(add_query_arg(
+            wp_safe_redirect(add_query_arg(
                 array('post_type' => $this->post_type, 'duplicated' => 1),
                 admin_url('edit.php')
             ));
@@ -3034,7 +3037,7 @@ class WP_Dynamic_Tags_Plugin
         $post_id = intval($_GET['post_id']);
         check_admin_referer('dt_export_single_' . $post_id);
 
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can('manage_options')) {
             wp_die(__('You do not have permission to export tags.', 'wp-dynamic-tags'));
         }
 
@@ -4240,7 +4243,8 @@ class WP_Dynamic_Tags_Plugin
      */
     private function handle_conflict_resolution()
     {
-        if (!wp_verify_nonce($_POST['dt_resolve_nonce'], 'dt_resolve_conflicts')) {
+        $nonce = isset($_POST['dt_resolve_nonce']) ? sanitize_text_field(wp_unslash($_POST['dt_resolve_nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'dt_resolve_conflicts')) {
             wp_die(__('Security check failed', 'wp-dynamic-tags'));
         }
 
@@ -4248,7 +4252,7 @@ class WP_Dynamic_Tags_Plugin
             wp_die(__('Insufficient permissions', 'wp-dynamic-tags'));
         }
 
-        $resolve_tags = isset($_POST['resolve_tags']) ? (array) $_POST['resolve_tags'] : array();
+        $resolve_tags = isset($_POST['resolve_tags']) ? array_map('sanitize_text_field', array_map('wp_unslash', (array) $_POST['resolve_tags'])) : array();
         $resolved_count = 0;
 
         foreach ($resolve_tags as $tag_key) {
@@ -4261,7 +4265,8 @@ class WP_Dynamic_Tags_Plugin
         $this->clear_cache();
 
         // Redirect with success message
-        wp_redirect(add_query_arg('resolved', '1', $_SERVER['REQUEST_URI']));
+        $return_to = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : admin_url();
+        wp_safe_redirect(add_query_arg('resolved', '1', $return_to));
         exit;
     }
 
@@ -4362,16 +4367,17 @@ class WP_Dynamic_Tags_Plugin
     public function handle_conflict_resolution_actions()
     {
         // Handle bulk migration
-        if (isset($_POST['bulk_migrate']) && wp_verify_nonce($_POST['dt_bulk_nonce'], 'dt_bulk_migrate')) {
+        $bulk_nonce = isset($_POST['dt_bulk_nonce']) ? sanitize_text_field(wp_unslash($_POST['dt_bulk_nonce'])) : '';
+        if (isset($_POST['bulk_migrate']) && wp_verify_nonce($bulk_nonce, 'dt_bulk_migrate')) {
             if (!current_user_can('manage_options')) {
                 wp_die(__('Insufficient permissions', 'wp-dynamic-tags'));
             }
 
-            $migration_strategy = sanitize_text_field($_POST['migration_strategy']);
+            $migration_strategy = isset($_POST['migration_strategy']) ? sanitize_text_field(wp_unslash($_POST['migration_strategy'])) : '';
             $this->run_bulk_migration($migration_strategy);
 
             // Redirect to prevent re-submission
-            wp_redirect(add_query_arg('migrated', '1', remove_query_arg('migrated')));
+            wp_safe_redirect(add_query_arg('migrated', '1', remove_query_arg('migrated')));
             exit;
         }
     }
@@ -4458,13 +4464,14 @@ class WP_Dynamic_Tags_Plugin
         }
 
         // Verify nonce
-        if (!wp_verify_nonce($_POST['dt_nonce'], 'dt_quick_create')) {
+        $nonce = isset($_POST['dt_nonce']) ? sanitize_text_field(wp_unslash($_POST['dt_nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'dt_quick_create')) {
             wp_die(__('Security check failed', 'wp-dynamic-tags'));
         }
 
-        $tag_key = sanitize_text_field($_POST['tag_key']);
-        $tag_value = wp_kses_post($_POST['tag_value']);
-        $tag_category = isset($_POST['tag_category']) ? sanitize_text_field($_POST['tag_category']) : 'general';
+        $tag_key = isset($_POST['tag_key']) ? sanitize_text_field(wp_unslash($_POST['tag_key'])) : '';
+        $tag_value = isset($_POST['tag_value']) ? wp_kses_post(wp_unslash($_POST['tag_value'])) : '';
+        $tag_category = isset($_POST['tag_category']) ? sanitize_text_field(wp_unslash($_POST['tag_category'])) : 'general';
 
         if (empty($tag_key) || empty($tag_value)) {
             return;
@@ -4488,7 +4495,8 @@ class WP_Dynamic_Tags_Plugin
             }
 
             $this->clear_cache();
-            wp_redirect(add_query_arg('created', '1', $_SERVER['REQUEST_URI']));
+            $return_to = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : admin_url();
+            wp_safe_redirect(add_query_arg('created', '1', $return_to));
             exit;
         }
     }

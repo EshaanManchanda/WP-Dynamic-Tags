@@ -56,6 +56,9 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
         wp_localize_script('jquery', 'dtTableManager', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('dt_table_manager'),
+            // Nonce for the tag CRUD endpoints (wp_ajax_dt_table_create_tag, _update_tag, _delete_tag, _get_tags, _bulk_action).
+            // Nothing created it before, so those endpoints could not be called from their own UI (S6).
+            'tagNonce' => wp_create_nonce('wp_dynamic_tags_nonce'),
             'strings' => array(
                 'confirmMigration' => __('Are you sure you want to migrate data? This cannot be undone.', 'wp-dynamic-tags'),
                 'confirmReset' => __('Are you sure you want to reset the table? All data will be lost!', 'wp-dynamic-tags'),
@@ -78,13 +81,14 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
             return;
         }
 
-        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
 
         switch ($action) {
             case 'enable_table_integration':
-                if (wp_verify_nonce($_GET['_wpnonce'], 'enable_table_integration')) {
+                if (wp_verify_nonce($nonce, 'enable_table_integration')) {
                     update_option('wp_dynamic_tags_table_integration_enabled', true);
-                    wp_redirect(add_query_arg(array(
+                    wp_safe_redirect(add_query_arg(array(
                         'page' => $this->page_slug,
                         'message' => 'table_integration_enabled'
                     ), admin_url('edit.php?post_type=' . $this->post_type)));
@@ -93,9 +97,9 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
                 break;
 
             case 'disable_table_integration':
-                if (wp_verify_nonce($_GET['_wpnonce'], 'disable_table_integration')) {
+                if (wp_verify_nonce($nonce, 'disable_table_integration')) {
                     update_option('wp_dynamic_tags_table_integration_enabled', false);
-                    wp_redirect(add_query_arg(array(
+                    wp_safe_redirect(add_query_arg(array(
                         'page' => $this->page_slug,
                         'message' => 'table_integration_disabled'
                     ), admin_url('edit.php?post_type=' . $this->post_type)));
@@ -1177,6 +1181,10 @@ class WP_Dynamic_Tags_Table_Manager_Admin {
      */
     public function ajax_statistics() {
         check_ajax_referer('dt_table_manager', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
 
         $plugin = WP_Dynamic_Tags_Plugin::get_instance();
         $db_manager = $plugin->get_db_manager();

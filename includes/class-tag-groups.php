@@ -42,7 +42,8 @@ class WP_Dynamic_Tags_Groups {
 
         // Add quick edit support
         add_action('quick_edit_custom_box', array($this, 'add_quick_edit_fields'), 10, 2);
-        add_action('wp_ajax_dt_quick_edit_groups', array($this, 'ajax_quick_edit_groups'));
+        // wp_ajax_dt_quick_edit_groups was registered here with no ajax_quick_edit_groups() method behind it (L13);
+        // calling the action was a fatal error and nothing in the plugin's UI used it, so the registration is gone.
 
         // Migration hook
         add_action('admin_init', array($this, 'maybe_migrate_categories'));
@@ -1067,10 +1068,10 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Taxonomy not registered. Please refresh the page and try again.', 'wp-dynamic-tags'));
         }
 
-        $name = sanitize_text_field($_POST['name']);
-        $description = sanitize_textarea_field($_POST['description']);
-        $color = sanitize_hex_color($_POST['color']);
-        $parent = intval($_POST['parent']);
+        $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+        $color = isset($_POST['color']) ? sanitize_hex_color(wp_unslash($_POST['color'])) : null;
+        $parent = isset($_POST['parent']) ? absint($_POST['parent']) : 0;
 
         if (empty($name)) {
             wp_send_json_error(__('Group name is required.', 'wp-dynamic-tags'));
@@ -1118,11 +1119,11 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Taxonomy not registered. Please refresh the page and try again.', 'wp-dynamic-tags'));
         }
 
-        $group_id = intval($_POST['group_id']);
-        $name = sanitize_text_field($_POST['name']);
-        $description = sanitize_textarea_field($_POST['description']);
-        $color = sanitize_hex_color($_POST['color']);
-        $parent = intval($_POST['parent']);
+        $group_id = isset($_POST['group_id']) ? absint($_POST['group_id']) : 0;
+        $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+        $color = isset($_POST['color']) ? sanitize_hex_color(wp_unslash($_POST['color'])) : null;
+        $parent = isset($_POST['parent']) ? absint($_POST['parent']) : 0;
 
         if (empty($name)) {
             wp_send_json_error(__('Group name is required.', 'wp-dynamic-tags'));
@@ -1355,13 +1356,18 @@ class WP_Dynamic_Tags_Groups {
             wp_die('Unauthorized');
         }
 
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
-        $group_ids = array_map('intval', $_POST['group_ids']);
-        $action = sanitize_text_field($_POST['assign_action']); // 'add', 'remove', 'replace'
+        $tag_ids = isset($_POST['tag_ids']) ? array_filter(array_map('absint', (array) $_POST['tag_ids'])) : array();
+        $group_ids = isset($_POST['group_ids']) ? array_filter(array_map('absint', (array) $_POST['group_ids'])) : array();
+        $action = isset($_POST['assign_action']) ? sanitize_text_field(wp_unslash($_POST['assign_action'])) : 'replace'; // 'add', 'remove', 'replace'
 
         $updated = 0;
 
         foreach ($tag_ids as $tag_id) {
+            // Only tag posts: this endpoint must not attach groups to pages, products or any other post.
+            if (get_post_type($tag_id) !== $this->post_type) {
+                continue;
+            }
+
             $current_groups = wp_get_post_terms($tag_id, $this->taxonomy, array('fields' => 'ids'));
 
             switch ($action) {
