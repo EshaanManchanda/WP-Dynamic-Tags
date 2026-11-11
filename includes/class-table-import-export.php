@@ -399,7 +399,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
                 continue;
             }
 
-            $fields = str_getcsv($line);
+            $fields = str_getcsv($line, ',', '"', '\\');
 
             if ($line_num === 0) {
                 $headers = $fields;
@@ -421,8 +421,13 @@ class WP_Dynamic_Tags_Table_Import_Export {
      * Parse XML import data
      */
     private function parse_xml($xml_data) {
+        // A DOCTYPE is how entity-expansion and external-entity attacks are declared; tag exports never contain one (I3).
+        if (stripos($xml_data, '<!DOCTYPE') !== false || stripos($xml_data, '<!ENTITY') !== false) {
+            return new WP_Error('xml_doctype_not_allowed', 'XML with a DOCTYPE or entity declaration is not accepted.');
+        }
+
         libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($xml_data);
+        $xml = simplexml_load_string($xml_data, 'SimpleXMLElement', LIBXML_NONET);
 
         if ($xml === false) {
             $errors = libxml_get_errors();
@@ -738,6 +743,68 @@ class WP_Dynamic_Tags_Table_Import_Export {
         ));
     }
 
+    /**
+     * Checks and reads the uploaded import file (I2). The endpoints used to read whatever PHP had put in tmp_name:
+     * no upload-error check, no size cap, no check of the file type.
+     *
+     * Filter dt_import_max_bytes sets the size cap (default 5 MB).
+     *
+     * @return array{content: string, format: string}|WP_Error
+     */
+    private function read_upload() {
+        $file = isset($_FILES['import_file']) ? $_FILES['import_file'] : null;
+        if (!is_array($file) || !isset($file['tmp_name'], $file['error']) || is_array($file['error'])) {
+            return new WP_Error('no_file', 'No file uploaded');
+        }
+        if ((int) $file['error'] !== UPLOAD_ERR_OK) {
+            return new WP_Error('upload_failed', 'The upload failed (error code ' . (int) $file['error'] . ').');
+        }
+
+        $max = (int) apply_filters('dt_import_max_bytes', 5 * MB_IN_BYTES);
+        $size = is_readable($file['tmp_name']) ? filesize($file['tmp_name']) : false;
+        if ($size === false) {
+            return new WP_Error('unreadable', 'Failed to read file');
+        }
+        if ($max > 0 && $size > $max) {
+            return new WP_Error('file_too_large', sprintf('The file is larger than the %s limit.', size_format($max)));
+        }
+
+        $extension = strtolower(pathinfo(isset($file['name']) ? sanitize_file_name(wp_unslash($file['name'])) : '', PATHINFO_EXTENSION));
+        if (!in_array($extension, $this->supported_formats, true)) {
+            return new WP_Error('unsupported_type', 'Unsupported file type. Use ' . implode(', ', $this->supported_formats) . '.');
+        }
+
+        $requested = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : '';
+        $format = in_array($requested, $this->supported_formats, true) ? $requested : $extension;
+
+        $content = file_get_contents($file['tmp_name']);
+        if ($content === false) {
+            return new WP_Error('unreadable', 'Failed to read file');
+        }
+
+        return array('content' => $content, 'format' => $format);
+    }
+
+    /**
+     * Only the documented import options are taken from the request, with the right types (I2).
+     *
+     * @param mixed $raw
+     * @return array<string, mixed>
+     */
+    private function sanitize_import_options($raw) {
+        $raw = is_array($raw) ? $raw : array();
+        $options = array();
+        foreach (array('update_existing', 'skip_duplicates') as $flag) {
+            if (isset($raw[$flag])) {
+                $options[$flag] = filter_var($raw[$flag], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+        if (isset($raw['batch_size'])) {
+            $options['batch_size'] = min(500, max(1, (int) $raw['batch_size']));
+        }
+        return $options;
+    }
+
     public function ajax_import() {
         check_ajax_referer('dt_table_manager', 'nonce');
 
@@ -745,22 +812,14 @@ class WP_Dynamic_Tags_Table_Import_Export {
             wp_send_json_error('Unauthorized');
         }
 
-        if (empty($_FILES['import_file'])) {
-            wp_send_json_error('No file uploaded');
+        $upload = $this->read_upload();
+        if (is_wp_error($upload)) {
+            wp_send_json_error($upload->get_error_message());
         }
 
-        $file = $_FILES['import_file'];
-        $format = sanitize_text_field($_POST['format']);
-        $options = isset($_POST['options']) ? $_POST['options'] : array();
+        $options = $this->sanitize_import_options(isset($_POST['options']) ? $_POST['options'] : array());
 
-        // Read file content
-        $file_content = file_get_contents($file['tmp_name']);
-
-        if ($file_content === false) {
-            wp_send_json_error('Failed to read file');
-        }
-
-        $result = $this->import_data($file_content, $format, $options);
+        $result = $this->import_data($upload['content'], $upload['format'], $options);
 
         if (is_wp_error($result)) {
             wp_send_json_error($result->get_error_message());
@@ -776,20 +835,13 @@ class WP_Dynamic_Tags_Table_Import_Export {
             wp_send_json_error('Unauthorized');
         }
 
-        if (empty($_FILES['import_file'])) {
-            wp_send_json_error('No file uploaded');
+        $upload = $this->read_upload();
+        if (is_wp_error($upload)) {
+            wp_send_json_error($upload->get_error_message());
         }
 
-        $file = $_FILES['import_file'];
-        $format = sanitize_text_field($_POST['format']);
-
-        $file_content = file_get_contents($file['tmp_name']);
-
-        if ($file_content === false) {
-            wp_send_json_error('Failed to read file');
-        }
-
-        $result = $this->import_data($file_content, $format, array('validate_only' => true));
+        // Validation never imports: validate_only is forced, whatever the request says.
+        $result = $this->import_data($upload['content'], $upload['format'], array('validate_only' => true));
 
         if (is_wp_error($result)) {
             wp_send_json_error($result->get_error_message());

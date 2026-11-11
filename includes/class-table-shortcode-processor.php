@@ -55,8 +55,8 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Register all shortcodes from table
      */
     public function register_table_shortcodes() {
-        // Skip registration during REST API requests to prevent timeouts
-        if (defined('REST_REQUEST') && REST_REQUEST) {
+        // REST requests render content too (L4); see WP_Dynamic_Tags_Plugin::should_register_shortcodes().
+        if (!WP_Dynamic_Tags_Plugin::should_register_shortcodes()) {
             return;
         }
 

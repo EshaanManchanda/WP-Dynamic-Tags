@@ -667,7 +667,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
         $headers[] = 'export_version';
         $headers[] = 'shortcode_patterns';
 
-        fputcsv($output, $headers);
+        fputcsv($output, $headers, ',', '"', '\\');
 
         // Export data with enhanced validation
         $exported_count = 0;
@@ -724,7 +724,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
                 $row[] = '2.0'; // Export version for compatibility tracking
                 $row[] = implode(';', $shortcode_patterns);
 
-                fputcsv($output, $row);
+                fputcsv($output, $row, ',', '"', '\\');
                 $exported_count++;
 
             } catch (Exception $e) {
@@ -923,7 +923,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
             return array('success' => false, 'message' => __('Cannot read CSV file.', 'wp-dynamic-tags'));
         }
         
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, 0, ',', '"', '\\');
         if (!$headers || !in_array('tag_key', $headers) || !in_array('tag_value', $headers)) {
             fclose($handle);
             return array('success' => false, 'message' => __('CSV must contain tag_key and tag_value columns.', 'wp-dynamic-tags'));
@@ -939,7 +939,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
         $skipped = 0;
         $errors = 0;
         
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
             if (count($row) <= max($key_index, $value_index)) {
                 $errors++;
                 continue;
@@ -1355,7 +1355,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
             throw new Exception(__('Cannot read CSV file.', 'wp-dynamic-tags'));
         }
 
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, 0, ',', '"', '\\');
 
         // Strip UTF-8 BOM from first header if present
         // BOM is added during export for Excel compatibility but breaks header detection
@@ -1391,7 +1391,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
         $duplicate_keys = array();
 
         // Pre-validation pass to detect duplicates within the CSV
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
             $line_number++;
 
             if (empty($row) || count($row) <= max($column_mapping['key_index'], $column_mapping['value_index'])) {

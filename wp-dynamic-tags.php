@@ -274,12 +274,28 @@ class WP_Dynamic_Tags_Plugin
     }
 
     /**
+     * Whether this request should register the tag shortcodes (L4). Registration used to be skipped on every REST
+     * request "to prevent timeouts", so shortcodes in REST-rendered content were left as raw text. They are registered by
+     * default now; filter dt_register_shortcodes_on_rest returns false to skip them on REST requests.
+     *
+     * @param bool|null $is_rest Defaults to "is this a REST request".
+     */
+    public static function should_register_shortcodes($is_rest = null)
+    {
+        if ($is_rest === null) {
+            $is_rest = defined('REST_REQUEST') && REST_REQUEST;
+        }
+        return !$is_rest || (bool) apply_filters('dt_register_shortcodes_on_rest', true);
+    }
+
+    /**
      * Register all shortcodes with fixed order and error handling
      */
     public function register_shortcodes()
     {
-        // Skip registration during REST API requests to prevent timeouts
-        if (defined('REST_REQUEST') && REST_REQUEST) {
+        // REST requests render post content too (block editor previews, headless front ends), so tags must be
+        // registered there (L4). Sites with a very large number of tags can opt out with the filter.
+        if (!self::should_register_shortcodes()) {
             return;
         }
 
@@ -3009,7 +3025,7 @@ class WP_Dynamic_Tags_Plugin
         header('Content-Disposition: attachment; filename="dynamic-tags-bulk-export-' . date('Y-m-d-H-i-s') . '.csv"');
 
         $output = fopen('php://output', 'w');
-        fputcsv($output, array('tag_key', 'tag_value', 'groups', 'priority', 'usage_count'));
+        fputcsv($output, array('tag_key', 'tag_value', 'groups', 'priority', 'usage_count'), ',', '"', '\\');
 
         foreach ($post_ids as $post_id) {
             $post = get_post($post_id);
@@ -3028,7 +3044,7 @@ class WP_Dynamic_Tags_Plugin
                     implode(';', $group_names),
                     get_post_meta($post_id, '_dt_priority', true) ?: 0,
                     get_post_meta($post_id, '_dt_usage_count', true) ?: 0
-                ));
+                ), ',', '"', '\\');
             }
         }
 

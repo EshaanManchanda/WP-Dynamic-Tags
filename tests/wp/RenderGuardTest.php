@@ -92,4 +92,20 @@ class DT_Render_Guard_Test extends WP_UnitTestCase
         $this->seed(['g_dflt' => 'A[g_dflt default="STOP"]']);
         $this->assertSame('ASTOP', do_shortcode('[g_dflt]'));
     }
+
+    // ------------------------------------------------------------------ L4
+
+    public function test_shortcodes_are_registered_on_rest_requests_by_default(): void
+    {
+        $this->assertTrue(WP_Dynamic_Tags_Plugin::should_register_shortcodes(true), 'REST-rendered content needs the shortcodes');
+        $this->assertTrue(WP_Dynamic_Tags_Plugin::should_register_shortcodes(false));
+    }
+
+    public function test_a_site_can_opt_out_of_registering_on_rest_requests(): void
+    {
+        add_filter('dt_register_shortcodes_on_rest', '__return_false');
+        $this->assertFalse(WP_Dynamic_Tags_Plugin::should_register_shortcodes(true));
+        $this->assertTrue(WP_Dynamic_Tags_Plugin::should_register_shortcodes(false), 'normal requests are not affected by the opt-out');
+        remove_filter('dt_register_shortcodes_on_rest', '__return_false');
+    }
 }
