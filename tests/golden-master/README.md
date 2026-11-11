@@ -51,3 +51,15 @@ The harness acts as the first user with the `administrator` role.
   Volatile values (IDs, today's date in both formats, e-mail addresses) are normalized before writing.
 * **Antivirus.** Scripts that call `wp_set_current_user()` can be quarantined by some antivirus products. If
   `render.php` or `siblings.php` disappears, restore it and exclude this folder.
+
+## Approving deliberate differences (allow-list)
+
+`allowed-differences.json` lists every output that is *meant* to differ from the baseline: path, context, the exact invocation, the
+**exact new output**, a bug id and the reason. Run the comparison with the allow-list:
+
+```
+php diff.php baseline table current table in_singular --all --allow=allowed-differences.json
+```
+
+It fails on any unlisted difference, on a listed entry whose output is different, and on a **stale** entry (the difference no
+longer occurs), so a security or bug fix can never be approved in bulk and an old approval cannot hide a later regression.

@@ -50,8 +50,8 @@ matrix green). Nothing is marked fixed without a test id.
 
 | ID | Sev | Status | Where | Defect | Evidence | Test |
 |---|---|---|---|---|---|---|
-| L1 | high | open | `class-dynamic-placeholders.php:620-630`, `class-table-shortcode-processor.php:266-280` | Sequential `{if}` blocks mis-parse: `A{if:x}shown{/if} middle {if:y}yes{else}no{/if} end` pairs the first `{if:x}` with the second block's `{else}`, leaking raw `{/if}`/`{if:y}`; nested `{if}` unsupported | **P** (regex probe 2026-11-11, output `A[x|T=shown{/if} middle {if:y}yes|F=no] end`) | |
-| L2 | medium | open | `class-table-shortcode-processor.php:285-314` | Condition matching by `strpos`: `{if:!user_logged_in}` is read as `user_logged_in`; `time_between` never true across midnight; post engine has no `time_between` | R | |
+| L1 | high | fixed | `class-dynamic-placeholders.php:620-630`, `class-table-shortcode-processor.php:266-280` ; red run on the old engines: 6 of 7 end-to-end tests failed | Sequential `{if}` blocks mis-parse: `A{if:x}shown{/if} middle {if:y}yes{else}no{/if} end` pairs the first `{if:x}` with the second block's `{else}`, leaking raw `{/if}`/`{if:y}`; nested `{if}` unsupported | **P** (regex probe 2026-11-11, output `A[x|T=shown{/if} middle {if:y}yes|F=no] end`)  `ConditionalParserTest` (17, pure), `DT_Conditional_Render_Test` (7, WP suite); golden-master allow-list entries |
+| L2 | medium | fixed (partly) | `class-table-shortcode-processor.php:285-314` | Condition matching by `strpos`: `{if:!user_logged_in}` is read as `user_logged_in`; `time_between` never true across midnight; post engine has no `time_between` | R  `DT_Conditional_Render_Test`, `TimeWindowTest` (13). Post engine still lacks `time_between`, table renderer still lacks `user_role:`/field conditions: resolved by the Phase 3 unification |
 | L3 | medium | open | `class-dynamic-placeholders.php:585-596` | Hardcoded test data in production: `[date1]` -> `25th Aug 2056`, `[date2]`, `[tagname]` -> `dynamic_tag_name`; `error_log` per token under `WP_DEBUG` | R | |
 | L4 | medium | open | `wp-dynamic-tags.php:253, 285, 2108` | `register_shortcodes()` returns early on REST requests (raw shortcodes in REST-rendered content); called twice per request | R | |
 | L5 | medium | open | `class-dynamic-formatters.php:92, 104, 113` | `date`/`relative` give 1970 for unparsable input; `human_time_diff(strtotime(), current_time('timestamp'))` mixes UTC and site-offset time; `currency` hardcodes `$`, `number_format` ignores locale | R | |
@@ -79,6 +79,8 @@ registration; usage `UPDATE` on every render (measured: one write per render, se
 queries (8 transient writes, 26 schema checks), 5,000 shortcodes registered; rendering 40 shortcodes = 40 database writes.
 
 ## Test evidence log
+
+* 2026-11-11 L1/L2: new pure `WP_Dynamic_Tags_Conditional_Parser` (stack based) used by both renderers; the table renderer gets `{else}`, `!negation`, exact condition names and midnight-crossing `time_between`. Red: 6 of 7 `DT_Conditional_Render_Test` cases failed on the old engines. Green: root PHPUnit 127, WP 7.1.4 and 7.0 front 18 + admin 131, PHPStan clean. Golden master: post path identical 132/132 in 3 contexts; table path 12 approved differences per context pinned in `tests/golden-master/allowed-differences.json` (negative control: a wrong expected output makes `diff.php --allow` fail).
 
 * 2026-11-11 L8/L9: guard in `WP_Dynamic_Tags_Table_Shortcode_Processor` (render stack, `dt_max_render_depth` default 10, `dt_max_render_size` default 1 MB; a result produced while a guard tripped is not cached). `tests/wp/RenderGuardTest.php`: 9 tests green on WP 7.1.4.
 

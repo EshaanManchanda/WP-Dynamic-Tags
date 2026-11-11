@@ -1,0 +1,293 @@
+{
+    "_comment": "Reviewed, deliberate golden-master differences. Every entry pins the exact new output. diff.php --allow fails on unlisted and on stale entries.",
+    "differences": [
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_in]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_in format=\"uppercase\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_in default=\"DEF\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_in cache=\"false\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_role]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_role format=\"uppercase\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_role default=\"DEF\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_role cache=\"false\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_field]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_field format=\"uppercase\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_field default=\"DEF\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_singular",
+            "invocation": "[gm_cond_field cache=\"false\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_in]",
+            "expected": "IN",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_in format=\"uppercase\"]",
+            "expected": "IN",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_in default=\"DEF\"]",
+            "expected": "IN",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_in cache=\"false\"]",
+            "expected": "IN",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_role]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_role format=\"uppercase\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_role default=\"DEF\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_role cache=\"false\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_field]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_field format=\"uppercase\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_field default=\"DEF\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "in_singular",
+            "invocation": "[gm_cond_field cache=\"false\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_in]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_in format=\"uppercase\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_in default=\"DEF\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_in cache=\"false\"]",
+            "expected": "OUT",
+            "bug": "L1",
+            "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_role]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_role format=\"uppercase\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_role default=\"DEF\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_role cache=\"false\"]",
+            "expected": "NOTADMIN",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_field]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_field format=\"uppercase\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_field default=\"DEF\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "table",
+            "ctx": "out_archive",
+            "invocation": "[gm_cond_field cache=\"false\"]",
+            "expected": "SMALL",
+            "bug": "L1",
+            "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        }
+    ]
+}

@@ -4744,6 +4744,9 @@ class WP_Dynamic_Tags_Plugin
     {
         $includes_dir = WP_DYNAMIC_TAGS_PLUGIN_DIR . 'includes/';
 
+        // Pure {if}/{else}/{/if} block parser shared by both rendering engines (L1); no dependencies, load first.
+        require_once $includes_dir . 'class-conditional-parser.php';
+
         if (file_exists($includes_dir . 'class-license-manager.php')) {
             require_once $includes_dir . 'class-license-manager.php';
         }

@@ -315,53 +315,58 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Process conditional content blocks
      */
     private function process_conditionals($content) {
-        // Pattern: {if:condition}content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{\/if\}/s';
-
-        return preg_replace_callback($pattern, function($matches) {
-            $condition = trim($matches[1]);
-            $conditional_content = $matches[2];
-
-            if ($this->evaluate_condition($condition)) {
-                return $conditional_content;
-            }
-
-            return '';
-        }, $content);
+        // {if:condition}content{/if}, now also with {else} and nesting, through the shared parser (L1).
+        return WP_Dynamic_Tags_Conditional_Parser::process((string) $content, function ($condition) {
+            return $this->evaluate_condition(trim($condition));
+        });
     }
 
     /**
      * Evaluate conditional expressions
      */
     private function evaluate_condition($condition) {
-        // Simple condition evaluation
-        if (strpos($condition, 'user_logged_in') !== false) {
-            return is_user_logged_in();
+        $condition = trim((string) $condition);
+
+        // "!condition" negates (L2): it used to be ignored, so {if:!user_logged_in} behaved like {if:user_logged_in}.
+        if ($condition !== '' && $condition[0] === '!') {
+            return !$this->evaluate_condition(substr($condition, 1));
         }
 
-        if (strpos($condition, 'is_admin') !== false) {
-            return current_user_can('manage_options');
+        // Exact names, not substrings: the old strpos() matched any text that merely contained the word.
+        switch ($condition) {
+            case 'user_logged_in':
+                return is_user_logged_in();
+            case 'user_not_logged_in':
+                return !is_user_logged_in();
+            case 'is_admin':
+                return current_user_can('manage_options');
+            case 'is_mobile':
+                return wp_is_mobile();
         }
 
-        if (strpos($condition, 'is_mobile') !== false) {
-            return wp_is_mobile();
-        }
-
-        if (preg_match('/time_between\((\d{1,2}):(\d{2}),(\d{1,2}):(\d{2})\)/', $condition, $matches)) {
-            $start_hour = intval($matches[1]);
-            $start_min = intval($matches[2]);
-            $end_hour = intval($matches[3]);
-            $end_min = intval($matches[4]);
-
-            $current_time = current_time('H:i');
-            $start_time = sprintf('%02d:%02d', $start_hour, $start_min);
-            $end_time = sprintf('%02d:%02d', $end_hour, $end_min);
-
-            return ($current_time >= $start_time && $current_time <= $end_time);
+        if (preg_match('/^time_between\(\s*(\d{1,2}):(\d{2})\s*,\s*(\d{1,2}):(\d{2})\s*\)$/', $condition, $matches)) {
+            $now = explode(':', current_time('H:i'));
+            return self::time_in_window(
+                (int) $now[0] * 60 + (int) $now[1],
+                (int) $matches[1] * 60 + (int) $matches[2],
+                (int) $matches[3] * 60 + (int) $matches[4]
+            );
         }
 
         // Default to false for unknown conditions
         return false;
+    }
+
+    /**
+     * Whether a time of day (minutes since midnight) lies inside [start, end], both inclusive. A window whose end is
+     * before its start runs through midnight (22:00-06:00); the old string comparison could never be true for it (L2).
+     * Pure, so it is unit tested without WordPress.
+     */
+    public static function time_in_window(int $now, int $start, int $end): bool {
+        if ($start <= $end) {
+            return $now >= $start && $now <= $end;
+        }
+        return $now >= $start || $now <= $end;
     }
 
     /**

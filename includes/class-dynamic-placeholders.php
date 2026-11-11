@@ -618,44 +618,11 @@ class WP_Dynamic_Tags_Placeholders {
      * Process conditional placeholders
      */
     private function process_conditionals($content) {
-        // Pattern: {if:condition}content{else}alt_content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{else\}(.*?)\{\/if\}/s';
-        $content = preg_replace_callback($pattern, array($this, 'process_conditional_with_else'), $content);
-        
-        // Pattern: {if:condition}content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{\/if\}/s';
-        $content = preg_replace_callback($pattern, array($this, 'process_conditional_simple'), $content);
-        
-        return $content;
-    }
-    
-    /**
-     * Process conditional with else clause
-     */
-    private function process_conditional_with_else($matches) {
-        $condition = $matches[1];
-        $true_content = $matches[2];
-        $false_content = $matches[3];
-        
-        if ($this->evaluate_condition($condition)) {
-            return $true_content;
-        } else {
-            return $false_content;
-        }
-    }
-    
-    /**
-     * Process simple conditional
-     */
-    private function process_conditional_simple($matches) {
-        $condition = $matches[1];
-        $content = $matches[2];
-        
-        if ($this->evaluate_condition($condition)) {
-            return $content;
-        } else {
-            return '';
-        }
+        // {if:condition}content{else}alt_content{/if} and {if:condition}content{/if}, sequential or nested (L1):
+        // block matching lives in WP_Dynamic_Tags_Conditional_Parser, this class only decides the conditions.
+        return WP_Dynamic_Tags_Conditional_Parser::process((string) $content, function ($condition) {
+            return (bool) $this->evaluate_condition($condition);
+        });
     }
     
     /**
