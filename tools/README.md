@@ -8,7 +8,7 @@ memory note `dev-environment-local-and-norton`; never disable TLS verification).
 |---|---|---|
 | `static/` | PHPCompatibility 10 (PHP 8.2-8.5), wp-compat (WP floor 7.0), Psalm taint analysis, PHPStan 2 | `phpcs --standard=PHPCompatibility --runtime-set testVersion 8.2-`; `phpstan analyse -c phpstan-compat.neon`; `psalm --taint-analysis` |
 | `integration/` | wp-phpunit 7.1.3 + PHPUnit 9.6 + Yoast polyfills (WordPress core test suite) | disposable database only |
-| `mutation/` | Infection 0.29 | needs Xdebug (`php_xdebug.dll` ships with Local's PHP) |
+| `mutation/` | Infection 0.29 (installed, **does not complete here**: it stops silently while processing the first source file on Windows + Xdebug) and `mutants.php`, a hand-written mutation runner (26 deliberate mutants of the conditional parser, the time window and `decode_meta`; all 26 killed) | `php tools/mutation/mutants.php` |
 | `fuzz/` | nikic/php-fuzzer | pure parsers only |
 
 `static/negctl/` (with `psalm-negctl.xml`) holds **negative controls**: tiny files that must be flagged. A clean run of a tool is only
