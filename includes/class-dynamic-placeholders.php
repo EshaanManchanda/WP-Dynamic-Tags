@@ -31,10 +31,10 @@ class WP_Dynamic_Tags_Placeholders {
     private static $_instance = null;
 
     /** {api:} responses larger than this are refused; WordPress stops reading the body at this size (S11). */
-    private const API_MAX_BYTES = MB_IN_BYTES;
+    private const API_MAX_BYTES = 1048576; // literal, not MB_IN_BYTES: the pure unit tests instantiate this class without WordPress
 
     /** {api:} payloads larger than this are used but not stored in a transient (wp_options) (S11). */
-    private const API_CACHE_MAX_BYTES = 256 * KB_IN_BYTES;
+    private const API_CACHE_MAX_BYTES = 262144; // 256 KB
 
     /** Remote fetches made by this request; capped by filter dt_api_max_fetches (default 5) (S11). */
     private static $api_fetches = 0;
