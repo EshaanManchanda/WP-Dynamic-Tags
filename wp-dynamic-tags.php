@@ -1149,6 +1149,22 @@ class WP_Dynamic_Tags_Plugin
     }
 
     /**
+     * wp_get_post_terms() that always returns an array (L7). WordPress answers with a WP_Error when the taxonomy does not
+     * exist (this plugin registers tag_groups on init, so code running earlier sees one); callers that merge, count or index
+     * the result were a PHP 8 fatal. Same parameters as wp_get_post_terms(); an error means "no terms".
+     *
+     * @param int          $post_id
+     * @param string       $taxonomy
+     * @param array<mixed> $args wp_get_object_terms() arguments, e.g. array('fields' => 'ids')
+     * @return array<mixed>
+     */
+    public static function post_terms($post_id, $taxonomy = 'post_tag', $args = array())
+    {
+        $terms = wp_get_post_terms($post_id, $taxonomy, $args);
+        return is_wp_error($terms) ? array() : $terms;
+    }
+
+    /**
      * Register a shortcode with conflict prevention
      */
     private function register_shortcode_safely($shortcode_name, $callback)
@@ -1998,7 +2014,7 @@ class WP_Dynamic_Tags_Plugin
         $tag_key = $this->sanitize_tag_key($tag_title);
 
         // Get groups for this tag (for logging and metadata only)
-        $groups = wp_get_post_terms($post_id, 'tag_groups');
+        $groups = WP_Dynamic_Tags_Plugin::post_terms($post_id, 'tag_groups');
 
         // Check for conflicts with existing tags
         $conflicts = $this->check_shortcode_conflicts($post_id, $tag_key, $groups);
@@ -2013,7 +2029,7 @@ class WP_Dynamic_Tags_Plugin
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG && defined('DT_DEBUG_VERBOSE')) {
-            if (!is_wp_error($groups) && !empty($groups)) {
+            if (!empty($groups)) {
                 $primary_group = $groups[0];
                 $conflict_status = $conflicts ? ' (resolved conflicts)' : '';
                 error_log("WP Dynamic Tags: Generated shortcode [{$shortcode}] for tag '{$tag_title}' in group '{$primary_group->name}'{$conflict_status}");
@@ -2043,7 +2059,7 @@ class WP_Dynamic_Tags_Plugin
 
         if (!empty($similar_tags)) {
             foreach ($similar_tags as $similar_tag) {
-                $similar_groups = wp_get_post_terms($similar_tag->ID, 'tag_groups');
+                $similar_groups = WP_Dynamic_Tags_Plugin::post_terms($similar_tag->ID, 'tag_groups');
                 $conflicts[] = array(
                     'tag_id' => $similar_tag->ID,
                     'tag_title' => $similar_tag->post_title,
@@ -2125,7 +2141,7 @@ class WP_Dynamic_Tags_Plugin
 
         if (!empty($grouped_tags)) {
             $grouped_tag = $grouped_tags[0];
-            $groups = wp_get_post_terms($grouped_tag->ID, 'tag_groups');
+            $groups = WP_Dynamic_Tags_Plugin::post_terms($grouped_tag->ID, 'tag_groups');
             if (!empty($groups)) {
                 $group_key = $this->sanitize_tag_key($groups[0]->name);
                 return $group_key . '_' . $tag_key;

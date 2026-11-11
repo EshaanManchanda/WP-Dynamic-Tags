@@ -844,7 +844,7 @@ class WP_Dynamic_Tags_Groups {
             'orderby' => 'name'
         ));
 
-        $selected_groups = wp_get_post_terms($post->ID, $this->taxonomy, array('fields' => 'ids'));
+        $selected_groups = WP_Dynamic_Tags_Plugin::post_terms($post->ID, $this->taxonomy, array('fields' => 'ids'));
 
         if (empty($groups)) {
             echo '<p>' . __('No groups available.', 'wp-dynamic-tags') . ' ';
@@ -1368,7 +1368,7 @@ class WP_Dynamic_Tags_Groups {
                 continue;
             }
 
-            $current_groups = wp_get_post_terms($tag_id, $this->taxonomy, array('fields' => 'ids'));
+            $current_groups = WP_Dynamic_Tags_Plugin::post_terms($tag_id, $this->taxonomy, array('fields' => 'ids'));
 
             switch ($action) {
                 case 'add':

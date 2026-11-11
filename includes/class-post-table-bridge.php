@@ -75,7 +75,7 @@ class WP_Dynamic_Tags_Post_Table_Bridge {
         $last_used = get_post_meta($post_id, '_dt_last_used', true);
 
         // Get groups (categories)
-        $groups = wp_get_post_terms($post_id, $this->taxonomy, array('fields' => 'ids'));
+        $groups = WP_Dynamic_Tags_Plugin::post_terms($post_id, $this->taxonomy, array('fields' => 'ids'));
         $category_id = !empty($groups) ? $groups[0] : 0;
 
         // Prepare data for table

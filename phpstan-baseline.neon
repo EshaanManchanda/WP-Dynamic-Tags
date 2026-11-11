@@ -31,21 +31,6 @@ parameters:
 			path: includes/class-bulk-manager.php
 
 		-
-			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
-			count: 1
-			path: includes/class-bulk-manager.php
-
-		-
-			message: "#^Property WP_Term\\:\\:\\$term_id \\(int\\) in isset\\(\\) is not nullable\\.$#"
-			count: 1
-			path: includes/class-bulk-manager.php
-
-		-
-			message: "#^Result of \\|\\| is always false\\.$#"
-			count: 2
-			path: includes/class-bulk-manager.php
-
-		-
 			message: "#^Call to function is_wp_error\\(\\) with array\\{path\\: string, url\\: string, subdir\\: string, basedir\\: string, baseurl\\: string, error\\: string\\|false\\} will always evaluate to false\\.$#"
 			count: 1
 			path: includes/class-import-export.php

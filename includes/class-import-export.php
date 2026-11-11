@@ -565,7 +565,7 @@ date3,"24th Feb 2026",general,"Math Olympiad",0,"2024-01-01 12:00:00","2024-01-0
                 $tag_data['priority'] = get_post_meta($tag->ID, '_dt_priority', true) ?: 0;
 
                 // Include groups
-                $groups = wp_get_post_terms($tag->ID, 'tag_groups');
+                $groups = WP_Dynamic_Tags_Plugin::post_terms($tag->ID, 'tag_groups');
                 $tag_data['groups'] = array();
                 foreach ($groups as $group) {
                     $tag_data['groups'][] = array(

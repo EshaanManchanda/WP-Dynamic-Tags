@@ -73,7 +73,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
         );
 
         foreach ($tags as $tag) {
-            $groups = wp_get_post_terms($tag->ID, $this->taxonomy, array('fields' => 'names'));
+            $groups = WP_Dynamic_Tags_Plugin::post_terms($tag->ID, $this->taxonomy, array('fields' => 'names'));
             $is_grouped = !empty($groups);
 
             $tag_info = array(
@@ -103,7 +103,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
      */
     private function generate_shortcode_for_tag($tag, $groups = null) {
         if ($groups === null) {
-            $groups = wp_get_post_terms($tag->ID, $this->taxonomy, array('fields' => 'names'));
+            $groups = WP_Dynamic_Tags_Plugin::post_terms($tag->ID, $this->taxonomy, array('fields' => 'names'));
         }
 
         $sanitized_title = $this->sanitize_tag_key($tag->post_title);
@@ -271,7 +271,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
             }
 
             // Collect groups
-            $tag_groups = wp_get_post_terms($tag_id, $this->taxonomy, array('fields' => 'names'));
+            $tag_groups = WP_Dynamic_Tags_Plugin::post_terms($tag_id, $this->taxonomy, array('fields' => 'names'));
             $merged_data['groups'] = array_merge($merged_data['groups'], $tag_groups);
 
             // Delete the tag
@@ -282,7 +282,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
         }
 
         // Update primary tag if needed
-        $primary_groups = wp_get_post_terms($primary_tag_id, $this->taxonomy, array('fields' => 'names'));
+        $primary_groups = WP_Dynamic_Tags_Plugin::post_terms($primary_tag_id, $this->taxonomy, array('fields' => 'names'));
         $all_groups = array_unique(array_merge($primary_groups, $merged_data['groups']));
 
         if (count($all_groups) > count($primary_groups)) {
@@ -436,7 +436,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
         $deleted = 0;
 
         foreach ($tag_ids as $tag_id) {
-            $groups = wp_get_post_terms($tag_id, $this->taxonomy);
+            $groups = WP_Dynamic_Tags_Plugin::post_terms($tag_id, $this->taxonomy);
             if (empty($groups)) {
                 $result = wp_delete_post($tag_id, true);
                 if ($result) {
@@ -628,7 +628,7 @@ class WP_Dynamic_Tags_Conflict_Resolver {
         ));
 
         foreach ($similar_tags as $similar_tag) {
-            $groups = wp_get_post_terms($similar_tag->ID, $this->taxonomy, array('fields' => 'names'));
+            $groups = WP_Dynamic_Tags_Plugin::post_terms($similar_tag->ID, $this->taxonomy, array('fields' => 'names'));
 
             if (!empty($groups)) {
                 $similarity = $this->calculate_title_similarity($tag->post_title, $similar_tag->post_title);

@@ -176,7 +176,7 @@ class WP_Dynamic_Tags_Bulk_Manager {
                                     </td>
                                     <td class="column-groups">
                                         <?php
-                                        $groups = wp_get_post_terms($tag->ID, 'tag_groups');
+                                        $groups = WP_Dynamic_Tags_Plugin::post_terms($tag->ID, 'tag_groups');
                                         if (!empty($groups)): ?>
                                             <?php foreach ($groups as $group):
                                                 // Ensure $group is an object and has the required properties

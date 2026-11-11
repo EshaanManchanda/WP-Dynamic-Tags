@@ -590,6 +590,9 @@ class WP_Dynamic_Tags_Placeholders {
         $query = new WP_Query($query_args);
         $rows = array();
         foreach ($query->posts as $queried_post) {
+            if (!$queried_post instanceof WP_Post) {
+                continue; // an int when a filter allowed fields=ids
+            }
             $rows[] = array(
                 'id' => $queried_post->ID,
                 'title' => get_the_title($queried_post),
