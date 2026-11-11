@@ -57,8 +57,8 @@ matrix green). Nothing is marked fixed without a test id.
 | L5 | medium | open | `class-dynamic-formatters.php:92, 104, 113` | `date`/`relative` give 1970 for unparsable input; `human_time_diff(strtotime(), current_time('timestamp'))` mixes UTC and site-offset time; `currency` hardcodes `$`, `number_format` ignores locale | R | |
 | L6 | medium | open | `assets/js/admin.js:195` | Posts `dt_duplicate_tag` to admin-ajax; only a GET `admin_action_` handler exists | R | |
 | L7 | medium | open | `class-bulk-manager.php:181`, `class-conflict-resolver.php:275-288, 636, 733`, `wp-dynamic-tags.php:1975`, `class-dynamic-placeholders.php:482` | Unchecked `WP_Error` from `get_terms`/`wp_get_object_terms` (fatal on PHP 8 for a missing taxonomy); `$ID` on `int|WP_Post`; plus unused private methods, write-only properties, unreachable code after `wp_send_json` (`admin/conflict-manager.php:425, 432`) | T (PHPStan level 8) | |
-| L8 | high | open | `class-table-shortcode-processor.php:258`, whole plugin | No recursion guard: tag `a` containing `[a]`, or A<->B, recurses; no depth or output-size limit | R (grep for depth/stack/recursion found nothing); **needs P first** | |
-| L9 | low | open | `class-table-shortcode-processor.php:197` | `performance_stats['shortcode_executions'][]` grows on every render | R | |
+| L8 | high | fixed | `class-table-shortcode-processor.php:258`, whole plugin | No recursion guard: tag `a` containing `[a]`, or A<->B, recurses; no depth or output-size limit | P: `tests/live/recursion-probe.php` exit 255 (PHP fatal, WordPress critical-error page) for self, pair and chain before; exit 0 with `A`, `AB`, `ABC` after | `DT_Render_Guard_Test` (9 tests; mutation: disabling the depth and size guards fails 3 of them) |
+| L9 | low | fixed | `class-table-shortcode-processor.php:197` | `performance_stats['shortcode_executions'][]` grows on every render | R | execution log capped at 50 entries; exercised by `DT_Render_Guard_Test` |
 | L10 | medium | open | `wp-dynamic-tags.php:1050-1060, 1186-1204, 1246-1248, 1589, 1618` | Site-specific hardcoded names: `remove_conflicting_shortcodes()` removes `math_olympiad_*`, `science_olympiad_*`, `general_*` of any owner; `is_our_shortcode()` pattern `^[a-z0-9_]+$` matches every shortcode, so conflict handling treats foreign shortcodes as ours | R | |
 | L11 | low | open | `wp-dynamic-tags.php:1086, 1108` | Verbose debug logging writes raw and processed tag content (may contain `{user_email}` etc.) to `debug.log` | R | |
 | L12 | medium | open | `wp-dynamic-tags.php:1090-1092` | Post-path usage is written (2 `update_post_meta`) per render when `WP_DEBUG` is on, and never counted in production: inconsistent with the table path | R | |
@@ -80,6 +80,9 @@ queries (8 transient writes, 26 schema checks), 5,000 shortcodes registered; ren
 
 ## Test evidence log
 
+* 2026-11-11 L8/L9: guard in `WP_Dynamic_Tags_Table_Shortcode_Processor` (render stack, `dt_max_render_depth` default 10, `dt_max_render_size` default 1 MB; a result produced while a guard tripped is not cached). `tests/wp/RenderGuardTest.php`: 9 tests green on WP 7.1.4.
+
 * 2026-11-11 B3 batch (S5, S6, S7, L13): `tests/wp-admin/ActionSecurityTest.php` generated from `tests/wp-admin/support/actions.php`.
   Before the fixes: 143 tests, 22 failures (7 S5/L13 authorization cases, 4 L13 callbacks, 1 S6 nonce, 3 S7 crashes, plus the registry integrity case). After: **131 tests, 0 failures** on WP 7.1.4 (the 4 dead actions left the registry). Root PHPUnit 97 tests OK, PHPStan baseline clean, golden master identical 6/6 on a disposable clone.
-  Run: `DT_WP_CORE_ROOT=<scratch> DT_PHP_INI_DIR=<scratch>\phpini82 tools\integrationun.ps1 -Core 7.1.4 -Suite admin`.
+  Run: `DT_WP_CORE_ROOT=<scratch> DT_PHP_INI_DIR=<scratch>\phpini82 tools\integration
+un.ps1 -Core 7.1.4 -Suite admin`.

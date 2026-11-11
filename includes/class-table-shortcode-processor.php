@@ -147,10 +147,50 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     }
 
     /**
-     * Process shortcode with enhanced features
+     * Tags currently being rendered in this request, keyed by tag id (L8). A tag whose content refers to itself, or two
+     * tags that refer to each other, used to render until PHP ran out of memory and took the page down.
+     *
+     * @var array<int|string, true>
+     */
+    private static $render_stack = array();
+
+    /** Incremented every time a guard trips; a result produced while it changed is context-dependent and not cached. */
+    private static $guard_trips = 0;
+
+    /**
+     * Process shortcode with enhanced features.
+     *
+     * Wrapper that applies the recursion guard (cycle detection by tag id, maximum depth, maximum output size, all
+     * filterable) and delegates to render_tag().
      */
     private function process_shortcode($tag, $atts = array()) {
+        $fallback = (is_array($atts) && isset($atts['default'])) ? (string) $atts['default'] : '';
+
+        if (isset(self::$render_stack[$tag->id])) {
+            self::$guard_trips++;
+            return $fallback; // cycle: this tag is already being rendered further up
+        }
+
+        $max_depth = max(1, (int) apply_filters('dt_max_render_depth', 10));
+        if (count(self::$render_stack) >= $max_depth) {
+            self::$guard_trips++;
+            return $fallback;
+        }
+
+        self::$render_stack[$tag->id] = true;
+        try {
+            return $this->render_tag($tag, $atts);
+        } finally {
+            unset(self::$render_stack[$tag->id]);
+        }
+    }
+
+    /**
+     * Render one tag (the body process_shortcode() used to have).
+     */
+    private function render_tag($tag, $atts) {
         $start_time = microtime(true);
+        $trips_before = self::$guard_trips;
 
         try {
             // Track usage
@@ -187,13 +227,24 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             // Apply formatting
             $content = $this->apply_formatting($content, $atts['format'], $tag);
 
-            // Cache result
-            if ($atts['cache'] === 'true') {
+            // Output size guard (L8): nested expansion can multiply output; drop anything beyond the limit.
+            $max_size = (int) apply_filters('dt_max_render_size', 1048576);
+            if ($max_size > 0 && strlen($content) > $max_size) {
+                self::$guard_trips++;
+                return $atts['default'];
+            }
+
+            // Cache result, unless a guard tripped while rendering it: such a result depends on where the tag was
+            // reached from (the render stack), so serving it from the cache elsewhere would be wrong.
+            if ($atts['cache'] === 'true' && self::$guard_trips === $trips_before) {
                 $this->cache[$cache_key] = $content;
             }
 
-            // Performance tracking
+            // Performance tracking: keep only the most recent entries, the list used to grow with every render (L9).
             $execution_time = microtime(true) - $start_time;
+            if (count($this->performance_stats['shortcode_executions']) >= 50) {
+                array_shift($this->performance_stats['shortcode_executions']);
+            }
             $this->performance_stats['shortcode_executions'][] = array(
                 'shortcode' => $tag->shortcode,
                 'execution_time' => $execution_time,
