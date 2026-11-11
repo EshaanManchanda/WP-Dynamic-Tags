@@ -9,8 +9,8 @@
   "plugin_uri": "https://github.com/EshaanManchanda/WP-Dynamic-Tags",
   "license": "GPL v2 or later",
   "requires": {
-    "wordpress": "5.0",
-    "php": "7.4",
+    "wordpress": "7.0",
+    "php": "8.2",
     "tested_up_to": "7.1"
   },
   "plans": [

@@ -26,6 +26,9 @@ matrix green). Nothing is marked fixed without a test id.
 | T3 | PHPCompatibilityWP 2.1.x cannot load under PHP_CodeSniffer 4 (needed by PHPCompatibility 10, the first release that knows PHP 8.2-8.5 deprecations) | Use the `PHPCompatibility` standard directly. PHPCompatibility 9.3.5 gave a false "clean" (negative control for `utf8_encode` was not flagged), so it is not used |
 | T4 | PHP 8.6 forward-compat: about 40 `trim()` calls without explicit characters (form feed becomes trimmed in 8.6) | Informational, not a bug today. Will not be changed except in lines touched anyway |
 
+| T5 | Plugin Check (WordPress.org checker) on the plugin copied into a throwaway site: 2,354 findings (1,783 errors, 571 warnings) in 32 files | 1,014 are `TextDomainMismatch`: an artifact of the folder name `Dynamic-tags-v4` (the text domain is `wp-dynamic-tags`; ship the folder as `wp-dynamic-tags`). 617 are unescaped output (`echo __()` without `esc_html__`) and 104 direct queries on the custom table (expected). 13 `wp_function_not_compatible_with_requires_wp` (`wp_date`, `wp_timezone` need WP 5.3 while the header said 5.0) are fixed by H1. Not a gate for private distribution; the escaping and `date()` items are Phase 5 work |
+| H1 | The headers declared `Requires at least: 5.0` and `Requires PHP: 7.4`, but the code needs WP >= 5.3 (`wp_date`) and PHP >= 8.0 (`str_contains`, typed code): fixed to `Requires at least: 7.0`, `Tested up to: 7.1`, `Requires PHP: 8.2` in the plugin header, `readme.txt`, `plugin-info.json` and `composer.json` (`"php": ">=8.2"`) | decided with the user; the floor is validated by wp-compat (T1) and the WP 7.0 test run |
+
 ## Security
 
 | ID | Sev | Status | Where | Defect | Evidence | Test |
