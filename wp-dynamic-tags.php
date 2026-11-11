@@ -153,6 +153,7 @@ class WP_Dynamic_Tags_Plugin
 
         // Row action handlers
         add_action('admin_action_dt_duplicate_tag', array($this, 'handle_duplicate_tag_action'));
+        add_action('wp_ajax_dt_duplicate_tag', array($this, 'ajax_duplicate_tag')); // the Duplicate button of admin.js (L6)
         add_action('admin_action_dt_export_single', array($this, 'handle_export_single_action'));
 
         // AJAX handler for real-time duplicate checking
@@ -3140,43 +3141,75 @@ class WP_Dynamic_Tags_Plugin
             wp_die(__('You do not have permission to duplicate tags.', 'wp-dynamic-tags'));
         }
 
-        $original_post = get_post($post_id);
-        if (!$original_post || $original_post->post_type !== $this->post_type) {
-            wp_die(__('Invalid tag.', 'wp-dynamic-tags'));
+        $new_id = $this->duplicate_tag_post($post_id);
+        if (is_wp_error($new_id)) {
+            wp_die($new_id->get_error_message());
         }
 
-        // Create duplicate
-        $new_post = array(
+        // Redirect back to list with success message
+        wp_safe_redirect(add_query_arg(
+            array('post_type' => $this->post_type, 'duplicated' => 1),
+            admin_url('edit.php')
+        ));
+        exit;
+    }
+
+    /**
+     * Duplicate button of assets/js/admin.js: POST admin-ajax.php?action=dt_duplicate_tag with tag_id and the nonce
+     * dt_duplicate. The script used to post to an action nobody had registered (L6).
+     */
+    public function ajax_duplicate_tag()
+    {
+        check_ajax_referer('dt_duplicate', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to duplicate tags.', 'wp-dynamic-tags'));
+        }
+
+        $new_id = $this->duplicate_tag_post(isset($_POST['tag_id']) ? absint($_POST['tag_id']) : 0);
+        if (is_wp_error($new_id)) {
+            wp_send_json_error($new_id->get_error_message());
+        }
+
+        wp_send_json_success(array('id' => $new_id));
+    }
+
+    /**
+     * Copies a tag post (title + " (Copy)", content, priority, groups). Shared by the row action and the AJAX button.
+     *
+     * @return int|WP_Error The new post ID.
+     */
+    private function duplicate_tag_post($post_id)
+    {
+        $original_post = get_post($post_id);
+        if (!$original_post || $original_post->post_type !== $this->post_type) {
+            return new WP_Error('invalid_tag', __('Invalid tag.', 'wp-dynamic-tags'));
+        }
+
+        $new_id = wp_insert_post(array(
             'post_title' => $original_post->post_title . ' (Copy)',
             'post_content' => $original_post->post_content,
             'post_type' => $this->post_type,
             'post_status' => 'publish'
-        );
+        ), true);
 
-        $new_id = wp_insert_post($new_post);
-
-        if ($new_id) {
-            // Copy meta
-            $priority = get_post_meta($post_id, '_dt_priority', true);
-            if ($priority) {
-                update_post_meta($new_id, '_dt_priority', $priority);
-            }
-
-            // Copy groups
-            $groups = wp_get_post_terms($post_id, 'tag_groups', array('fields' => 'ids'));
-            if (!is_wp_error($groups) && !empty($groups)) {
-                wp_set_post_terms($new_id, $groups, 'tag_groups');
-            }
-
-            // Redirect back to list with success message
-            wp_safe_redirect(add_query_arg(
-                array('post_type' => $this->post_type, 'duplicated' => 1),
-                admin_url('edit.php')
-            ));
-            exit;
-        } else {
-            wp_die(__('Failed to duplicate tag.', 'wp-dynamic-tags'));
+        if (is_wp_error($new_id)) {
+            return new WP_Error('duplicate_failed', __('Failed to duplicate tag.', 'wp-dynamic-tags'));
         }
+
+        // Copy meta
+        $priority = get_post_meta($post_id, '_dt_priority', true);
+        if ($priority) {
+            update_post_meta($new_id, '_dt_priority', $priority);
+        }
+
+        // Copy groups
+        $groups = wp_get_post_terms($post_id, 'tag_groups', array('fields' => 'ids'));
+        if (!is_wp_error($groups) && !empty($groups)) {
+            wp_set_post_terms($new_id, $groups, 'tag_groups');
+        }
+
+        return (int) $new_id;
     }
 
     /**

@@ -33,6 +33,7 @@ return [
     'dt_dismiss_menu_notice'   => ['nonce' => 'dt_dismiss_notice', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_test_shortcode'        => ['nonce' => 'dt_test_shortcode', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_check_duplicate'       => ['nonce' => 'dt_check_duplicate', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
+    'dt_duplicate_tag'         => ['nonce' => 'dt_duplicate', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
 
     // --- Bulk manager / old import-export (deleted in Phase 4)
     'dt_inline_edit'           => ['nonce' => 'dt_inline_edit', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
