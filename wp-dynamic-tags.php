@@ -785,22 +785,60 @@ class WP_Dynamic_Tags_Plugin
             $items = array_slice($items, 0, $limit);
         }
 
+        // The author's template is processed ONCE, before any row value is inserted. Row values are data (they can come
+        // from a remote {api:} response): they used to be pasted into the template and the whole result was processed
+        // again, so a value such as "{func:...}" or "<script>" was executed or injected (S1).
+        $template = apply_filters('dt_process_value', $content);
+
         $rendered = array();
         foreach ($items as $item) {
-            $piece = $content;
-            if (is_array($item)) {
-                $piece = preg_replace_callback('/\{item:([a-z0-9_]+)\}/i', function ($m) use ($item) {
-                    return isset($item[$m[1]]) && is_scalar($item[$m[1]]) ? (string) $item[$m[1]] : '';
-                }, $piece);
-                $piece = str_replace('{item}', '', $piece);
-            } else {
-                $piece = str_replace('{item}', (string) $item, $piece);
-            }
-            // Allow other placeholders inside the loop template too.
-            $rendered[] = apply_filters('dt_process_value', $piece);
+            $rendered[] = self::fill_loop_template($template, $item);
         }
 
         return implode($atts['separator'], $rendered);
+    }
+
+    /**
+     * Fills {item} / {item:field} in an already processed loop template with one row, in a single pass (S1).
+     *
+     * The value is escaped for the place it lands in: inside an HTML tag as an attribute value (esc_url for
+     * href/src/action-like attributes, esc_attr otherwise), in element text through wp_kses_post (safe markup such as
+     * <b> survives). The inserted value is never parsed again, so it cannot contain executable tokens.
+     *
+     * @param string $template Template with the author's tokens already resolved.
+     * @param mixed  $item     A scalar, or an array row for {item:field}.
+     */
+    public static function fill_loop_template($template, $item)
+    {
+        $template = (string) $template;
+
+        return preg_replace_callback('/\{item(?::([a-z0-9_]+))?\}/i', function ($m) use ($template, $item) {
+            $field = isset($m[1]) && $m[1][0] !== '' ? $m[1][0] : null;
+
+            if (is_array($item)) {
+                $value = ($field !== null && isset($item[$field]) && is_scalar($item[$field])) ? (string) $item[$field] : '';
+            } elseif ($field === null) {
+                $value = (string) $item;
+            } else {
+                return $m[0][0]; // {item:field} on a scalar item stays as written, as before
+            }
+
+            if ($value === '') {
+                return '';
+            }
+
+            $before = substr($template, 0, $m[0][1]);
+            $lt = strrpos($before, '<');
+            $gt = strrpos($before, '>');
+            if ($lt !== false && ($gt === false || $lt > $gt)) {
+                // Inside a tag: find the attribute this value belongs to.
+                $url_attr = preg_match('/([a-z][a-z0-9:_-]*)\s*=\s*(?:"[^"]*|\'[^\']*|[^\s"\'>]*)$/i', substr($before, $lt), $a)
+                    && in_array(strtolower($a[1]), array('href', 'src', 'action', 'formaction', 'poster', 'cite', 'data'), true);
+                return $url_attr ? esc_url($value) : esc_attr($value);
+            }
+
+            return wp_kses_post($value);
+        }, $template, -1, $count, PREG_OFFSET_CAPTURE);
     }
 
     /**
@@ -871,10 +909,8 @@ class WP_Dynamic_Tags_Plugin
             'orderby' => 'date',
             'order' => 'DESC',
         );
-        if (!empty($atts['query'])) {
-            wp_parse_str($atts['query'], $parsed_query);
-            $query_args = array_merge($query_args, $parsed_query);
-        }
+        // Whitelisted, viewer-aware arguments only (S2); the author's string can no longer widen post_status or row count.
+        $query_args = WP_Dynamic_Tags_Placeholders::build_query_args((string) $atts['query'], $query_args);
 
         $query = new WP_Query($query_args);
         if (!$query->have_posts()) {

@@ -429,10 +429,11 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_meta_value($key) {
         $post_id = get_the_ID();
-        if (!$post_id) {
+        if (!$post_id || !self::is_meta_key_allowed($key, 'post')) {
             return '';
         }
-        return (string) get_post_meta($post_id, $key, true);
+        $value = get_post_meta($post_id, $key, true);
+        return is_scalar($value) ? (string) $value : '';
     }
 
     /**
@@ -441,10 +442,11 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_user_meta_value($key) {
         global $post;
-        if (!$post) {
+        if (!$post || !self::is_meta_key_allowed($key, 'user')) {
             return '';
         }
-        return (string) get_user_meta($post->post_author, $key, true);
+        $value = get_user_meta($post->post_author, $key, true);
+        return is_scalar($value) ? (string) $value : '';
     }
 
     /**
@@ -452,10 +454,120 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_term_meta_value($key) {
         $term = $this->get_primary_term();
-        if (!$term) {
+        if (!$term || !self::is_meta_key_allowed($key, 'term')) {
             return '';
         }
-        return (string) get_term_meta($term->term_id, $key, true);
+        $value = get_term_meta($term->term_id, $key, true);
+        return is_scalar($value) ? (string) $value : '';
+    }
+
+    /**
+     * Whether a token may read this meta key (S3). Tags are written by administrators but rendered for anonymous
+     * visitors, so a token must not be able to print protected or credential-like meta (post `_edit_lock`, the author's
+     * `session_tokens`, `wp_capabilities`, ...). An empty key is refused too: get_post_meta() with no key returns every
+     * meta value as an array, which used to render as "Array" (B7).
+     *
+     * Filter `dt_allow_meta_key( bool $allowed, string $key, string $type )` re-enables a key on purpose.
+     *
+     * @param string $type post|user|term
+     */
+    public static function is_meta_key_allowed($key, $type = 'post') {
+        $key = trim((string) $key);
+        if ($key === '') {
+            return false;
+        }
+
+        $allowed = !is_protected_meta($key, $type);
+
+        if ($allowed && $type === 'user') {
+            // Credential-like or capability keys; "wp_capabilities" is stored under the site's own table prefix.
+            $allowed = !preg_match('/(pass(word)?|secret|token|session|api[_-]?key|nonce|capabilit|user_level|activation)/i', $key);
+        }
+
+        return (bool) apply_filters('dt_allow_meta_key', $allowed, $key, $type);
+    }
+
+    /** WP_Query arguments a {query:} token or [dt_template query=] may set; everything else in the string is ignored. */
+    private static $query_allowed_args = array(
+        'post_type', 'posts_per_page', 'orderby', 'order', 'category_name', 'cat', 'tag', 'tag_id', 'author', 'author_name',
+        's', 'p', 'page_id', 'name', 'post__in', 'post__not_in', 'post_parent', 'paged', 'offset', 'year', 'monthnum', 'day',
+        'ignore_sticky_posts', 'meta_key', 'meta_value', 'post_status',
+    );
+
+    /**
+     * Post statuses the current viewer may be shown (S2): published posts for everyone, private posts for users who can
+     * read them, drafts/pending/scheduled posts for users who can edit others' posts.
+     *
+     * @return string[]
+     */
+    public static function readable_post_statuses() {
+        $statuses = array('publish');
+        if (current_user_can('read_private_posts')) {
+            $statuses[] = 'private';
+        }
+        if (current_user_can('edit_others_posts')) {
+            array_push($statuses, 'draft', 'pending', 'future');
+        }
+        return $statuses;
+    }
+
+    /**
+     * Turns the query string of a {query:} token or a [dt_template query=] attribute into WP_Query arguments (S2).
+     *
+     * The author's string used to be merged over the defaults, so `post_status=any` or `posts_per_page=-1` let anonymous
+     * visitors read private and draft posts, password-protected posts and any number of rows. Now only whitelisted
+     * arguments are taken (filter `dt_query_allowed_args`), the post type must be public, the status is limited to what
+     * the current viewer may read (the filter `dt_query_post_statuses` can narrow or reorder it but never widen it),
+     * password-protected posts are excluded and the row count is capped (filter `dt_query_max_posts`, default 50).
+     *
+     * @param string               $query_string URL-style query string.
+     * @param array<string, mixed> $defaults     Arguments used when the string does not set them.
+     * @return array<string, mixed>
+     */
+    public static function build_query_args($query_string, array $defaults) {
+        $args = $defaults;
+        $parsed = array();
+        if ($query_string !== '' && $query_string !== null) {
+            wp_parse_str((string) $query_string, $parsed);
+        }
+
+        $allowed = (array) apply_filters('dt_query_allowed_args', self::$query_allowed_args);
+        foreach ($parsed as $name => $value) {
+            if (in_array($name, $allowed, true)) {
+                $args[$name] = $value;
+            }
+        }
+
+        // Post type: only public ones; anything else falls back to the default.
+        $public = get_post_types(array('public' => true));
+        $requested = isset($args['post_type']) ? array_filter(array_map('sanitize_key', (array) $args['post_type'])) : array();
+        $types = array_values(array_intersect($requested, $public));
+        $args['post_type'] = $types ? $types : (isset($defaults['post_type']) ? $defaults['post_type'] : 'post');
+
+        // Post status: what was asked for, narrowed to what this viewer may read. "any" means "everything readable".
+        $wanted = array('publish');
+        if (isset($parsed['post_status']) && in_array('post_status', $allowed, true)) {
+            $wanted = array_filter(array_map('sanitize_key', explode(',', is_array($parsed['post_status']) ? implode(',', $parsed['post_status']) : (string) $parsed['post_status'])));
+        }
+        $wanted = (array) apply_filters('dt_query_post_statuses', $wanted);
+        $readable = self::readable_post_statuses();
+        $final = in_array('any', $wanted, true) ? $readable : array_values(array_intersect($wanted, $readable));
+        $args['post_status'] = $final ? $final : array('publish');
+
+        // Never list password-protected posts.
+        $args['has_password'] = false;
+
+        // Row cap.
+        $max = max(1, (int) apply_filters('dt_query_max_posts', 50));
+        $per_page = isset($args['posts_per_page']) ? (int) $args['posts_per_page'] : 5;
+        $args['posts_per_page'] = ($per_page < 1 || $per_page > $max) ? $max : $per_page;
+
+        // A protected meta key cannot be used to select or sort posts either.
+        if (isset($args['meta_key']) && !self::is_meta_key_allowed($args['meta_key'], 'post')) {
+            unset($args['meta_key'], $args['meta_value']);
+        }
+
+        return $args;
     }
 
     /**
@@ -465,15 +577,11 @@ class WP_Dynamic_Tags_Placeholders {
      * convention [dt_template]'s `query` attribute uses.
      */
     private function get_query_value($query_string) {
-        $query_args = array(
+        $query_args = self::build_query_args((string) $query_string, array(
             'post_type' => 'post',
             'posts_per_page' => 5,
             'post_status' => 'publish',
-        );
-        if (!empty($query_string)) {
-            wp_parse_str($query_string, $parsed_query);
-            $query_args = array_merge($query_args, $parsed_query);
-        }
+        ));
 
         $query = new WP_Query($query_args);
         $rows = array();

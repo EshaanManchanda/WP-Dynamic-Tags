@@ -288,6 +288,86 @@
             "expected": "SMALL",
             "bug": "L1",
             "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+        },
+        {
+            "path": "post",
+            "ctx": "out_singular",
+            "invocation": "[gm_unknown]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "out_singular",
+            "invocation": "[gm_unknown format=\"uppercase\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "out_singular",
+            "invocation": "[gm_unknown default=\"DEF\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "out_singular",
+            "invocation": "[gm_unknown cache=\"false\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "out_singular",
+            "invocation": "[gm_unknown processing=\"false\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "in_singular",
+            "invocation": "[gm_unknown]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "in_singular",
+            "invocation": "[gm_unknown format=\"uppercase\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "in_singular",
+            "invocation": "[gm_unknown default=\"DEF\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "in_singular",
+            "invocation": "[gm_unknown cache=\"false\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+        },
+        {
+            "path": "post",
+            "ctx": "in_singular",
+            "invocation": "[gm_unknown processing=\"false\"]",
+            "expected": "{not_a_token}||{",
+            "bug": "B7/S3",
+            "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
         }
     ]
 }
