@@ -118,11 +118,6 @@ class WP_Dynamic_Tags_Table_Manager {
             // Clear cache
             $this->clear_cache();
 
-            // Create corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled()) {
-                $this->create_corresponding_post($result, $data);
-            }
-
             // Log the creation
             do_action('wp_dynamic_tags_tag_created', $result, $data);
         }
@@ -165,11 +160,6 @@ class WP_Dynamic_Tags_Table_Manager {
             // Clear cache
             $this->clear_cache();
 
-            // Update corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled() && $existing_tag->post_id > 0) {
-                $this->update_corresponding_post($existing_tag->post_id, $data);
-            }
-
             // Log the update
             do_action('wp_dynamic_tags_tag_updated', $id, $data, $existing_tag);
         }
@@ -198,11 +188,6 @@ class WP_Dynamic_Tags_Table_Manager {
         if (!is_wp_error($result)) {
             // Clear cache
             $this->clear_cache();
-
-            // Delete corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled() && $existing_tag->post_id > 0) {
-                wp_delete_post($existing_tag->post_id, true);
-            }
 
             // Log the deletion
             do_action('wp_dynamic_tags_tag_deleted', $id, $existing_tag);
@@ -491,90 +476,6 @@ class WP_Dynamic_Tags_Table_Manager {
         }
 
         return $shortcode;
-    }
-
-    /**
-     * Check if dual mode is enabled (both table and posts)
-     */
-    private function is_dual_mode_enabled() {
-        return get_option('wp_dynamic_tags_dual_mode', false);
-    }
-
-    /**
-     * Create corresponding post for dual mode
-     */
-    private function create_corresponding_post($tag_id, $data) {
-        $post_data = array(
-            'post_title' => $data['tag_name'],
-            'post_content' => $data['content'],
-            'post_excerpt' => $data['description'],
-            'post_type' => 'dynamic_tag',
-            'post_status' => $data['status'] === 'active' ? 'publish' : 'draft'
-        );
-
-        $post_id = wp_insert_post($post_data);
-
-        if (!is_wp_error($post_id)) {
-            // Update table record with post_id
-            $this->db_manager->update_tag($tag_id, array('post_id' => $post_id));
-
-            // Add meta data
-            update_post_meta($post_id, '_dt_tag_name', $data['tag_name']);
-            update_post_meta($post_id, '_dt_shortcode', $data['shortcode']);
-            update_post_meta($post_id, '_dt_priority', $data['priority']);
-
-            // Set category if specified
-            if (!empty($data['category_id'])) {
-                wp_set_post_terms($post_id, array($data['category_id']), 'tag_groups');
-            }
-        }
-
-        return $post_id;
-    }
-
-    /**
-     * Update corresponding post for dual mode
-     */
-    private function update_corresponding_post($post_id, $data) {
-        $post_data = array('ID' => $post_id);
-
-        if (isset($data['tag_name'])) {
-            $post_data['post_title'] = $data['tag_name'];
-        }
-
-        if (isset($data['content'])) {
-            $post_data['post_content'] = $data['content'];
-        }
-
-        if (isset($data['description'])) {
-            $post_data['post_excerpt'] = $data['description'];
-        }
-
-        if (isset($data['status'])) {
-            $post_data['post_status'] = $data['status'] === 'active' ? 'publish' : 'draft';
-        }
-
-        if (count($post_data) > 1) {
-            wp_update_post($post_data);
-        }
-
-        // Update meta data
-        if (isset($data['tag_name'])) {
-            update_post_meta($post_id, '_dt_tag_name', $data['tag_name']);
-        }
-
-        if (isset($data['shortcode'])) {
-            update_post_meta($post_id, '_dt_shortcode', $data['shortcode']);
-        }
-
-        if (isset($data['priority'])) {
-            update_post_meta($post_id, '_dt_priority', $data['priority']);
-        }
-
-        // Update category
-        if (isset($data['category_id'])) {
-            wp_set_post_terms($post_id, array($data['category_id']), 'tag_groups');
-        }
     }
 
     /**

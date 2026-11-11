@@ -83,6 +83,9 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             // Register special shortcodes
             $this->register_special_shortcodes();
 
+            // Tag posts that were not migrated yet keep their shortcode (read-only, only while the flag says so)
+            $this->register_legacy_post_tags();
+
             $execution_time = microtime(true) - $start_time;
 
             $this->performance_stats['shortcode_registration'] = array(
@@ -109,6 +112,9 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
 
     /** @var array<string, array<string, object>>|null Lookup index of the core shortcodes, built from the registry on first use. */
     private $tag_index = null;
+
+    /** @var object[] Virtual rows of published legacy tag posts that have no table row yet (read-only compatibility window). */
+    private $legacy_rows = array();
 
     /**
      * Every active tag: the registry of the request. Registration and the core shortcodes ask with exactly these
@@ -163,7 +169,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
 
         if ($this->tag_index === null) {
             $this->tag_index = array('shortcode' => array(), 'name' => array(), 'alias' => array());
-            foreach ($this->all_active_tags() as $tag) {
+            foreach (array_merge($this->all_active_tags(), $this->legacy_rows) as $tag) {
                 $this->tag_index['shortcode'][$tag->shortcode] = $tag;
                 $this->tag_index['name'][strtolower($tag->tag_name)] = $tag;
                 $aliases = (is_array($tag->meta_data) && isset($tag->meta_data['legacy']['aliases'])) ? (array) $tag->meta_data['legacy']['aliases'] : array();
@@ -194,6 +200,45 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      */
     public function render_row($tag, $atts = array()) {
         return (string) $this->process_shortcode($tag, $atts);
+    }
+
+    /**
+     * Compatibility window for tag posts that have no row yet (a 3.0 site that is not migrated, or a post saved while the
+     * migration was running). While the autoloaded flag option wp_dynamic_tags_legacy_pending is '1' they are read from
+     * wp_posts (one query) and registered like any tag: same pipeline, no row, no usage counting. Nothing is written except
+     * the flag, once, when it does not exist yet. The migration (or the capture hooks) turns them into rows.
+     */
+    private function register_legacy_post_tags() {
+        $this->legacy_rows = array();
+
+        $pending = get_option(WP_Dynamic_Tags_Migration_Engine::OPTION_PENDING, 'unknown');
+        if ($pending === 'unknown') {
+            $pending = WP_Dynamic_Tags_Migration_Engine::get_instance()->refresh_pending_flag() ? '1' : '0';
+        }
+        if ((string) $pending !== '1') {
+            return;
+        }
+
+        global $wpdb;
+        $posts = $wpdb->get_results($wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_content FROM {$wpdb->posts} p LEFT JOIN {$this->db_manager->get_table_name()} t ON t.post_id = p.ID WHERE p.post_type = %s AND p.post_status = 'publish' AND t.id IS NULL ORDER BY p.ID ASC",
+            WP_Dynamic_Tags_Migration_Engine::POST_TYPE
+        ));
+
+        $reserved = array('dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_else', 'dt_template');
+        foreach ((array) $posts as $post) {
+            $code = WP_Dynamic_Tags_Migration_Planner::derive_shortcode((string) $post->post_title);
+            if (trim((string) $post->post_title) === '' || (string) $post->post_content === '' || in_array($code, $reserved, true) || isset($this->registered_shortcodes[$code])) {
+                continue; // nothing to show, a name of the core shortcodes, or a real row already owns the name
+            }
+            $row = (object) array(
+                'id' => -((int) $post->ID), 'tag_name' => (string) $post->post_title, 'shortcode' => $code, 'content' => (string) $post->post_content,
+                'description' => '', 'category_id' => 0, 'priority' => 0, 'usage_count' => 0, 'status' => 'active', 'meta_data' => '', 'post_id' => (int) $post->ID,
+            );
+            if ($this->register_single_shortcode($row)) {
+                $this->legacy_rows[] = $row;
+            }
+        }
     }
 
     /**
@@ -764,7 +809,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         // Counted in memory and written once at shutdown, and only when counting is switched on: this used to be an UPDATE
         // on every render (40 renders = 40 writes). The facade method Table_Manager::track_usage() still writes at once for
         // callers that ask for it.
-        if (self::usage_tracking_enabled()) {
+        if ($tag_id > 0 && self::usage_tracking_enabled()) {
             $this->usage_counts[$tag_id] = ($this->usage_counts[$tag_id] ?? 0) + 1;
             if (!$this->usage_flush_hooked) {
                 add_action('shutdown', array($this, 'flush_usage'));

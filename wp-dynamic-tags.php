@@ -63,7 +63,6 @@ class WP_Dynamic_Tags_Plugin
     private $migration_manager;
     private $migration_admin;
     private $table_manager;
-    private $post_table_bridge;
     private $table_manager_admin;
     private $table_shortcode_processor;
     private $table_import_export;
@@ -4713,7 +4712,7 @@ class WP_Dynamic_Tags_Plugin
      */
     public function get_post_table_bridge()
     {
-        return $this->post_table_bridge;
+        return null; // the Bridge is no longer started (plan Phase 3); the admin screens treat null as "not available"
     }
 
     /**
@@ -4864,9 +4863,14 @@ class WP_Dynamic_Tags_Plugin
             $this->table_manager = WP_Dynamic_Tags_Table_Manager::get_instance();
         }
 
-        if (class_exists('WP_Dynamic_Tags_Post_Table_Bridge')) {
-            $this->post_table_bridge = WP_Dynamic_Tags_Post_Table_Bridge::get_instance();
+        // Writes to legacy tag posts (save, trash, delete, group change) are carried into the table (plan Phase 3c).
+        if (class_exists('WP_Dynamic_Tags_Migration_Engine')) {
+            WP_Dynamic_Tags_Migration_Engine::register_capture_hooks();
         }
+
+        // The post <-> table Bridge is no longer started: the table is the only store, and writes to the legacy tag posts
+        // are captured by WP_Dynamic_Tags_Migration_Engine::register_capture_hooks() (plan Phase 3). The class is deleted with
+        // the rest of the legacy code in Phase 5; get_post_table_bridge() answers null meanwhile.
 
         if (class_exists('WP_Dynamic_Tags_Table_Shortcode_Processor')) {
             $this->table_shortcode_processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();

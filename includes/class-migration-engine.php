@@ -54,6 +54,151 @@ class WP_Dynamic_Tags_Migration_Engine
         return self::$instance;
     }
 
+    // ================================================================== legacy-write capture (plan Phase 3)
+
+    /** Count, last time and last post of the writes to legacy tag posts that were carried into the table (diagnostics). */
+    public const OPTION_CAPTURE = 'wp_dynamic_tags_legacy_writes';
+    /** '1' while a published legacy tag post has no row yet (the read-only loader runs), '0' otherwise. Autoloaded. */
+    public const OPTION_PENDING = 'wp_dynamic_tags_legacy_pending';
+    public const CAPTURE_HOOK   = 'dt_capture_post';
+
+    /**
+     * Hooks that carry writes to legacy tag posts into the table. They replace the post -> table half of the old Bridge, go
+     * through the migration planner (idempotent; a post only overwrites a row it is newer than) and stay for all of 3.x.
+     */
+    public static function register_capture_hooks(): void
+    {
+        add_action('save_post_' . self::POST_TYPE, [self::class, 'handle_save'], 20, 2);
+        add_action('wp_trash_post', [self::class, 'handle_trash'], 10, 1);
+        add_action('before_delete_post', [self::class, 'handle_delete'], 10, 1);
+        add_action('set_object_terms', [self::class, 'handle_terms'], 20, 4);
+        add_action(self::CAPTURE_HOOK, [self::class, 'handle_scheduled'], 10, 1);
+    }
+
+    /** @param mixed $post */
+    public static function handle_save($post_id, $post = null): void
+    {
+        if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision((int) $post_id)) {
+            return;
+        }
+        self::get_instance()->capture_post((int) $post_id);
+    }
+
+    public static function handle_scheduled($post_id): void
+    {
+        self::get_instance()->capture_post((int) $post_id);
+    }
+
+    public static function handle_trash($post_id): void
+    {
+        if (get_post_type((int) $post_id) === self::POST_TYPE) {
+            self::get_instance()->capture_removal((int) $post_id, false);
+        }
+    }
+
+    public static function handle_delete($post_id): void
+    {
+        if (get_post_type((int) $post_id) === self::POST_TYPE) {
+            self::get_instance()->capture_removal((int) $post_id, true);
+        }
+    }
+
+    public static function handle_terms($object_id, $terms = null, $tt_ids = null, $taxonomy = ''): void
+    {
+        if ($taxonomy === self::TAXONOMY && get_post_type((int) $object_id) === self::POST_TYPE) {
+            self::get_instance()->capture_group((int) $object_id);
+        }
+    }
+
+    /**
+     * Carries one saved legacy post into the table, the way a migration step would (same planner, same rules). No
+     * transaction: one post is a handful of statements, each of them idempotent.
+     *
+     * @return bool|WP_Error true when the post was looked at, false when postponed (a migration step holds the lock)
+     */
+    public function capture_post(int $post_id)
+    {
+        $token = $this->acquire_lock();
+        if ($token === null) {
+            if (!wp_next_scheduled(self::CAPTURE_HOOK, [$post_id])) {
+                wp_schedule_single_event(time() + 30, self::CAPTURE_HOOK, [$post_id]);
+            }
+            return false;
+        }
+        try {
+            $posts = $this->load_posts($post_id - 1, 1);
+            if (!isset($posts[$post_id])) {
+                return true; // not a legacy post (an auto-draft, the trash): nothing to carry over
+            }
+            $state = $this->get_state();
+            $index = $this->load_row_index();
+            try {
+                $this->process_post($posts[$post_id], $index, $state);
+            } catch (Throwable $e) {
+                $this->log('Capture of post ' . $post_id . ' failed: ' . $e->getMessage(), 'error');
+                return new WP_Error('capture_failed', $e->getMessage());
+            }
+            $this->save_state($state); // bumps the revision: a write after the last verification invalidates it
+            $this->note_capture($post_id);
+            $this->flush_table_caches();
+            $this->refresh_pending_flag();
+            return true;
+        } finally {
+            $this->release_lock($token);
+            $this->flush_log();
+        }
+    }
+
+    /** The post went to the trash or was deleted: its row is switched off, never deleted (the row is the record). */
+    public function capture_removal(int $post_id, bool $permanent): void
+    {
+        global $wpdb;
+        $table  = $this->db->get_table_name();
+        $row_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE post_id = %d", $post_id));
+        if (!$row_id) {
+            return;
+        }
+        $data = ['status' => 'inactive'];
+        if ($permanent) {
+            $data['post_id'] = 0;
+        }
+        $wpdb->update($table, $data, ['id' => (int) $row_id]);
+        $this->note_capture($post_id);
+        $this->flush_table_caches();
+        $this->refresh_pending_flag();
+    }
+
+    /** The group of the post changed: the row follows (a row has one group, the first one). */
+    public function capture_group(int $post_id): void
+    {
+        global $wpdb;
+        $table  = $this->db->get_table_name();
+        $groups = WP_Dynamic_Tags_Plugin::post_terms($post_id, self::TAXONOMY, ['fields' => 'ids']);
+        $wpdb->update($table, ['category_id' => $groups ? (int) $groups[0] : 0], ['post_id' => $post_id]);
+        $this->flush_table_caches();
+    }
+
+    private function note_capture(int $post_id): void
+    {
+        $record = get_option(self::OPTION_CAPTURE, []);
+        $record = is_array($record) ? $record : [];
+        $record['count']        = (int) ($record['count'] ?? 0) + 1;
+        $record['last_at']      = current_time('mysql');
+        $record['last_post_id'] = $post_id;
+        update_option(self::OPTION_CAPTURE, $record, false);
+    }
+
+    /**
+     * Works out whether a legacy post still lacks a row and stores the answer (an autoloaded option, read on every request
+     * by the legacy loader so that normal requests need no query). Called whenever that can change.
+     */
+    public function refresh_pending_flag(): bool
+    {
+        $pending = $this->count_unlinked($this->conflict_ids($this->get_state(), 'accepted')) > 0;
+        update_option(self::OPTION_PENDING, $pending ? '1' : '0');
+        return $pending;
+    }
+
     // ================================================================== state
 
     /** @return array<string,mixed> */
@@ -146,6 +291,7 @@ class WP_Dynamic_Tags_Migration_Engine
         $state['last_post_id'] = 0;
         $state['finished_at']  = null;
         $this->save_state($state);
+        $this->refresh_pending_flag();
         $this->log('Rescan requested.');
         $this->flush_log();
     }
@@ -601,6 +747,7 @@ class WP_Dynamic_Tags_Migration_Engine
         $state['last_error']  = null;
         $state = $this->save_state($state);
         $this->flush_table_caches();
+        $this->refresh_pending_flag();
         $this->log(sprintf(
             'Migration finished: %d inserted, %d updated, %d linked, %d skipped, %d conflicts.',
             $state['counters']['inserted'], $state['counters']['updated'], $state['counters']['linked'], $state['counters']['skipped'], $state['counters']['conflicts']
@@ -1298,6 +1445,7 @@ class WP_Dynamic_Tags_Migration_Engine
             }
         }
         $this->flush_table_caches();
+        $this->refresh_pending_flag();
 
         $status              = $this->status();
         $status['done']      = true;
@@ -1314,12 +1462,23 @@ class WP_Dynamic_Tags_Migration_Engine
     private function suspend_legacy_hooks(): array
     {
         $candidates = [];
+        $candidates[] = ['before_delete_post', [self::class, 'handle_delete']]; // capture: cleanup is not a user deleting a tag
+
+        // A post <-> table Bridge that somebody started anyway (the plugin no longer does): it would deactivate the row of
+        // every post cleanup deletes. Found through the registered hooks, so none is created just to be suspended.
+        global $wp_filter;
+        if (class_exists('WP_Dynamic_Tags_Post_Table_Bridge') && isset($wp_filter['before_delete_post'])) {
+            foreach ($wp_filter['before_delete_post']->callbacks as $callbacks) {
+                foreach ($callbacks as $registered) {
+                    $function = $registered['function'];
+                    if (is_array($function) && is_object($function[0]) && $function[0] instanceof WP_Dynamic_Tags_Post_Table_Bridge) {
+                        $candidates[] = ['before_delete_post', $function];
+                    }
+                }
+            }
+        }
         if (class_exists('WP_Dynamic_Tags_Plugin')) {
             $candidates[] = ['delete_post', [WP_Dynamic_Tags_Plugin::get_instance(), 'refresh_shortcodes_on_delete']];
-        }
-        if (class_exists('WP_Dynamic_Tags_Post_Table_Bridge')) {
-            $bridge       = WP_Dynamic_Tags_Post_Table_Bridge::get_instance();
-            $candidates[] = ['before_delete_post', [$bridge, 'sync_post_deletion']];
         }
 
         $removed = [];
