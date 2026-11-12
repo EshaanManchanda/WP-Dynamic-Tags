@@ -138,6 +138,7 @@ requests. Fires `wp_dynamic_tags_tag_used( $tag_id )` (in memory on every render
 | `dt_import_max_bytes` | `$bytes` | 5 MB | upload size cap of an import |
 | `dt_import_max_rows` | `$rows` | `5000` | rows per import file (0 or less: no limit) |
 | `dt_list_per_page` | `$n` | `20` | rows per page of the All Tags screen |
+| `dt_page_cache_active` | `$active` | `WP_CACHE`, or LiteSpeed Cache or WP Rocket is active | whether a page cache is in front of the site; Settings > Tags and your server then recommends up to 10,000 tags instead of 5,000. Return `true` for a cache run by the host, which the plugin cannot see |
 | `dt_purge_page_caches` | `$on` | `true` | purge the supported page-cache plugins when a tag or group changes (see Actions) |
 | `dt_debug_mode` | `$on` | the constant `DT_DEBUG_MODE` | record the debug log |
 

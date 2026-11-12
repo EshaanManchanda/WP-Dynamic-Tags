@@ -177,8 +177,8 @@ Render an existing Dynamic Tag once per post in a query:
 - **No writes while rendering** - Rendering a page does not update a counter, set a transient or check the schema
 - **One query** - All active tags are loaded with a single query per request
 - **Opt-in usage counting** - Off by default; when on, counts are kept in memory and written once at the end of the request, never on admin, AJAX, REST, cron or preview requests
-- **Fast imports** - 5,000 rows import in about 13 seconds
-- **How many tags?** There is no built-in limit. Every request registers every active tag as a shortcode, so the cost grows with the number of tags. Measured on a development PC (PHP 8.2, MySQL 8.4, ten plugins active, no page cache), per uncached page: 1,000 tags about +2 MB and +10 ms; 5,000 about +10 MB and +55 ms; 10,000 about +20 MB and +110 ms; 20,000 about +40 MB and +210 ms; 50,000 about +106 MB and +550 ms. **On shared hosting (one CPU core, 1 GB RAM) keep a site to 5,000 tags, or 10,000 behind a page cache.** Larger sets work (a 50,000-tag site was imported, listed, searched and exported without errors) but every uncached request pays for them. Part of the cost is WordPress itself: `do_shortcode()` compares every registered shortcode name on each call.
+- **Fast imports** - 5,000 rows import in about 15 to 20 seconds on a development PC
+- **How many tags?** There is no built-in limit. Every request registers every active tag as a shortcode, so the cost grows with the number of tags. Measured on a development PC (PHP 8.2, MySQL 8.4, ten plugins active, no page cache), per uncached page: 1,000 tags about +2 MB and +10 ms; 5,000 about +10 MB and +55 ms; 10,000 about +20 MB and +110 ms; 20,000 about +40 MB and +210 ms; 50,000 about +106 MB and +550 ms. **On shared hosting (one CPU core, 1 GB RAM) keep a site to 5,000 tags, or 10,000 behind a page cache.** Larger sets work (a 50,000-tag site was imported, listed, searched and exported without errors) but every uncached request pays for them. Part of the cost is WordPress itself: `do_shortcode()` compares every registered shortcode name on each call. The same explanation, with this site's live numbers and a status, is on **Dynamic Tags > Settings**.
 
 ---
 
@@ -530,6 +530,7 @@ CREATE TABLE wp_dynamic_tags (
 - ✨ A new admin: one menu, a searchable and sortable list with a **Value** column, bulk actions, a form with live preview, Tools and diagnostics
 - ✨ Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved
 - ✨ Import and export rebuilt: lossless CSV, per-row reports, limits, SQL is export only
+- ✨ **Settings > Tags and your server** explains how tags work and why a lot of tags slow a site down, shows this site's live numbers (tags, PHP memory limit, page cache, load time) with a Fine / Watch / Too many status, and recommends tag counts by kind of hosting
 - 🐛 The audit findings of 3.0.0 are fixed (see `docs/BUG-REGISTER.md`), including token safety, the missing recursion guard, export and import hardening and uninstall
 - 📖 Every deliberate difference in output is listed in `docs/RELEASE-NOTES-3.1.0.md`; the public API is in `docs/API.md`
 

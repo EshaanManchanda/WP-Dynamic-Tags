@@ -26,6 +26,14 @@ been run.
   checks, diagnostics, debug log), plus **Groups** and **Settings**. The old addresses
   (`edit.php?post_type=dynamic_tag`, the old Table Manager and Conflict Manager pages) redirect to the
   new screens.
+* **Settings explains the cost of tags.** *Dynamic Tags > Settings > Tags and your server* says how tags
+  work (one table row each, every active tag registered as a shortcode on every request, nothing written
+  while rendering), why a lot of tags slow a site down (with the measured table), and shows this site's
+  live numbers: tags (total, active, inactive), shortcodes registered, the time loading them took in this
+  request, PHP version and memory limit, whether a page cache is detected (filter `dt_page_cache_active`
+  for a cache the plugin cannot see) and a Fine / Watch / Too many status. A table recommends tag counts
+  by kind of hosting. The old "Published Tags (Posts)" count, which counted legacy tag posts, is gone from
+  this page.
 * **Safer writes.** A tag can no longer take a shortcode name that belongs to the plugin (`dt`, `dt_group`,
   `dt_loop`, anything starting with `dt_table_`, ...) or to WordPress or another plugin; it can no longer be
   saved if it would render itself (`[a]` inside `a`, or `a` and `b` referring to each other); and content
@@ -35,7 +43,8 @@ been run.
   first (*Validate*), good rows are imported and each bad row is reported by its number with the reason.
   A CSV read back is identical to what was exported, and cells that a spreadsheet would run as a formula
   are neutralised on export. Limits: 5 MB and 5,000 rows by default (filters `dt_import_max_bytes`,
-  `dt_import_max_rows`). 5,000 rows import in about 13 seconds.
+  `dt_import_max_rows`). 5,000 rows import in about 15 to 20 seconds
+  on a development PC (measured again in Phase 9c: 16.4 and 18.2 s).
 * **Edits show on the whole site.** The plugin keeps nothing between requests, so an edit shows on the next page
   load; when the site has a page cache in front of it, the cache is purged for you: once per request, only when a tag
   or a group really changed, for WP Rocket, LiteSpeed Cache, W3 Total Cache, WP Super Cache, WP Fastest Cache, SiteGround
@@ -149,7 +158,7 @@ The full register, with a failing test for each item that could be tested, is `d
   breaks and the importer could not read a spreadsheet's file (N2); SQL could be imported through a
   parser that cut content at the first comma (N1); a copy of every tag stayed in `wp_options` after an
   uninstall that was asked to delete the data, and on a network only one site was cleaned.
-* **Tests:** the root suite (141 tests, no WordPress), the WordPress suites (front 169, admin 237, on 7.0 and
+* **Tests:** the root suite (159 tests, no WordPress), the WordPress suites (front 169, admin 248, on 7.0 and
   7.1.4 and as a network), an exposure matrix (six roles across query and meta tokens, `[dt_template]`, `[dt_loop]`, REST-rendered
   content and password-protected posts; every AJAX action for subscriber, contributor, author, editor and a
   visitor), a golden master of 396 renders compared with the recorded 3.0.0 output, 80 live

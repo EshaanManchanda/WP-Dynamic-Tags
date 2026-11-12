@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WP Dynamic Tags 3.0.0\n"
-"Report-Msgid-Bugs-To: https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/Dynamic-tags-v4\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T01:01:25+00:00\n"
+"POT-Creation-Date: 2026-11-12T06:37:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-dynamic-tags\n"
@@ -89,8 +89,8 @@ msgid "No more tags can be created."
 msgstr ""
 
 #: admin/class-admin.php:73
-#: admin/class-admin.php:258
-#: admin/class-admin.php:439
+#: admin/class-admin.php:270
+#: admin/class-admin.php:451
 msgid "That tag no longer exists."
 msgstr ""
 
@@ -103,533 +103,545 @@ msgid "The action could not be carried out."
 msgstr ""
 
 #: admin/class-admin.php:114
-#: admin/class-admin.php:253
-#: admin/class-admin.php:301
-#: admin/class-admin.php:506
-#: admin/class-admin.php:651
+#: admin/class-admin.php:126
+#: admin/class-admin.php:265
+#: admin/class-admin.php:313
+#: admin/class-admin.php:568
+#: admin/class-admin.php:713
 msgid "You do not have permission to manage dynamic tags."
 msgstr ""
 
-#: admin/class-admin.php:136
-#: admin/class-admin.php:394
+#: admin/class-admin.php:148
+#: admin/class-admin.php:406
 #: wp-dynamic-tags.php:143
 #: wp-dynamic-tags.php:145
 msgid "Dynamic Tags"
 msgstr ""
 
-#: admin/class-admin.php:137
+#: admin/class-admin.php:149
 #: wp-dynamic-tags.php:151
 msgid "All Tags"
 msgstr ""
 
-#: admin/class-admin.php:138
-#: admin/class-admin.php:437
+#: admin/class-admin.php:150
+#: admin/class-admin.php:449
 #: wp-dynamic-tags.php:146
 msgid "Add New Tag"
 msgstr ""
 
-#: admin/class-admin.php:138
-#: admin/class-admin.php:395
+#: admin/class-admin.php:150
+#: admin/class-admin.php:407
 msgid "Add New"
 msgstr ""
 
-#: admin/class-admin.php:139
-#: admin/class-admin.php:523
+#: admin/class-admin.php:151
+#: admin/class-admin.php:585
 msgid "Import / Export"
 msgstr ""
 
-#: admin/class-admin.php:140
-#: admin/class-admin.php:582
+#: admin/class-admin.php:152
+#: admin/class-admin.php:644
 msgid "Tools and Diagnostics"
 msgstr ""
 
-#: admin/class-admin.php:140
+#: admin/class-admin.php:152
 msgid "Tools"
 msgstr ""
 
-#: admin/class-admin.php:218
+#: admin/class-admin.php:230
 msgid "Copied"
 msgstr ""
 
-#: admin/class-admin.php:219
+#: admin/class-admin.php:231
 msgid "Copy failed"
 msgstr ""
 
-#: admin/class-admin.php:220
+#: admin/class-admin.php:232
 msgid "Rendering..."
 msgstr ""
 
-#: admin/class-admin.php:221
+#: admin/class-admin.php:233
 msgid "The preview could not be rendered."
 msgstr ""
 
-#: admin/class-admin.php:222
+#: admin/class-admin.php:234
 msgid "Exporting..."
 msgstr ""
 
-#: admin/class-admin.php:223
+#: admin/class-admin.php:235
 msgid "The export failed."
 msgstr ""
 
-#: admin/class-admin.php:224
+#: admin/class-admin.php:236
 msgid "Validating..."
 msgstr ""
 
-#: admin/class-admin.php:225
+#: admin/class-admin.php:237
 msgid "Importing..."
 msgstr ""
 
-#: admin/class-admin.php:226
+#: admin/class-admin.php:238
 msgid "The import failed."
 msgstr ""
 
-#: admin/class-admin.php:227
+#: admin/class-admin.php:239
 msgid "Choose a file first."
 msgstr ""
 
-#: admin/class-admin.php:228
+#: admin/class-admin.php:240
 msgid "Import this file? Tags with the same shortcode are changed only if you ticked \"update existing\"."
 msgstr ""
 
-#: admin/class-admin.php:229
+#: admin/class-admin.php:241
 msgid "Working..."
 msgstr ""
 
-#: admin/class-admin.php:230
+#: admin/class-admin.php:242
 msgid "The request failed."
 msgstr ""
 
-#: admin/class-admin.php:231
+#: admin/class-admin.php:243
 msgid "Records in the file"
 msgstr ""
 
-#: admin/class-admin.php:232
+#: admin/class-admin.php:244
 msgid "Created"
 msgstr ""
 
-#: admin/class-admin.php:233
+#: admin/class-admin.php:245
 msgid "Updated"
 msgstr ""
 
-#: admin/class-admin.php:234
+#: admin/class-admin.php:246
 msgid "Skipped"
 msgstr ""
 
-#: admin/class-admin.php:235
+#: admin/class-admin.php:247
 msgid "Errors"
 msgstr ""
 
-#: admin/class-admin.php:236
+#: admin/class-admin.php:248
 msgid "The file is valid."
 msgstr ""
 
-#: admin/class-admin.php:237
+#: admin/class-admin.php:249
 msgid "The file has problems:"
 msgstr ""
 
-#: admin/class-admin.php:238
+#: admin/class-admin.php:250
 msgid "Row"
 msgstr ""
 
-#: admin/class-admin.php:278
+#: admin/class-admin.php:290
 msgid "Unknown action."
 msgstr ""
 
-#: admin/class-admin.php:399
+#: admin/class-admin.php:411
 #: wp-dynamic-tags.php:152
 msgid "Search Tags"
 msgstr ""
 
-#: admin/class-admin.php:437
+#: admin/class-admin.php:449
 msgid "Edit Tag"
 msgstr ""
 
-#: admin/class-admin.php:440
+#: admin/class-admin.php:452
 msgid "Back to all tags"
 msgstr ""
 
-#: admin/class-admin.php:455
+#: admin/class-admin.php:467
 #: admin/class-tags-list-table.php:27
 msgid "Name"
 msgstr ""
 
-#: admin/class-admin.php:457
+#: admin/class-admin.php:469
 msgid "Letters, numbers, spaces, hyphens and underscores."
 msgstr ""
 
-#: admin/class-admin.php:459
+#: admin/class-admin.php:471
 #: admin/class-tags-list-table.php:28
 #: includes/class-tag-groups.php:984
 msgid "Shortcode"
 msgstr ""
 
-#: admin/class-admin.php:461
+#: admin/class-admin.php:473
 msgid "Leave empty to create it from the name. Changing it breaks pages that use the old one."
 msgstr ""
 
-#: admin/class-admin.php:463
-#: admin/class-tags-list-table.php:188
+#: admin/class-admin.php:475
+#: admin/class-tags-list-table.php:189
 msgid "Copy"
 msgstr ""
 
-#: admin/class-admin.php:467
-#: admin/class-admin.php:528
-#: admin/class-tags-list-table.php:29
+#: admin/class-admin.php:479
+#: admin/class-admin.php:590
+#: admin/class-tags-list-table.php:30
 msgid "Group"
 msgstr ""
 
-#: admin/class-admin.php:467
+#: admin/class-admin.php:479
 msgid "No group"
 msgstr ""
 
-#: admin/class-admin.php:474
-#: admin/class-admin.php:527
-#: admin/class-admin.php:585
-#: admin/class-tags-list-table.php:30
+#: admin/class-admin.php:486
+#: admin/class-admin.php:589
+#: admin/class-admin.php:647
+#: admin/class-tags-list-table.php:31
+#: admin/settings-page.php:326
 #: includes/class-migration-admin.php:214
 msgid "Status"
 msgstr ""
 
-#: admin/class-admin.php:475
-#: admin/class-tags-list-table.php:74
-#: admin/class-tags-list-table.php:202
+#: admin/class-admin.php:487
+#: admin/class-tags-list-table.php:75
+#: admin/class-tags-list-table.php:214
 msgid "Active"
 msgstr ""
 
-#: admin/class-admin.php:476
-#: admin/class-tags-list-table.php:74
-#: admin/class-tags-list-table.php:203
+#: admin/class-admin.php:488
+#: admin/class-tags-list-table.php:75
+#: admin/class-tags-list-table.php:215
 msgid "Inactive"
 msgstr ""
 
-#: admin/class-admin.php:479
-#: admin/class-tags-list-table.php:31
+#: admin/class-admin.php:491
+#: admin/class-tags-list-table.php:32
 msgid "Priority"
 msgstr ""
 
-#: admin/class-admin.php:481
+#: admin/class-admin.php:493
 #: includes/class-tag-groups.php:159
 msgid "Description"
 msgstr ""
 
-#: admin/class-admin.php:483
+#: admin/class-admin.php:495
 msgid "Content"
 msgstr ""
 
-#: admin/class-admin.php:487
+#: admin/class-admin.php:508
+msgid "Use the Code tab for conditions that contain < or >: the Visual tab rewrites them."
+msgstr ""
+
+#: admin/class-admin.php:511
 msgid "Placeholders you can use (click to insert)"
 msgstr ""
 
-#: admin/class-admin.php:493
+#: admin/class-admin.php:517
 msgid "Preview"
 msgstr ""
 
-#: admin/class-admin.php:493
+#: admin/class-admin.php:517
 msgid "Rendered here with the current page context of this screen; scripts are not run."
 msgstr ""
 
-#: admin/class-admin.php:497
+#: admin/class-admin.php:521
 msgid "Save Tag"
 msgstr ""
 
-#: admin/class-admin.php:497
+#: admin/class-admin.php:521
 msgid "Create Tag"
 msgstr ""
 
-#: admin/class-admin.php:525
-#: admin/class-admin.php:533
+#: admin/class-admin.php:587
+#: admin/class-admin.php:595
 msgid "Export"
 msgstr ""
 
-#: admin/class-admin.php:526
+#: admin/class-admin.php:588
 msgid "Format"
 msgstr ""
 
-#: admin/class-admin.php:527
-#: admin/class-tags-list-table.php:74
+#: admin/class-admin.php:589
+#: admin/class-tags-list-table.php:75
 msgid "All"
 msgstr ""
 
-#: admin/class-admin.php:527
+#: admin/class-admin.php:589
 msgid "Active only"
 msgstr ""
 
-#: admin/class-admin.php:527
+#: admin/class-admin.php:589
 msgid "Inactive only"
 msgstr ""
 
-#: admin/class-admin.php:528
-#: admin/class-tags-list-table.php:127
+#: admin/class-admin.php:590
+#: admin/class-tags-list-table.php:128
 msgid "All groups"
 msgstr ""
 
-#: admin/class-admin.php:534
+#: admin/class-admin.php:596
 msgid "Exports contain the full content of the tags, including any personal data they hold. Keep the file private."
 msgstr ""
 
-#: admin/class-admin.php:536
-#: admin/class-admin.php:540
+#: admin/class-admin.php:598
+#: admin/class-admin.php:602
 msgid "Import"
 msgstr ""
 
-#: admin/class-admin.php:537
+#: admin/class-admin.php:599
 msgid "File"
 msgstr ""
 
-#: admin/class-admin.php:538
+#: admin/class-admin.php:600
 msgid "JSON, CSV or XML, up to 5 MB."
 msgstr ""
 
-#: admin/class-admin.php:538
+#: admin/class-admin.php:600
 msgid "Sample CSV"
 msgstr ""
 
-#: admin/class-admin.php:539
+#: admin/class-admin.php:601
 msgid "Options"
 msgstr ""
 
-#: admin/class-admin.php:539
+#: admin/class-admin.php:601
 msgid "Update existing tags (same shortcode)"
 msgstr ""
 
-#: admin/class-admin.php:539
+#: admin/class-admin.php:601
 msgid "Skip duplicates"
 msgstr ""
 
-#: admin/class-admin.php:540
+#: admin/class-admin.php:602
 msgid "Check the file"
 msgstr ""
 
-#: admin/class-admin.php:587
+#: admin/class-admin.php:649
+#: admin/settings-page.php:318
 msgid "Tags"
 msgstr ""
 
 #. translators: 1: total, 2: active
-#: admin/class-admin.php:587
+#: admin/class-admin.php:649
 #, php-format
 msgid "%1$d (%2$d active)"
 msgstr ""
 
 #. translators: 1: total, 2: active
-#: admin/class-admin.php:588
+#: admin/class-admin.php:650
+#: admin/settings-page.php:320
 msgid "Shortcodes registered in this request"
 msgstr ""
 
-#: admin/class-admin.php:589
+#: admin/class-admin.php:651
 msgid "Usage counting"
 msgstr ""
 
-#: admin/class-admin.php:589
-#: admin/class-admin.php:614
+#: admin/class-admin.php:651
+#: admin/class-admin.php:676
 msgid "On"
 msgstr ""
 
-#: admin/class-admin.php:589
+#: admin/class-admin.php:651
 msgid "Off (Settings)"
 msgstr ""
 
-#: admin/class-admin.php:590
+#: admin/class-admin.php:652
 msgid "Database table"
 msgstr ""
 
-#: admin/class-admin.php:590
+#: admin/class-admin.php:652
 msgid "exists"
 msgstr ""
 
-#: admin/class-admin.php:590
+#: admin/class-admin.php:652
 msgid "MISSING"
 msgstr ""
 
-#: admin/class-admin.php:591
+#: admin/class-admin.php:653
 msgid "Versions"
 msgstr ""
 
-#: admin/class-admin.php:595
+#: admin/class-admin.php:657
 msgid "Shortcode names"
 msgstr ""
 
 #. translators: %s: plugin folder
-#: admin/class-admin.php:598
+#: admin/class-admin.php:660
 #, php-format
 msgid "Not registered: the name belongs to %s."
 msgstr ""
 
 #. translators: %s: plugin folder
-#: admin/class-admin.php:602
+#: admin/class-admin.php:664
 #, php-format
 msgid "Replaced by %s after this plugin registered it: that plugin's shortcode is shown on pages."
 msgstr ""
 
-#: admin/class-admin.php:608
+#: admin/class-admin.php:670
 msgid "No conflicts found."
 msgstr ""
 
-#: admin/class-admin.php:611
+#: admin/class-admin.php:673
 msgid "Rendering and debug log"
 msgstr ""
 
-#: admin/class-admin.php:613
+#: admin/class-admin.php:675
 msgid "Times the render guard cut off a tag in this request"
 msgstr ""
 
-#: admin/class-admin.php:614
+#: admin/class-admin.php:676
 msgid "Debug mode"
 msgstr ""
 
-#: admin/class-admin.php:614
+#: admin/class-admin.php:676
 msgid "Off: define DT_DEBUG_MODE as true in wp-config.php, or use the dt_debug_mode filter"
 msgstr ""
 
-#: admin/class-admin.php:618
+#: admin/class-admin.php:680
 msgid "Time (UTC)"
 msgstr ""
 
-#: admin/class-admin.php:618
+#: admin/class-admin.php:680
 msgid "Event"
 msgstr ""
 
-#: admin/class-admin.php:618
+#: admin/class-admin.php:680
 msgid "Tag"
 msgstr ""
 
-#: admin/class-admin.php:618
+#: admin/class-admin.php:680
 msgid "Type"
 msgstr ""
 
-#: admin/class-admin.php:618
+#: admin/class-admin.php:680
 msgid "Context"
 msgstr ""
 
-#: admin/class-admin.php:624
+#: admin/class-admin.php:686
 msgid "Clear the log"
 msgstr ""
 
-#: admin/class-admin.php:628
+#: admin/class-admin.php:690
 msgid "Older tag posts"
 msgstr ""
 
-#: admin/class-admin.php:632
+#: admin/class-admin.php:694
 msgid "Tag posts of earlier versions"
 msgstr ""
 
-#: admin/class-admin.php:633
+#: admin/class-admin.php:695
 msgid "Writes to them carried into the table"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:633
+#: admin/class-admin.php:695
 #, php-format
 msgid "%1$d, the last on %2$s"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:633
+#: admin/class-admin.php:695
 msgid "none"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:634
+#: admin/class-admin.php:696
 msgid "Tags that point at a post that no longer exists"
 msgstr ""
 
-#: admin/class-admin.php:635
+#: admin/class-admin.php:697
 msgid "Inactive tags"
 msgstr ""
 
-#: admin/class-admin.php:638
+#: admin/class-admin.php:700
 msgid "Moving older tag posts into the table"
 msgstr ""
 
-#: admin/class-admin.php:641
+#: admin/class-admin.php:703
 msgid "Database"
 msgstr ""
 
-#: admin/class-admin.php:642
+#: admin/class-admin.php:704
 msgid "Check the table"
 msgstr ""
 
-#: admin/class-admin.php:642
+#: admin/class-admin.php:704
 msgid "Create the table if it is missing"
 msgstr ""
 
-#: admin/class-admin.php:672
+#: admin/class-admin.php:734
 msgid "The table already exists."
 msgstr ""
 
-#: admin/class-admin.php:679
+#: admin/class-admin.php:741
 msgid "The table was created."
 msgstr ""
 
-#: admin/class-admin.php:701
+#: admin/class-admin.php:763
 msgid "The table is healthy."
 msgstr ""
 
-#: admin/class-admin.php:701
+#: admin/class-admin.php:763
 msgid "The table exists but has problems."
 msgstr ""
 
-#: admin/class-admin.php:704
+#: admin/class-admin.php:766
 msgid "The table does not exist."
 msgstr ""
 
-#: admin/class-tags-list-table.php:32
-msgid "Used"
+#: admin/class-tags-list-table.php:29
+msgid "Value"
 msgstr ""
 
 #: admin/class-tags-list-table.php:33
+msgid "Used"
+msgstr ""
+
+#: admin/class-tags-list-table.php:34
 msgid "Modified"
 msgstr ""
 
-#: admin/class-tags-list-table.php:50
-#: admin/class-tags-list-table.php:168
-#: admin/settings-page.php:255
+#: admin/class-tags-list-table.php:51
+#: admin/class-tags-list-table.php:169
+#: admin/settings-page.php:415
 msgid "Activate"
 msgstr ""
 
-#: admin/class-tags-list-table.php:51
-#: admin/class-tags-list-table.php:168
-#: admin/settings-page.php:258
+#: admin/class-tags-list-table.php:52
+#: admin/class-tags-list-table.php:169
+#: admin/settings-page.php:418
 msgid "Deactivate"
 msgstr ""
 
-#: admin/class-tags-list-table.php:52
-#: admin/class-tags-list-table.php:167
+#: admin/class-tags-list-table.php:53
+#: admin/class-tags-list-table.php:168
 msgid "Duplicate"
 msgstr ""
 
-#: admin/class-tags-list-table.php:53
-#: admin/class-tags-list-table.php:173
+#: admin/class-tags-list-table.php:54
+#: admin/class-tags-list-table.php:174
 msgid "Delete"
 msgstr ""
 
-#: admin/class-tags-list-table.php:116
+#: admin/class-tags-list-table.php:117
 msgid "No tags found."
 msgstr ""
 
-#: admin/class-tags-list-table.php:126
+#: admin/class-tags-list-table.php:127
 msgid "Filter by group"
 msgstr ""
 
-#: admin/class-tags-list-table.php:132
+#: admin/class-tags-list-table.php:133
 msgid "Filter"
 msgstr ""
 
-#: admin/class-tags-list-table.php:166
+#: admin/class-tags-list-table.php:167
 #: includes/class-tag-groups.php:994
 msgid "Edit"
 msgstr ""
 
-#: admin/class-tags-list-table.php:172
+#: admin/class-tags-list-table.php:173
 msgid "Delete this tag? Pages that use its shortcode will show nothing."
 msgstr ""
 
 #. translators: %s: shortcode
-#: admin/class-tags-list-table.php:187
+#: admin/class-tags-list-table.php:188
 #, php-format
 msgid "Copy %s"
 msgstr ""
 
-#: admin/class-tags-list-table.php:215
+#: admin/class-tags-list-table.php:227
 msgid "Usage counting is off"
 msgstr ""
 
@@ -651,7 +663,7 @@ msgid "Count Tag Usage"
 msgstr ""
 
 #: admin/settings-page.php:99
-#: admin/settings-page.php:230
+#: admin/settings-page.php:390
 msgid "License"
 msgstr ""
 
@@ -687,153 +699,376 @@ msgstr ""
 msgid "Off by default. When on, visits are counted in memory and written once at the end of each page request (one database update per tag shown); admin, AJAX, cron and REST requests are never counted. Usage columns show a dash while this is off."
 msgstr ""
 
-#: admin/settings-page.php:196
+#: admin/settings-page.php:224
+#: includes/class-license-manager.php:244
+msgid "Unlimited"
+msgstr ""
+
+#: admin/settings-page.php:228
+msgid "Unknown"
+msgstr ""
+
+#: admin/settings-page.php:239
+msgid "Fine"
+msgstr ""
+
+#: admin/settings-page.php:240
+msgid "Watch"
+msgstr ""
+
+#: admin/settings-page.php:241
+msgid "Too many"
+msgstr ""
+
+#. translators: %s: number of active tags
+#: admin/settings-page.php:246
+#, php-format
+msgid "You have %s active tag."
+msgid_plural "You have %s active tags."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: memory the tags take in MB, 2: the PHP memory limit
+#: admin/settings-page.php:249
+#, php-format
+msgid "The tags take about %1$s MB of every request, a quarter or more of your PHP memory limit (%2$s). Raise the memory limit or deactivate tags you do not use."
+msgstr ""
+
+#: admin/settings-page.php:251
+msgid "That will make every page that is not served from a page cache, and the admin, noticeably slower, and a small host can run out of memory. Deactivate tags you do not use, or move the site to a stronger server."
+msgstr ""
+
+#. translators: 1: the recommended maximum, 2: extra milliseconds, 3: extra megabytes
+#: admin/settings-page.php:254
+#, php-format
+msgid "That is above the recommended maximum of %1$s for a small host. Expect about %2$s ms and %3$s MB extra on every page that is not served from a page cache. Deactivate tags you do not use, or put a page cache in front of the site."
+msgstr ""
+
+#. translators: %s: the recommended maximum number of tags
+#: admin/settings-page.php:257
+#, php-format
+msgid "That is within the recommended maximum of %s for a small host."
+msgstr ""
+
+#. translators: %s: the recommended maximum with a page cache
+#: admin/settings-page.php:260
+#, php-format
+msgid "With a page cache in front of the site the maximum is %s."
+msgstr ""
+
+#: admin/settings-page.php:265
+msgid "Next to nothing (under 0.1 MB and 1 ms per uncached page)"
+msgstr ""
+
+#. translators: 1: megabytes, 2: milliseconds
+#: admin/settings-page.php:268
+#, php-format
+msgid "about %1$s MB and %2$s ms per uncached page"
+msgstr ""
+
+#: admin/settings-page.php:272
+msgid "Entry shared hosting (about 1 CPU core, 1 GB of RAM)"
+msgstr ""
+
+#: admin/settings-page.php:273
+msgid "Mid-range shared or cloud hosting (2 or more cores, 2 to 4 GB of RAM)"
+msgstr ""
+
+#: admin/settings-page.php:274
+msgid "VPS or managed WordPress hosting (4 GB of RAM or more, PHP opcache, an object cache)"
+msgstr ""
+
+#: admin/settings-page.php:275
+msgid "Large dedicated server"
+msgstr ""
+
+#: admin/settings-page.php:283
+msgid "Tags and your server"
+msgstr ""
+
+#: admin/settings-page.php:285
+msgid "How Dynamic Tags works"
+msgstr ""
+
+#: admin/settings-page.php:287
+msgid "Every tag is one row in the plugin's database table: a name, a shortcode, the content and a status."
+msgstr ""
+
+#: admin/settings-page.php:288
+msgid "Every active tag is registered as a shortcode, for example [your_tag], on every request: front end, admin, AJAX, cron and REST. Inactive tags are not loaded."
+msgstr ""
+
+#: admin/settings-page.php:289
+msgid "When a page is shown, WordPress runs the shortcode and the plugin fills in placeholders such as {site_name} or {post_title} for that page and that visitor."
+msgstr ""
+
+#: admin/settings-page.php:290
+msgid "Showing a tag never writes to the database. Saving a tag does, and the change appears on the whole site at once: the supported page-cache plugins are cleared automatically."
+msgstr ""
+
+#: admin/settings-page.php:293
+msgid "Why a lot of tags can slow your site down"
+msgstr ""
+
+#: admin/settings-page.php:294
+msgid "Because every active tag is registered on every request, each tag costs a little memory and time on every page that is not served from a page cache. WordPress also compares every registered shortcode name each time it processes content, so the cost grows with the number of tags. A few hundred tags are not noticeable; thousands are."
+msgstr ""
+
+#: admin/settings-page.php:296
+msgid "Measured on a development PC (PHP 8.2, MySQL 8.4, no page cache). Shared hosting can be about twice as slow."
+msgstr ""
+
+#: admin/settings-page.php:299
+msgid "Active tags"
+msgstr ""
+
+#: admin/settings-page.php:300
+msgid "Extra memory per request"
+msgstr ""
+
+#: admin/settings-page.php:301
+msgid "Extra time per uncached page"
+msgstr ""
+
+#. translators: %s: megabytes
+#: admin/settings-page.php:308
+#, php-format
+msgid "%s MB"
+msgstr ""
+
+#. translators: %s: milliseconds
+#: admin/settings-page.php:309
+#: admin/settings-page.php:321
+#, php-format
+msgid "%s ms"
+msgstr ""
+
+#: admin/settings-page.php:315
+msgid "Your site now"
+msgstr ""
+
+#. translators: 1: all tags, 2: active tags, 3: inactive tags
+#: admin/settings-page.php:318
+#, php-format
+msgid "%1$s (%2$s active, %3$s inactive)"
+msgstr ""
+
+#. translators: 1: all tags, 2: active tags, 3: inactive tags
+#: admin/settings-page.php:319
+msgid "Tag groups"
+msgstr ""
+
+#: admin/settings-page.php:321
+msgid "Time to load and register the tags in this request"
+msgstr ""
+
+#. translators: %s: milliseconds
+#: admin/settings-page.php:322
+msgid "What your active tags add (estimate)"
+msgstr ""
+
+#: admin/settings-page.php:323
+#: includes/class-dynamic-placeholders.php:1441
+msgid "PHP version"
+msgstr ""
+
+#: admin/settings-page.php:324
+msgid "PHP memory limit"
+msgstr ""
+
+#: admin/settings-page.php:325
+msgid "Page cache"
+msgstr ""
+
+#: admin/settings-page.php:325
+msgid "Detected"
+msgstr ""
+
+#: admin/settings-page.php:325
+msgid "Not detected (a cache run by your host cannot be seen from here)"
+msgstr ""
+
+#: admin/settings-page.php:329
+msgid "WordPress raises the PHP memory limit inside wp-admin, so the limit your visitors get can be lower than the one shown here."
+msgstr ""
+
+#: admin/settings-page.php:331
+msgid "Recommended tag counts by hosting type"
+msgstr ""
+
+#: admin/settings-page.php:335
+msgid "Hosting"
+msgstr ""
+
+#: admin/settings-page.php:336
+msgid "Comfortable"
+msgstr ""
+
+#: admin/settings-page.php:337
+msgid "Recommended maximum"
+msgstr ""
+
+#: admin/settings-page.php:338
+msgid "With a page cache"
+msgstr ""
+
+#: admin/settings-page.php:352
+msgid "The first row follows from the limits of a real shared-hosting plan (1 CPU core, 1 GB of RAM) and the measurements above; the other rows are estimates scaled from it. A table of 50,000 tags was imported, listed, searched and exported without errors in testing: that is a stress result, not a support claim."
+msgstr ""
+
+#: admin/settings-page.php:354
+msgid "What you can do"
+msgstr ""
+
+#: admin/settings-page.php:356
+msgid "Deactivate or delete tags you no longer use: inactive tags are not loaded."
+msgstr ""
+
+#: admin/settings-page.php:357
+msgid "Use a page cache, so visitors do not run PHP for every page view. Changing a tag clears the supported caches automatically."
+msgstr ""
+
+#. translators: %s: the name of a filter, in code tags
+#: admin/settings-page.php:360
+#, php-format
+msgid "On a site with a very large number of tags, developers can stop tags being registered on REST requests with the filter %s."
+msgstr ""
+
+#: admin/settings-page.php:362
+msgid "An import is limited to 5,000 rows at a time by default. Check the numbers above before importing thousands of tags."
+msgstr ""
+
+#: admin/settings-page.php:376
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: admin/settings-page.php:197
+#: admin/settings-page.php:377
 msgid "Permission Denied"
 msgstr ""
 
-#: admin/settings-page.php:224
+#: admin/settings-page.php:384
 msgid "WP Dynamic Tags - Settings"
 msgstr ""
 
-#: admin/settings-page.php:238
+#: admin/settings-page.php:398
 msgid "Current plan:"
 msgstr ""
 
 #. translators: %s: the date the license expires
-#: admin/settings-page.php:243
+#: admin/settings-page.php:403
 #, php-format
 msgid "(expires %s)"
 msgstr ""
 
-#: admin/settings-page.php:251
+#: admin/settings-page.php:411
 msgid "Enter license key"
 msgstr ""
 
-#: admin/settings-page.php:266
+#: admin/settings-page.php:426
 msgid "Feature"
 msgstr ""
 
-#: admin/settings-page.php:267
+#: admin/settings-page.php:427
 #: includes/class-license-manager.php:38
 msgid "Free"
 msgstr ""
 
-#: admin/settings-page.php:268
+#: admin/settings-page.php:428
 #: includes/class-license-manager.php:38
 msgid "Paid"
 msgstr ""
 
-#: admin/settings-page.php:309
-#: admin/settings-page.php:321
+#: admin/settings-page.php:469
+#: admin/settings-page.php:481
 msgid "Request failed. Please try again."
 msgstr ""
 
-#: admin/settings-page.php:314
+#: admin/settings-page.php:474
 msgid "Deactivate this license?"
 msgstr ""
 
-#: admin/settings-page.php:329
-msgid "Current Data Status"
-msgstr ""
-
-#: admin/settings-page.php:332
-msgid "Published Tags (Posts):"
-msgstr ""
-
-#: admin/settings-page.php:336
-msgid "Tags in Database Table:"
-msgstr ""
-
-#: admin/settings-page.php:340
-msgid "Tag Groups:"
-msgstr ""
-
-#: admin/settings-page.php:361
+#: admin/settings-page.php:505
 msgid "💾 Data Retention (Recommended)"
 msgstr ""
 
-#: admin/settings-page.php:363
+#: admin/settings-page.php:507
 msgid "By default, your tags and groups are preserved when you uninstall the plugin. This means:"
 msgstr ""
 
-#: admin/settings-page.php:366
+#: admin/settings-page.php:510
 msgid "If you reinstall the plugin later, all your tags will work immediately"
 msgstr ""
 
-#: admin/settings-page.php:367
+#: admin/settings-page.php:511
 msgid "Your shortcodes will be automatically restored"
 msgstr ""
 
-#: admin/settings-page.php:368
+#: admin/settings-page.php:512
 msgid "No data loss if you accidentally uninstall"
 msgstr ""
 
-#: admin/settings-page.php:369
+#: admin/settings-page.php:513
 msgid "Easy to move your site between environments"
 msgstr ""
 
-#: admin/settings-page.php:372
+#: admin/settings-page.php:516
 msgid "What is preserved:"
 msgstr ""
 
-#: admin/settings-page.php:375
-#: admin/settings-page.php:391
+#: admin/settings-page.php:519
+#: admin/settings-page.php:535
 msgid "All dynamic tag posts"
 msgstr ""
 
-#: admin/settings-page.php:376
+#: admin/settings-page.php:520
 msgid "Custom database table (wp_dynamic_tags)"
 msgstr ""
 
-#: admin/settings-page.php:377
+#: admin/settings-page.php:521
 msgid "Tag groups taxonomy"
 msgstr ""
 
-#: admin/settings-page.php:378
+#: admin/settings-page.php:522
 msgid "Usage statistics"
 msgstr ""
 
-#: admin/settings-page.php:386
+#: admin/settings-page.php:530
 msgid "🗑️ Clean Uninstall"
 msgstr ""
 
-#: admin/settings-page.php:388
+#: admin/settings-page.php:532
 msgid "If you enable \"Delete Data on Uninstall\", the following will be permanently deleted:"
 msgstr ""
 
-#: admin/settings-page.php:392
+#: admin/settings-page.php:536
 msgid "All tag groups"
 msgstr ""
 
-#: admin/settings-page.php:393
+#: admin/settings-page.php:537
 msgid "Custom database table"
 msgstr ""
 
-#: admin/settings-page.php:394
+#: admin/settings-page.php:538
 msgid "All plugin options and settings"
 msgstr ""
 
-#: admin/settings-page.php:395
+#: admin/settings-page.php:539
 msgid "All transients and cached data"
 msgstr ""
 
-#: admin/settings-page.php:398
+#: admin/settings-page.php:542
 msgid "⚠️ Warning: This action cannot be undone!"
 msgstr ""
 
-#: admin/settings-page.php:406
+#: admin/settings-page.php:550
 msgid "💼 Backup Your Data"
 msgstr ""
 
-#: admin/settings-page.php:408
+#: admin/settings-page.php:552
 msgid "Before uninstalling or making major changes, you can export your tags:"
 msgstr ""
 
-#: admin/settings-page.php:413
+#: admin/settings-page.php:557
 msgid "Go to Import/Export"
 msgstr ""
 
@@ -843,431 +1078,427 @@ msgstr ""
 msgid "%s ago"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1360
+#: includes/class-dynamic-placeholders.php:1365
 msgid "Current user login name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1361
+#: includes/class-dynamic-placeholders.php:1366
 msgid "Current user email address"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1362
+#: includes/class-dynamic-placeholders.php:1367
 msgid "Current user display name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1363
+#: includes/class-dynamic-placeholders.php:1368
 msgid "Current user first name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1364
+#: includes/class-dynamic-placeholders.php:1369
 msgid "Current user last name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1365
+#: includes/class-dynamic-placeholders.php:1370
 msgid "Current user role(s)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1368
+#: includes/class-dynamic-placeholders.php:1373
 msgid "Current year (e.g., 2024)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1369
+#: includes/class-dynamic-placeholders.php:1374
 msgid "Current month name (e.g., January)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1370
+#: includes/class-dynamic-placeholders.php:1375
 msgid "Current day of month (e.g., 15)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1371
+#: includes/class-dynamic-placeholders.php:1376
 msgid "Current date in site format"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1372
+#: includes/class-dynamic-placeholders.php:1377
 msgid "Current time in site format"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1373
+#: includes/class-dynamic-placeholders.php:1378
 msgid "Current date and time"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1376
+#: includes/class-dynamic-placeholders.php:1381
 msgid "Site title"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1377
+#: includes/class-dynamic-placeholders.php:1382
 msgid "Site URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1378
+#: includes/class-dynamic-placeholders.php:1383
 msgid "Site tagline/description"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1379
+#: includes/class-dynamic-placeholders.php:1384
 msgid "Site admin email"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1380
+#: includes/class-dynamic-placeholders.php:1385
 msgid "Site language code"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1383
+#: includes/class-dynamic-placeholders.php:1388
 msgid "Current post title"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1384
+#: includes/class-dynamic-placeholders.php:1389
 msgid "Current post author name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1385
+#: includes/class-dynamic-placeholders.php:1390
 msgid "Current post publication date"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1386
+#: includes/class-dynamic-placeholders.php:1391
 msgid "Current post excerpt"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1387
+#: includes/class-dynamic-placeholders.php:1392
 msgid "Current post URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1388
+#: includes/class-dynamic-placeholders.php:1393
 msgid "Current post ID"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1389
+#: includes/class-dynamic-placeholders.php:1394
 msgid "Current post slug"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1390
+#: includes/class-dynamic-placeholders.php:1395
 msgid "Current post content"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1391
+#: includes/class-dynamic-placeholders.php:1396
 msgid "Current post status"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1392
+#: includes/class-dynamic-placeholders.php:1397
 msgid "Current post type"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1393
+#: includes/class-dynamic-placeholders.php:1398
 msgid "Current post last-modified date"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1394
+#: includes/class-dynamic-placeholders.php:1399
 msgid "Current post comment count"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1395
+#: includes/class-dynamic-placeholders.php:1400
 msgid "Current post comment status"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1396
+#: includes/class-dynamic-placeholders.php:1401
 msgid "Current post shortlink"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1397
+#: includes/class-dynamic-placeholders.php:1402
 msgid "Current post featured image URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1398
+#: includes/class-dynamic-placeholders.php:1403
 msgid "Current post featured image ID"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1399
+#: includes/class-dynamic-placeholders.php:1404
 msgid "Current post featured image alt text"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1400
+#: includes/class-dynamic-placeholders.php:1405
 msgid "Current post featured image caption"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1401
+#: includes/class-dynamic-placeholders.php:1406
 msgid "Current post's parent post title"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1402
+#: includes/class-dynamic-placeholders.php:1407
 msgid "Current post's parent post URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1405
+#: includes/class-dynamic-placeholders.php:1410
 msgid "Current post's primary category name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1406
+#: includes/class-dynamic-placeholders.php:1411
 msgid "Current post's primary category ID"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1407
+#: includes/class-dynamic-placeholders.php:1412
 msgid "Current post's primary category slug"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1408
+#: includes/class-dynamic-placeholders.php:1413
 msgid "Current post's primary category description"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1409
+#: includes/class-dynamic-placeholders.php:1414
 msgid "Current post's primary category URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1410
+#: includes/class-dynamic-placeholders.php:1415
 msgid "All of the current post's categories, comma-separated"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1411
+#: includes/class-dynamic-placeholders.php:1416
 msgid "All of the current post's tags, comma-separated"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1414
+#: includes/class-dynamic-placeholders.php:1419
 msgid "Current post author's display name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1415
+#: includes/class-dynamic-placeholders.php:1420
 msgid "Current post author's user ID"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1416
+#: includes/class-dynamic-placeholders.php:1421
 msgid "Current post author's email address"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1417
+#: includes/class-dynamic-placeholders.php:1422
 msgid "Current post author's biography"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1418
+#: includes/class-dynamic-placeholders.php:1423
 msgid "Current post author's archive URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1419
+#: includes/class-dynamic-placeholders.php:1424
 msgid "Current post author's website"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1420
+#: includes/class-dynamic-placeholders.php:1425
 msgid "Current post author's avatar URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1423
+#: includes/class-dynamic-placeholders.php:1428
 msgid "Current page URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1424
+#: includes/class-dynamic-placeholders.php:1429
 msgid "Current page path"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1425
+#: includes/class-dynamic-placeholders.php:1430
 msgid "Current query string"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1426
+#: includes/class-dynamic-placeholders.php:1431
 msgid "Current HTTP host"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1427
+#: includes/class-dynamic-placeholders.php:1432
 msgid "Referring URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1428
+#: includes/class-dynamic-placeholders.php:1433
 msgid "Visitor user agent"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1431
+#: includes/class-dynamic-placeholders.php:1436
 msgid "WordPress version"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1432
+#: includes/class-dynamic-placeholders.php:1437
 msgid "Active theme name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1433
+#: includes/class-dynamic-placeholders.php:1438
 msgid "Active theme version"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1434
+#: includes/class-dynamic-placeholders.php:1439
 msgid "Site logo URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1435
+#: includes/class-dynamic-placeholders.php:1440
 msgid "Site icon URL"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1436
-msgid "PHP version"
-msgstr ""
-
-#: includes/class-dynamic-placeholders.php:1437
+#: includes/class-dynamic-placeholders.php:1442
 msgid "Site timezone"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1440
+#: includes/class-dynamic-placeholders.php:1445
 msgid "Conditional content for logged-in users"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1441
+#: includes/class-dynamic-placeholders.php:1446
 msgid "Conditional content for specific user role"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1442
+#: includes/class-dynamic-placeholders.php:1447
 msgid "Conditional content for mobile devices"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1443
+#: includes/class-dynamic-placeholders.php:1448
 msgid "Conditional content for front page"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1444
+#: includes/class-dynamic-placeholders.php:1449
 msgid "Condition can also test a field value: truthy check (e.g. {if:acf:featured}) or comparison with =, !=, >, <, >=, <=, contains"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1445
+#: includes/class-dynamic-placeholders.php:1450
 msgid "Wrap a whole block of content (not just a token) so it can be hidden/shown by any condition above, e.g. [dt_if condition=\"wc:price>50\"]On sale![dt_else]Regular price[/dt_if]"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1448
+#: includes/class-dynamic-placeholders.php:1453
 msgid "Post meta value for the given key, e.g. {meta:price}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1449
+#: includes/class-dynamic-placeholders.php:1454
 msgid "Post author's user meta value, e.g. {user_meta:phone}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1450
+#: includes/class-dynamic-placeholders.php:1455
 msgid "Primary term's term meta value, e.g. {term_meta:icon}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1451
+#: includes/class-dynamic-placeholders.php:1456
 msgid "ACF field value; use field.subfield to pull a column out of a repeater/group, e.g. {acf:team_members.name} (requires ACF)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1452
+#: includes/class-dynamic-placeholders.php:1457
 msgid "WooCommerce product field: price, regular_price, sale_price, sale_percent, sku, stock_status, stock_quantity, categories, tags (requires WooCommerce)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1453
+#: includes/class-dynamic-placeholders.php:1458
 msgid "Query posts as an array of rows (id, title, permalink, excerpt, date, thumbnail) for use with [dt_loop]"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1454
+#: includes/class-dynamic-placeholders.php:1459
 msgid "Fetch external JSON and optionally walk a dot-notation path into it, e.g. {api:https://api.example.com/rates::usd|round:2}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1455
+#: includes/class-dynamic-placeholders.php:1460
 msgid "Call a developer-registered function (see register_dynamic_tag_function() in code) - not arbitrary PHP, only functions explicitly exposed by name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1458
+#: includes/class-dynamic-placeholders.php:1463
 msgid "Join an array value into text with a separator, e.g. {wc:categories|join:\", \"}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1459
+#: includes/class-dynamic-placeholders.php:1464
 msgid "Count the items in an array value, e.g. {acf:gallery|count}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1460
+#: includes/class-dynamic-placeholders.php:1465
 msgid "First item of an array value, e.g. {acf:team_members.name|first}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1461
+#: includes/class-dynamic-placeholders.php:1466
 msgid "Last item of an array value, e.g. {acf:team_members.name|last}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1462
+#: includes/class-dynamic-placeholders.php:1467
 msgid "Repeat a template once per item of an array source, e.g. [dt_loop source=\"acf:gallery\"]<img src=\"{item}\">[/dt_loop]"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1465
+#: includes/class-dynamic-placeholders.php:1470
 msgid "Custom date format (replace Y-m-d with desired format)"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1466
+#: includes/class-dynamic-placeholders.php:1471
 msgid "Apply a formatter, e.g. {post_title|upper} or {meta:price|currency}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1467
+#: includes/class-dynamic-placeholders.php:1472
 msgid "Fallback text shown when the token resolves empty, e.g. {meta:subtitle??Coming soon}"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1468
+#: includes/class-dynamic-placeholders.php:1473
 msgid "Render an existing Dynamic Tag once per post in a query, e.g. [dt_template tag=\"product_card\" query=\"post_type=product&posts_per_page=6\"]"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1481
+#: includes/class-dynamic-placeholders.php:1486
 msgid "Personal greeting with user name"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1482
+#: includes/class-dynamic-placeholders.php:1487
 msgid "Dynamic copyright notice"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1483
+#: includes/class-dynamic-placeholders.php:1488
 msgid "Site contact information"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1484
+#: includes/class-dynamic-placeholders.php:1489
 msgid "Post metadata"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1487
+#: includes/class-dynamic-placeholders.php:1492
 msgid "Different content based on login status"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1488
+#: includes/class-dynamic-placeholders.php:1493
 msgid "Content only for specific user roles"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1489
+#: includes/class-dynamic-placeholders.php:1494
 msgid "Device-specific content"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1490
+#: includes/class-dynamic-placeholders.php:1495
 msgid "Condition based on a field value"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1491
+#: includes/class-dynamic-placeholders.php:1496
 msgid "Hide/show a whole block of content, not just text inside a tag"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1494
+#: includes/class-dynamic-placeholders.php:1499
 msgid "Custom date format"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1495
+#: includes/class-dynamic-placeholders.php:1500
 msgid "Complex conditional logic"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1498
+#: includes/class-dynamic-placeholders.php:1503
 msgid "Comma-join a repeater column across all rows"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1499
+#: includes/class-dynamic-placeholders.php:1504
 msgid "Format a WooCommerce product field"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1500
+#: includes/class-dynamic-placeholders.php:1505
 msgid "Render a template once per gallery image"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1501
+#: includes/class-dynamic-placeholders.php:1506
 msgid "Render a template once per repeater row"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1504
+#: includes/class-dynamic-placeholders.php:1509
 msgid "Render a Dynamic Tag once per product, like a repeating card"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1505
+#: includes/class-dynamic-placeholders.php:1510
 msgid "Render a Dynamic Tag once per team member, in a custom order"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1508
+#: includes/class-dynamic-placeholders.php:1513
 msgid "List recent posts without creating a Dynamic Tag first"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1509
+#: includes/class-dynamic-placeholders.php:1514
 msgid "Pull a single value out of an external JSON API"
 msgstr ""
 
-#: includes/class-dynamic-placeholders.php:1510
+#: includes/class-dynamic-placeholders.php:1515
 msgid "Call a function a developer registered in code, e.g. WP_Dynamic_Tags_Placeholders::register_dynamic_tag_function()"
 msgstr ""
 
@@ -1306,10 +1537,6 @@ msgstr ""
 
 #: includes/class-license-manager.php:244
 msgid "Up to 15"
-msgstr ""
-
-#: includes/class-license-manager.php:244
-msgid "Unlimited"
 msgstr ""
 
 #: includes/class-license-manager.php:245

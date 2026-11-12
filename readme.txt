@@ -67,6 +67,7 @@ Yes — `{query:...}` runs a WP_Query and returns an array of post rows, and `{a
 * New admin: one menu, a searchable and sortable list with a Value column, bulk actions, a form with a live preview, Tools and diagnostics
 * Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved
 * Import and export rebuilt (lossless CSV, per-row reports, limits; SQL is export only)
+* Settings now explains how tags work and why a lot of tags slow a site down, shows the site's live numbers (tags, PHP memory limit, page cache, load time) with a Fine / Watch / Too many status, and recommends tag counts by kind of hosting
 * The findings of a security and reliability audit of 3.0.0 are fixed; see docs/BUG-REGISTER.md and docs/RELEASE-NOTES-3.1.0.md
 
 = 3.0.0 =
