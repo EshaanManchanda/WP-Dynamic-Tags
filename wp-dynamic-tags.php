@@ -462,7 +462,8 @@ class WP_Dynamic_Tags_Plugin
             'empty' => '',
         ), $atts, 'dt_loop');
 
-        if (empty($atts['source']) || !$this->placeholders || !method_exists($this->placeholders, 'resolve_token_raw')) {
+        // Paid: on a Free site a loop behaves like a loop with no data (the author's empty="" text, nothing else).
+        if (empty($atts['source']) || !self::plan_is_paid() || !$this->placeholders || !method_exists($this->placeholders, 'resolve_token_raw')) {
             return $atts['empty'];
         }
 
@@ -578,7 +579,8 @@ class WP_Dynamic_Tags_Plugin
             'empty' => '',
         ), $atts, 'dt_template');
 
-        if (empty($atts['tag'])) {
+        // Paid: on a Free site it behaves like a template with no posts (the author's empty="" text, nothing else).
+        if (empty($atts['tag']) || !self::plan_is_paid()) {
             return $atts['empty'];
         }
 
@@ -616,6 +618,12 @@ class WP_Dynamic_Tags_Plugin
         return $atts['before'] . implode($atts['separator'], $rendered) . $atts['after'];
     }
 
+
+    /** Whether this site is on the Paid plan (reads the plan option, writes nothing). */
+    private static function plan_is_paid()
+    {
+        return !class_exists('DT_License_Manager') || DT_License_Manager::is_paid();
+    }
 
     /** @var array<string, string> shortcode name => plugin folder (or "core") that owns it, recorded when we skipped a name */
     private static $shortcode_conflicts = array();

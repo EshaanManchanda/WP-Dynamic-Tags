@@ -74,9 +74,16 @@ class WP_Dynamic_Tags_Table_Manager {
     }
 
     /**
-     * Create a new dynamic tag
+     * Create a new dynamic tag.
+     *
+     * @param array  $data   The tag's fields.
+     * @param string $origin 'api' (the default) for code that creates tags, such as another plugin's sync: the tag is marked in
+     *                       its meta_data and is never blocked by or counted toward the Free limit. The plugin's own screens
+     *                       (Add New, Duplicate, Import) pass 'user'; anything that is not 'api' counts as a person.
+     * @return int|WP_Error The new id, or why the tag was refused.
      */
-    public function create_tag($data) {
+    public function create_tag($data, $origin = WP_Dynamic_Tags_Tag_Service::ORIGIN_API) {
+        $origin = $origin === WP_Dynamic_Tags_Tag_Service::ORIGIN_API ? WP_Dynamic_Tags_Tag_Service::ORIGIN_API : WP_Dynamic_Tags_Tag_Service::ORIGIN_USER;
         // Check table availability first
         $table_check = $this->ensure_table_available();
         if (is_wp_error($table_check)) {
@@ -105,10 +112,11 @@ class WP_Dynamic_Tags_Table_Manager {
         );
 
         $data = wp_parse_args($data, $defaults);
+        $data['meta_data'] = WP_Dynamic_Tags_Tag_Service::normalize_meta($data['meta_data'], $origin === WP_Dynamic_Tags_Tag_Service::ORIGIN_API);
 
         // The Tag Service: reserved and foreign shortcode names, circular references, the creation limit, and markup the
         // writing user may not post unfiltered (plan Phase 6).
-        $guard = WP_Dynamic_Tags_Tag_Service::guard_create($data);
+        $guard = WP_Dynamic_Tags_Tag_Service::guard_create($data, $origin);
         if (is_wp_error($guard)) {
             return $guard;
         }
@@ -163,6 +171,12 @@ class WP_Dynamic_Tags_Table_Manager {
         }
         if (array_key_exists('content', $data)) {
             $data['content'] = WP_Dynamic_Tags_Tag_Service::prepare_content($data['content']);
+        }
+        // Who created a tag is decided when it is created and never by an update: the mark follows the stored row.
+        if (array_key_exists('meta_data', $data)) {
+            $stored = $existing_tag->meta_data;
+            $created_by_plugin = is_array($stored) && ($stored[WP_Dynamic_Tags_Tag_Service::ORIGIN_KEY] ?? '') === WP_Dynamic_Tags_Tag_Service::ORIGIN_API;
+            $data['meta_data'] = WP_Dynamic_Tags_Tag_Service::normalize_meta($data['meta_data'], $created_by_plugin);
         }
 
         // Update in database

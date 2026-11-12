@@ -12,4 +12,9 @@ tests_add_filter('muplugins_loaded', static function (): void {
     require dirname(__DIR__, 2) . '/wp-dynamic-tags.php';
 });
 
+// The suite runs as the Paid plan: the feature tests (loops, field conditions, {query:}, {api:}, {func:}, [dt_template]) exist to
+// check those features, which a Free site does not render. LicenseGatingTest, TagLimitTest and LicenseManagerTest remove this
+// filter and set the plan they test themselves. Nothing is written: the filter answers get_option('dt_plan').
+tests_add_filter('pre_option_dt_plan', static fn() => 'paid');
+
 require $tests_dir . '/includes/bootstrap.php';

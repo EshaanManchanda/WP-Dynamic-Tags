@@ -56,6 +56,14 @@ The harness acts as the first user with the `administrator` role.
   after it finishes (B9).
 * **Determinism.** Run the whole set twice back-to-back and compare the `out` sections; they must be identical.
   Volatile values (IDs, today's date in both formats, e-mail addresses) are normalized before writing.
+* **The plan.** `wp-boot.php` answers `get_option('dt_plan')` with `paid` (a `pre_option_dt_plan` filter, nothing is
+  written): the baselines are 3.0.0 output, which had no plans, and the site is on the Free plan. The Free plan is tested in
+  `tests/wp` (LicenseGatingTest, TagLimitTest, LicenseManagerTest).
+* **Fixture IDs and the year.** A fixture's ID is normalized to `<ID:name>` wherever that number appears in an output. On a
+  disposable database that has run the harness many times the tag table's AUTO_INCREMENT can reach the current year
+  (2026), and then `{current_year}` is masked as an ID: out_singular then shows 4 unlisted and 1 stale difference and the
+  two back-to-back runs differ. It is the data, not the plugin: `ALTER TABLE wp_dynamic_tags AUTO_INCREMENT = <max id + 1>`
+  on the disposable database (never the site's own) and run again.
 * **Antivirus.** Scripts that call `wp_set_current_user()` can be quarantined by some antivirus products. If
   `render.php` or `siblings.php` disappears, restore it and exclude this folder.
 

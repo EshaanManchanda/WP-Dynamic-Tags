@@ -23,6 +23,15 @@ if (!defined('ABSPATH')) {
 
 final class WP_Dynamic_Tags_Tag_Service
 {
+    /**
+     * Who created a tag, remembered in its meta_data. 'api' is code calling create_tag($data) (a sibling plugin's sync); a tag
+     * made by a person (Add New, Duplicate, Import) carries no mark. Only the mark of an api tag is ever stored: it is how the
+     * Free limit tells them apart (DT_License_Manager::count_capped_tags()).
+     */
+    public const ORIGIN_KEY = 'dt_origin';
+    public const ORIGIN_API = 'api';
+    public const ORIGIN_USER = 'user';
+
     /** Names of the plugin's own shortcodes. */
     private const RESERVED = array('dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_else', 'dt_template');
 
@@ -65,12 +74,13 @@ final class WP_Dynamic_Tags_Tag_Service
      * Whether another tag may be created. The one place a limit on the number of tags is decided: filter dt_can_create_tag
      * returns true to allow, false to refuse with the default message, or a WP_Error to refuse with its own.
      *
-     * @param array<string,mixed> $data The tag that is about to be created.
+     * @param array<string,mixed> $data   The tag that is about to be created.
+     * @param string              $origin 'api' for code calling create_tag($data), 'user' for Add New, Duplicate and Import.
      * @return true|WP_Error
      */
-    public static function can_create(array $data)
+    public static function can_create(array $data, string $origin = self::ORIGIN_USER)
     {
-        $allowed = apply_filters('dt_can_create_tag', true, $data);
+        $allowed = apply_filters('dt_can_create_tag', true, $data, $origin);
         if (is_wp_error($allowed)) {
             return $allowed;
         }
@@ -87,6 +97,37 @@ final class WP_Dynamic_Tags_Tag_Service
             return wp_kses_post($content);
         }
         return $content;
+    }
+
+    /**
+     * A tag's meta_data as it will be stored, with the origin mark handled in this one place for create and update.
+     *
+     * The mark (dt_origin = api) is what keeps a tag out of the Free limit, so a caller can never choose it: any mark in the
+     * data is removed and then set again only when the tag is (or stays) one that another plugin created. A meta_data string
+     * that is not an array but mentions the mark cannot carry a real one and is dropped, so that it cannot fake one either.
+     * The rest of the meta data is kept as it was sent.
+     *
+     * @param mixed $raw An array, a JSON or serialized string, or empty.
+     * @param bool  $api Whether the tag is created by another plugin (or already was).
+     * @return array<string,mixed>|string
+     */
+    public static function normalize_meta($raw, bool $api)
+    {
+        $meta = WP_Dynamic_Tags_Database_Manager::decode_meta($raw);
+        if (is_array($meta)) {
+            unset($meta[self::ORIGIN_KEY]);
+            if ($api) {
+                $meta[self::ORIGIN_KEY] = self::ORIGIN_API;
+            }
+            return $meta;
+        }
+        if ($raw === null || $raw === '') {
+            return $api ? array(self::ORIGIN_KEY => self::ORIGIN_API) : '';
+        }
+        if (is_string($raw) && strpos($raw, self::ORIGIN_KEY) !== false) {
+            return '';
+        }
+        return $raw;
     }
 
     /**
@@ -240,9 +281,9 @@ final class WP_Dynamic_Tags_Tag_Service
      * @param array<string,mixed> $data The new tag, with its shortcode already known.
      * @return true|WP_Error
      */
-    public static function guard_create(array $data)
+    public static function guard_create(array $data, string $origin = self::ORIGIN_USER)
     {
-        $allowed = self::can_create($data);
+        $allowed = self::can_create($data, $origin);
         if (is_wp_error($allowed)) {
             return $allowed;
         }

@@ -31,3 +31,8 @@ require getenv('WP_LOAD') ?: dirname(__DIR__, 5) . '/wp-load.php';
 if ($db_override) {
     restore_error_handler();
 }
+
+// The golden master, the live scenarios and the sibling harness compare with the output of 3.0.0, which had no plans, on a site
+// that is on the Free plan: they run as the Paid plan so that every feature is rendered. Nothing is written (the filter answers
+// get_option('dt_plan')); the Free plan has its own tests under tests/wp.
+add_filter('pre_option_dt_plan', static fn() => 'paid');

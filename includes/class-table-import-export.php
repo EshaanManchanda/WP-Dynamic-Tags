@@ -867,7 +867,8 @@ class WP_Dynamic_Tags_Table_Import_Export {
         }
 
         // Create new tag
-        $result = $this->table_manager->create_tag($data);
+        // An import is a person adding tags: it counts toward the Free limit, and a mark in the file's meta_data is not honoured.
+        $result = $this->table_manager->create_tag($data, WP_Dynamic_Tags_Tag_Service::ORIGIN_USER);
         if (is_wp_error($result)) {
             return $result;
         }

@@ -284,7 +284,7 @@ final class WP_Dynamic_Tags_Admin
                     'category_id' => (int) $row->category_id,
                     'priority'    => (int) $row->priority,
                     'status'      => 'inactive',
-                ));
+                ), WP_Dynamic_Tags_Tag_Service::ORIGIN_USER);
                 return is_wp_error($created) ? $created : true;
         }
         return new WP_Error('invalid_action', __('Unknown action.', 'wp-dynamic-tags'));
@@ -333,7 +333,7 @@ final class WP_Dynamic_Tags_Admin
         if ($data['shortcode'] === '') {
             unset($data['shortcode']); // generated from the name
         }
-        return $manager->create_tag($data);
+        return $manager->create_tag($data, WP_Dynamic_Tags_Tag_Service::ORIGIN_USER);
     }
 
     // ------------------------------------------------------------------ the list

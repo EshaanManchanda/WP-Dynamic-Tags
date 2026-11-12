@@ -372,6 +372,12 @@ class WP_Dynamic_Tags_Placeholders {
     private function replace_generic_token($matches) {
         $parsed = self::parse_token_body($matches[1]);
 
+        // A Paid placeholder on a Free site renders as no data: nothing, or the author's own ??fallback. Decided before the
+        // formatters so that |currency cannot turn the missing value into "$0.00".
+        if ($parsed['arg'] !== null && $this->has_token($parsed['key'], $parsed['arg']) && !self::plan_allows($parsed['key'])) {
+            return $parsed['fallback'] ?? '';
+        }
+
         $value = $this->resolve_token($parsed['key'], $parsed['arg']);
         if ($value === false) {
             // Unknown key: leave the original token text unchanged, same as before.
@@ -430,9 +436,54 @@ class WP_Dynamic_Tags_Placeholders {
         }
 
         if (isset($this->parameterized_placeholders[$key]) && is_callable($this->parameterized_placeholders[$key])) {
+            // The one gate of the Paid placeholders: every way to read one ({token}, [dt_loop source=], a field condition)
+            // comes through here. On a Free site the source is not asked at all (no query, no request, no function call).
+            if (!self::plan_allows($key)) {
+                return '';
+            }
             return call_user_func($this->parameterized_placeholders[$key], $arg);
         }
         return false;
+    }
+
+    /**
+     * Whether this site's plan lets a {key:...} placeholder run: every one on Paid, and on Free all but the Paid ones
+     * (DT_License_Manager::GATED_PREFIXES). Reads the plan option; writes nothing.
+     */
+    private static function plan_allows($key) {
+        return !class_exists('DT_License_Manager') || !DT_License_Manager::is_gated_prefix($key) || DT_License_Manager::is_paid();
+    }
+
+    /** Whether a {key} or {key:arg} placeholder is registered: a name lookup, nothing is called. */
+    private function has_token($key, $arg) {
+        if ($arg === null) {
+            return isset($this->placeholders[$key]) && is_callable($this->placeholders[$key]);
+        }
+        return isset($this->parameterized_placeholders[$key]) && is_callable($this->parameterized_placeholders[$key]);
+    }
+
+    /** Conditions the plugin decides itself (evaluate_condition()): free on every plan. */
+    private const BUILTIN_CONDITIONS = array('user_logged_in', 'user_not_logged_in', 'is_admin', 'is_mobile', 'is_front_page', 'is_home', 'is_single', 'is_page');
+
+    /** Whether a condition is one of the built-in ones, with or without a leading "!". Pure. */
+    public static function is_builtin_condition($condition) {
+        $condition = ltrim(trim((string) $condition));
+        $condition = ltrim($condition, '!');
+        return in_array($condition, self::BUILTIN_CONDITIONS, true)
+            || strpos($condition, 'user_role:') === 0
+            || preg_match('/^time_between\(\s*\d{1,2}:\d{2}\s*,\s*\d{1,2}:\d{2}\s*\)$/', $condition) === 1;
+    }
+
+    /**
+     * Whether a condition reads a field (a registered token, compared or tested for a value): a Paid feature. A built-in
+     * condition, or one a site adds through the dt_evaluate_condition filter, is not.
+     */
+    public function is_field_condition($condition) {
+        if (self::is_builtin_condition($condition)) {
+            return false;
+        }
+        $parsed = self::parse_condition_expression(ltrim(trim((string) $condition), '!'));
+        return $this->has_token($parsed['key'], $parsed['arg']);
     }
 
     /**
@@ -970,6 +1021,15 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function evaluate_field_condition($condition) {
         $parsed = self::parse_condition_expression($condition);
+
+        // Field-based conditions are a Paid feature: on a Free site a condition that reads a token is simply not met (a
+        // comparison against a Paid source would otherwise be decided by the empty string it resolves to: {if:wc:price!=5}).
+        // A leading "!" still negates the answer, as for any condition that is not met. A condition that is no token at all
+        // still reaches the dt_evaluate_condition filter below.
+        if (class_exists('DT_License_Manager') && !DT_License_Manager::is_paid() && $this->has_token($parsed['key'], $parsed['arg'])) {
+            return false;
+        }
+
         $value = $this->resolve_token($parsed['key'], $parsed['arg']);
 
         if ($value === false) {
