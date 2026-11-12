@@ -315,6 +315,8 @@ function wp_dynamic_tags_uninstall() {
             'wp_dynamic_tags_table_creation_error', 'wp_dynamic_tags_table_error', 'wp_dynamic_tags_activated',
             'wp_dynamic_tags_activation_time', 'wp_dynamic_tags_table_integration_enabled',
             'dt_group_colors', 'dt_categories_migrated', 'dt_total_exports', 'dt_total_imports', 'dt_last_export', 'dt_last_import',
+            // what the keep-data path of an earlier uninstall left behind (a plugin that was removed, reinstalled, then removed again)
+            'wp_dynamic_tags_last_uninstall', 'wp_dynamic_tags_data_preserved',
         ) as $own_option) {
             delete_option($own_option);
         }

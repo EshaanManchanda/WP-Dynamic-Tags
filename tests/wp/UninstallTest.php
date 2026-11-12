@@ -16,6 +16,9 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         'wp_dynamic_tags_table_creation_error', 'wp_dynamic_tags_table_error', 'wp_dynamic_tags_activated',
         'wp_dynamic_tags_activation_time', 'wp_dynamic_tags_table_integration_enabled',
         'dt_group_colors', 'dt_categories_migrated', 'dt_total_exports', 'dt_total_imports', 'dt_last_export', 'dt_last_import',
+        // Written by the keep-data path of an earlier uninstall: a later "delete data" uninstall must not leave them behind
+        // (found on the release rehearsal: keep-data uninstall, reinstall, delete-data uninstall).
+        'wp_dynamic_tags_last_uninstall', 'wp_dynamic_tags_data_preserved',
     );
 
     private const OWN_TRANSIENTS = array('dt_api_0123456789abcdef', 'dt_export_0123456789abcdef', 'wp_dynamic_tags_data_restored', 'wp_dynamic_tags_deactivated');
