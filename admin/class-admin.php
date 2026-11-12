@@ -385,6 +385,51 @@ final class WP_Dynamic_Tags_Admin
         }
     }
 
+    /**
+     * What the capacity advisor needs to know about this server: the PHP memory limit in bytes (-1 unlimited, 0 unknown) and
+     * whether a page cache is in front. A cache run by the host rather than a plugin cannot be seen from here: such a site can
+     * return true from the filter dt_page_cache_active.
+     *
+     * @return array{memory_limit_bytes: int, page_cache: bool}
+     */
+    public static function capacity_context(): array
+    {
+        $limit = ini_get('memory_limit');
+        return array(
+            'memory_limit_bytes' => (is_string($limit) && $limit !== '') ? (int) wp_convert_hr_to_bytes($limit) : 0,
+            'page_cache'         => (bool) apply_filters('dt_page_cache_active', (defined('WP_CACHE') && WP_CACHE) || defined('LSCWP_V') || defined('WP_ROCKET_VERSION')),
+        );
+    }
+
+    /**
+     * The notice above the list and the form when the site has more active tags than its server is advised to carry
+     * (WP_Dynamic_Tags_Capacity_Advisor::assess(), the same verdict as Settings > Tags and your server). Nothing below that.
+     */
+    private function capacity_notice(): string
+    {
+        $active = (int) WP_Dynamic_Tags_Database_Manager::get_instance()->get_tags_count(array('status' => 'active'));
+        $context = self::capacity_context();
+        $assessment = WP_Dynamic_Tags_Capacity_Advisor::assess($active, $context['memory_limit_bytes'], $context['page_cache']);
+        if ($assessment['level'] === 'ok') {
+            return '';
+        }
+
+        if ($assessment['reason'] === 'memory') {
+            /* translators: %s: the number of active tags */
+            $text = sprintf(__('This site has %s active tags, which take a large share of the memory PHP is allowed to use. Every active tag is loaded on every page.', 'wp-dynamic-tags'), number_format_i18n($active));
+        } else {
+            /* translators: 1: the number of active tags, 2: the recommended maximum */
+            $text = sprintf(__('This site has %1$s active tags, more than the recommended maximum of %2$s for this server. Every active tag is loaded on every page, so pages can get slower.', 'wp-dynamic-tags'), number_format_i18n($active), number_format_i18n($assessment['safe_max']));
+        }
+        return sprintf(
+            '<div class="notice notice-%s dt-capacity-notice"><p>%s <a href="%s">%s</a></p></div>',
+            $assessment['level'] === 'high' ? 'error' : 'warning',
+            esc_html($text),
+            esc_url(self::settings_url() . '#dt-capacity'),
+            esc_html__('See Tags and your server', 'wp-dynamic-tags')
+        );
+    }
+
     /** Where the License box is (the Settings screen), for the links that say how to get a Paid key. */
     private static function settings_url(): string
     {
@@ -490,6 +535,7 @@ final class WP_Dynamic_Tags_Admin
         echo '<div class="wrap dt-wrap"><h1 class="wp-heading-inline">' . esc_html__('Dynamic Tags', 'wp-dynamic-tags') . '</h1> ';
         echo '<a href="' . esc_url(self::edit_url()) . '" class="page-title-action">' . esc_html__('Add New', 'wp-dynamic-tags') . '</a><hr class="wp-header-end">';
         $this->notices();
+        echo $this->capacity_notice(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in capacity_notice()
         echo $this->plan_note(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in plan_note()
         $list->views();
         echo '<form method="get"><input type="hidden" name="page" value="' . esc_attr(self::MENU) . '">';
@@ -544,6 +590,7 @@ final class WP_Dynamic_Tags_Admin
         $v = $this->form_values ?? ($row ? (array) $row : array());
         $v = array_merge(array('tag_name' => '', 'shortcode' => '', 'content' => '', 'description' => '', 'category_id' => 0, 'priority' => 0, 'status' => 'active'), $v);
 
+        echo $this->capacity_notice(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in capacity_notice()
         if ($id === 0) {
             echo $this->plan_note(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in plan_note()
         }

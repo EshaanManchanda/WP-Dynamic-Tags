@@ -239,8 +239,8 @@ class WP_Dynamic_Tags_Settings_Page {
         $register_ms = isset($stats['shortcode_registration']['execution_time']) ? (float) $stats['shortcode_registration']['execution_time'] * 1000 : null;
 
         // WordPress raises this limit inside wp-admin, so what visitors get can be lower: the caption below says so.
-        $limit = ini_get('memory_limit');
-        $limit_bytes = (is_string($limit) && $limit !== '') ? (int) wp_convert_hr_to_bytes($limit) : 0;
+        $context = WP_Dynamic_Tags_Admin::capacity_context();
+        $limit_bytes = $context['memory_limit_bytes'];
         if ($limit_bytes === -1) {
             $limit_label = __('Unlimited', 'wp-dynamic-tags');
         } elseif ($limit_bytes > 0) {
@@ -249,8 +249,7 @@ class WP_Dynamic_Tags_Settings_Page {
             $limit_label = __('Unknown', 'wp-dynamic-tags');
         }
 
-        // A cache run by the host (not a plugin) cannot be seen from here: sites with one can return true from the filter.
-        $page_cache = (bool) apply_filters('dt_page_cache_active', (defined('WP_CACHE') && WP_CACHE) || defined('LSCWP_V') || defined('WP_ROCKET_VERSION'));
+        $page_cache = $context['page_cache'];
 
         $assessment = WP_Dynamic_Tags_Capacity_Advisor::assess($active, $limit_bytes, $page_cache);
         $estimate = WP_Dynamic_Tags_Capacity_Advisor::estimate($active);
@@ -299,7 +298,7 @@ class WP_Dynamic_Tags_Settings_Page {
             return $value === null ? '&mdash;' : esc_html(number_format_i18n((int) $value));
         };
         ?>
-        <div class="postbox dt-capacity">
+        <div class="postbox dt-capacity" id="dt-capacity">
             <div class="inside">
                 <h2><?php esc_html_e('Tags and your server', 'wp-dynamic-tags'); ?></h2>
 
