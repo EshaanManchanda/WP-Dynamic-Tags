@@ -151,9 +151,16 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
 
     // ------------------------------------------------------------------ columns
 
+    /** The checkbox of a row, with a label that names the tag (for screen readers; a bulk action must say what it is about). */
     protected function column_cb($item)
     {
-        return sprintf('<input type="checkbox" name="tag[]" value="%d" />', (int) ((object) $item)->id);
+        $item = (object) $item;
+        return sprintf(
+            '<label class="screen-reader-text" for="cb-select-%1$d">%2$s</label><input type="checkbox" name="tag[]" value="%1$d" id="cb-select-%1$d" />',
+            (int) $item->id,
+            /* translators: %s: tag name */
+            esc_html(sprintf(__('Select %s', 'wp-dynamic-tags'), (string) ($item->tag_name ?? '')))
+        );
     }
 
     protected function column_tag_name($item)

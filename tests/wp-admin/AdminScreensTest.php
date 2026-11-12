@@ -402,6 +402,17 @@ class DT_Admin_Screens_Test extends WP_Ajax_UnitTestCase
         $this->assertLessThan(160, strlen($long));
     }
 
+    public function test_every_row_checkbox_has_a_label_for_screen_readers(): void
+    {
+        // Lighthouse (axe "label") failed 20 unlabelled checkboxes on All Tags: a bulk action must name the tag it is about.
+        $id = $this->tag('cb_probe');
+
+        $html = $this->value_list();
+
+        $this->assertStringContainsString('<label class="screen-reader-text" for="cb-select-' . $id . '">Select cb_probe</label>', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*name="tag\[\]"[^>]*id="cb-select-' . $id . '"|<input[^>]*id="cb-select-' . $id . '"[^>]*name="tag\[\]"/', $html, 'the label points at the checkbox it names');
+    }
+
     public function test_a_plain_text_tag_is_not_sent_through_the_renderer_for_the_list(): void
     {
         $this->tag('val_plain', array('content' => 'just <b>text</b> with no tokens'));
