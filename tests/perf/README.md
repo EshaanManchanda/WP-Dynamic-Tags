@@ -9,6 +9,12 @@ writes during rendering, no schema checks or transient churn on normal requests)
 * `measure.php` boots WordPress in a fresh process and records query counts (with `SAVEQUERIES`) for boot and
   for rendering 40 shortcodes (20 distinct tags, then the same tag 20 times to see cache behaviour).
 * `run.ps1` runs several fresh-process samples and writes the medians to `<label>.json`.
+* `scale.ps1` / `scale.php` (Phase 9c) re-seeds the clone with N rows and measures the admin data paths: the
+  list page's queries (first, middle and last page, sorting), search, bulk actions, export in every format and
+  import with the default row limit and with it lifted. It writes to the clone (bulk actions, one delete, an
+  import that is removed again) and refuses any database but `local_perf`:
+  `.\scale.ps1 -Count 50000 -Out C:\somewhere\scale-50000.json`. For the boot cost per tag run `run.ps1 -Count N -Seed`
+  for several N (0.5 to 50 thousand) and compare `boot_ms`, `boot_peak_mb` and `render_ms`.
 
 ```powershell
 # create the clone (read-only dump of the live DB), see tests/live/README.md for the mysql flags used here
