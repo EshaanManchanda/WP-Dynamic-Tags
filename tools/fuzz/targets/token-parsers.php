@@ -15,12 +15,12 @@ require $includes . 'class-database-manager.php';
 $config->setTarget(function (string $input): void {
     $t = WP_Dynamic_Tags_Placeholders::parse_token_body($input);
     if (!is_string($t['key']) || !is_array($t['formatters']) || !array_key_exists('arg', $t) || !array_key_exists('fallback', $t)) {
-        throw new Exception('parse_token_body returned a malformed result');
+        throw new Error('parse_token_body returned a malformed result');
     }
 
     $c = WP_Dynamic_Tags_Placeholders::parse_condition_expression($input);
     if (!in_array($c['type'], ['comparison', 'truthy'], true) || !is_string($c['key'])) {
-        throw new Exception('parse_condition_expression returned a malformed result');
+        throw new Error('parse_condition_expression returned a malformed result');
     }
     if ($c['type'] === 'comparison') {
         WP_Dynamic_Tags_Placeholders::compare_values($input, (string) $c['op'], (string) $c['value']);
@@ -32,7 +32,7 @@ $config->setTarget(function (string $input): void {
     // decode_meta must never create an object, whatever it is fed
     $m = WP_Dynamic_Tags_Database_Manager::decode_meta($input);
     if (is_object($m) && !($m instanceof __PHP_Incomplete_Class)) {
-        throw new Exception('decode_meta returned an object');
+        throw new Error('decode_meta returned an object');
     }
 });
 $config->setMaxLen(300);

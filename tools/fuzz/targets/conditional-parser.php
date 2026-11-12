@@ -17,10 +17,10 @@ $config->setTarget(function (string $input): void {
     });
     // The output can only contain text that was in the input (literal pieces and chosen branches), so it is never longer.
     if (strlen($out) > strlen($input)) {
-        throw new Exception('output longer than input');
+        throw new Error('output longer than input');
     }
     if ($asked > strlen($input)) {
-        throw new Exception('more conditions evaluated than the input can contain');
+        throw new Error('more conditions evaluated than the input can contain');
     }
 });
 $config->setMaxLen(400);
