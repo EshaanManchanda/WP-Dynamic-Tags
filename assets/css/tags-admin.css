@@ -4,6 +4,7 @@
 .dt-wrap .dt-badge-off { background: #e8e8e8; color: #50575e; }
 
 .dt-wrap .column-shortcode code { user-select: all; }
+.dt-wrap .column-value { width: 24%; color: #50575e; word-break: break-word; }
 .dt-wrap .column-priority, .dt-wrap .column-usage_count { width: 7em; }
 .dt-wrap .column-status { width: 8em; }
 .dt-wrap .column-cb { width: 2.2em; }

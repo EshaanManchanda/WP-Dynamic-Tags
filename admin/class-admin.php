@@ -115,6 +115,18 @@ final class WP_Dynamic_Tags_Admin
         }
     }
 
+    /**
+     * The screens that go beyond tags (import and export, tools and the table checks, which hold the migration) stay with
+     * administrators whatever dt_manage_capability says: they are site-level and some of their actions are destructive, and
+     * the endpoints behind them (import, export, migration) always need manage_options. A delegate sees only what works.
+     */
+    private function guard_site(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('You do not have permission to manage dynamic tags.', 'wp-dynamic-tags'), '', array('response' => 403));
+        }
+    }
+
     private function manager(): WP_Dynamic_Tags_Table_Manager
     {
         return WP_Dynamic_Tags_Table_Manager::get_instance();
@@ -136,8 +148,8 @@ final class WP_Dynamic_Tags_Admin
         $list = add_menu_page(__('Dynamic Tags', 'wp-dynamic-tags'), __('Dynamic Tags', 'wp-dynamic-tags'), $cap, self::MENU, array($this, 'page_list'), 'dashicons-tag', 30);
         add_submenu_page(self::MENU, __('All Tags', 'wp-dynamic-tags'), __('All Tags', 'wp-dynamic-tags'), $cap, self::MENU, array($this, 'page_list'));
         $edit = add_submenu_page(self::MENU, __('Add New Tag', 'wp-dynamic-tags'), __('Add New', 'wp-dynamic-tags'), $cap, self::PAGE_EDIT, array($this, 'page_edit'));
-        add_submenu_page(self::MENU, __('Import / Export', 'wp-dynamic-tags'), __('Import / Export', 'wp-dynamic-tags'), $cap, self::PAGE_IMPORT, array($this, 'page_import'));
-        $tools = add_submenu_page(self::MENU, __('Tools and Diagnostics', 'wp-dynamic-tags'), __('Tools', 'wp-dynamic-tags'), $cap, self::PAGE_TOOLS, array($this, 'page_tools'));
+        add_submenu_page(self::MENU, __('Import / Export', 'wp-dynamic-tags'), __('Import / Export', 'wp-dynamic-tags'), 'manage_options', self::PAGE_IMPORT, array($this, 'page_import'));
+        $tools = add_submenu_page(self::MENU, __('Tools and Diagnostics', 'wp-dynamic-tags'), __('Tools', 'wp-dynamic-tags'), 'manage_options', self::PAGE_TOOLS, array($this, 'page_tools'));
 
         // The requests that change something are handled before any output, so they can redirect.
         add_action('load-' . $list, array($this, 'load_list'));
@@ -481,7 +493,19 @@ final class WP_Dynamic_Tags_Admin
         echo '<tr><th scope="row"><label for="dt-description">' . esc_html__('Description', 'wp-dynamic-tags') . '</label></th><td><textarea id="dt-description" name="description" rows="2" class="large-text">' . esc_textarea((string) $v['description']) . '</textarea></td></tr>';
 
         echo '<tr><th scope="row"><label for="dt-content">' . esc_html__('Content', 'wp-dynamic-tags') . '</label></th><td>';
-        echo '<textarea id="dt-content" name="content" rows="12" class="large-text code">' . esc_textarea((string) $v['content']) . '</textarea>';
+        // WordPress's own editor, with its Visual and Code tabs (the tag post editor had them; WordPress remembers the tab the user
+        // last used). wpautop stays on, as it was for tag posts: the Visual tab shows paragraphs but saves a single paragraph
+        // without its <p> wrapper, so a tag such as a phone number can still be used inside a sentence.
+        wp_editor((string) $v['content'], 'dt-content', array(
+            'textarea_name'    => 'content',
+            'textarea_rows'    => 12,
+            'media_buttons'    => false,
+            'drag_drop_upload' => false,
+            'quicktags'        => true,
+            'editor_class'     => 'code',
+            'tinymce'          => array('height' => 260),
+        ));
+        echo '<p class="description">' . esc_html__('Use the Code tab for conditions that contain < or >: the Visual tab rewrites them.', 'wp-dynamic-tags') . '</p>';
         $placeholders = class_exists('WP_Dynamic_Tags_Placeholders') && WP_Dynamic_Tags_Placeholders::get_instance() ? WP_Dynamic_Tags_Placeholders::get_instance()->get_placeholder_names() : array();
         if ($placeholders) {
             echo '<details class="dt-placeholders"><summary>' . esc_html__('Placeholders you can use (click to insert)', 'wp-dynamic-tags') . '</summary><p>';
@@ -496,6 +520,44 @@ final class WP_Dynamic_Tags_Admin
 
         submit_button($id > 0 ? __('Save Tag', 'wp-dynamic-tags') : __('Create Tag', 'wp-dynamic-tags'));
         echo '</form></div>';
+    }
+
+    /**
+     * The text a tag renders to, for the Value column of the list: the real render pipeline, as plain text, up to 500
+     * characters. Blank when there is nothing to show or the render fails. The list is not a page, so no remote fetch is made
+     * ({api:} answers that are already cached are used), nothing is counted, a failure of one tag stays with that tag, and
+     * anything a shortcode prints is discarded.
+     */
+    public static function value_preview(object $tag): string
+    {
+        $content = (string) ($tag->content ?? '');
+
+        if (strpbrk($content, '{[') === false) {
+            // No placeholder, condition or shortcode in it: there is nothing to render, the text is the value. This keeps the
+            // list fast on a site with many plain tags (rendering a tag costs a few milliseconds).
+            $html = $content;
+        } else {
+            $no_fetch = static function () {
+                return 0;
+            };
+            add_filter('dt_api_max_fetches', $no_fetch, PHP_INT_MAX);
+            $level = ob_get_level();
+            ob_start();
+            try {
+                $html = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance()->render_row($tag, array('cache' => 'false'));
+            } catch (Throwable $e) {
+                $html = '';
+            } finally {
+                while (ob_get_level() > $level) {
+                    ob_end_clean();
+                }
+                remove_filter('dt_api_max_fetches', $no_fetch, PHP_INT_MAX);
+            }
+        }
+
+        $text = html_entity_decode(wp_strip_all_tags(is_string($html) ? $html : ''), ENT_QUOTES, 'UTF-8');
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+        return mb_substr($text, 0, 500);
     }
 
     /** Renders the submitted content the way a page would, for the preview on the form. */
@@ -519,7 +581,7 @@ final class WP_Dynamic_Tags_Admin
 
     public function page_import(): void
     {
-        $this->guard();
+        $this->guard_site();
         echo '<div class="wrap dt-wrap"><h1>' . esc_html__('Import / Export', 'wp-dynamic-tags') . '</h1>';
 
         echo '<h2>' . esc_html__('Export', 'wp-dynamic-tags') . '</h2><form id="dt-export-form"><table class="form-table" role="presentation"><tbody>';
@@ -545,7 +607,7 @@ final class WP_Dynamic_Tags_Admin
 
     public function load_tools(): void
     {
-        $this->guard();
+        $this->guard_site();
         if (isset($_POST['dt_clear_debug'])) {
             check_admin_referer('dt_clear_debug');
             WP_Dynamic_Tags_Debug::clear();
@@ -565,7 +627,7 @@ final class WP_Dynamic_Tags_Admin
 
     public function page_tools(): void
     {
-        $this->guard();
+        $this->guard_site();
         global $wpdb, $shortcode_tags;
         $db = WP_Dynamic_Tags_Database_Manager::get_instance();
         $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
@@ -647,7 +709,7 @@ final class WP_Dynamic_Tags_Admin
     private function ajax_guard(): void
     {
         check_ajax_referer('dt_table_manager', 'nonce');
-        if (!current_user_can(self::capability())) {
+        if (!current_user_can('manage_options')) { // the table tools are site-level, like the import and export endpoints
             wp_send_json_error(__('You do not have permission to manage dynamic tags.', 'wp-dynamic-tags'), 403);
         }
     }

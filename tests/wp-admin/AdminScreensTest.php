@@ -35,7 +35,11 @@ class DT_Admin_Screens_Test extends WP_Ajax_UnitTestCase
         parent::set_up();
         $this->previous_log = (string) ini_set('error_log', (string) tempnam(sys_get_temp_dir(), 'dtadm')); // the debug log also writes to error_log
         $this->admin = new WP_Dynamic_Tags_Admin();
-        wp_set_current_user(self::factory()->user->create(array('role' => 'administrator')));
+        $administrator = self::factory()->user->create(array('role' => 'administrator'));
+        if (is_multisite()) {
+            grant_super_admin($administrator); // on a network only a super administrator may post unfiltered HTML (the Tag Service rule)
+        }
+        wp_set_current_user($administrator);
         set_current_screen('dashboard');
         // wp_redirect() and wp_die() are followed by exit: turn both into exceptions the test can catch.
         add_filter('wp_redirect', static function ($location) {
@@ -363,6 +367,199 @@ class DT_Admin_Screens_Test extends WP_Ajax_UnitTestCase
                 $this->page($method);
             });
             $this->assertStringStartsWith('DIE:', (string) $message, $method . ' must refuse an editor');
+        }
+    }
+
+    // ------------------------------------------------------------------ the Value column
+
+    /** The inner HTML of the Value cell of the row whose shortcode is $code, or null when the row or the column is missing. */
+    private function value_cell(string $html, string $code): ?string
+    {
+        if (preg_match('#<code>\[' . preg_quote($code, '#') . '\]</code>.*?<td class=[\'"]value column-value[^>]*>(.*?)</td>#s', $html, $m) !== 1) {
+            return null;
+        }
+        return $m[1];
+    }
+
+    private function value_list(): string
+    {
+        $_GET = array('page' => 'dynamic-tags');
+        return $this->page('page_list');
+    }
+
+    public function test_the_list_shows_what_each_tag_renders_to(): void
+    {
+        $this->tag('val_site', array('content' => 'Hello {site_name|upper}'));
+        $this->tag('val_markup', array('content' => '<b>bold</b> and <i>plain</i>'));
+        $this->tag('val_long', array('content' => str_repeat('abcde ', 60)));
+
+        $html = $this->value_list();
+        $this->assertStringContainsString('<th scope="col"', $html);
+        $this->assertSame('Hello ' . strtoupper(get_bloginfo('name')), $this->value_cell($html, 'val_site'), 'the rendered value, not the template');
+        $this->assertSame('bold and plain', $this->value_cell($html, 'val_markup'), 'markup is shown as plain text');
+        $long = (string) $this->value_cell($html, 'val_long');
+        $this->assertStringEndsWith('&hellip;', $long, 'a long value is cut');
+        $this->assertLessThan(160, strlen($long));
+    }
+
+    public function test_a_plain_text_tag_is_not_sent_through_the_renderer_for_the_list(): void
+    {
+        $this->tag('val_plain', array('content' => 'just <b>text</b> with no tokens'));
+        $this->tag('val_token', array('content' => 'has {site_name}'));
+        $rendered = 0;
+        add_filter('dt_process_value', static function ($content) use (&$rendered) {
+            $rendered++;
+            return $content;
+        });
+
+        $html = $this->value_list();
+        $this->assertSame('just text with no tokens', $this->value_cell($html, 'val_plain'));
+        $this->assertSame('has ' . get_bloginfo('name'), $this->value_cell($html, 'val_token'));
+        $this->assertSame(1, $rendered, 'only the tag that has a token or a shortcode is rendered: the list of a large site must stay fast');
+    }
+
+    public function test_a_tag_that_cannot_be_rendered_has_a_blank_value(): void
+    {
+        $this->tag('val_empty', array('content' => ''));
+        $this->tag('val_boom', array('content' => 'EXPLODE {site_name}')); // a token, so that it reaches the renderer
+        $this->tag('val_fatal', array('content' => 'FATAL {site_name}'));
+        $this->tag('val_ok', array('content' => 'still fine'));
+        add_filter('dt_process_value', static function ($content) {
+            if (strpos((string) $content, 'EXPLODE') !== false) {
+                throw new RuntimeException('a render that fails');
+            }
+            if (strpos((string) $content, 'FATAL') !== false) {
+                throw new TypeError('a PHP error inside some shortcode, which the renderer does not catch'); // an Error, not an Exception
+            }
+            return $content;
+        });
+
+        $html = $this->value_list();
+        $this->assertSame('', $this->value_cell($html, 'val_empty'), 'nothing to show: blank');
+        $this->assertSame('', $this->value_cell($html, 'val_boom'), 'a render that throws leaves the cell blank');
+        $this->assertSame('', $this->value_cell($html, 'val_fatal'), 'so does a PHP error, which would otherwise take the whole screen down');
+        $this->assertSame('still fine', $this->value_cell($html, 'val_ok'), 'and does not take the other rows with it');
+    }
+
+    public function test_the_list_never_calls_a_remote_api_but_uses_an_answer_that_is_already_cached(): void
+    {
+        $calls = 0;
+        add_filter('pre_http_request', static function ($pre) use (&$calls) {
+            $calls++;
+            return new WP_Error('blocked', 'no network in tests'); // counted and refused: a failing test must never reach another site
+        });
+        $this->tag('val_api', array('content' => '{api:http://example.com/not-cached.json::name}'));
+        $this->tag('val_cached', array('content' => '{api:http://example.com/cached.json::name}'));
+        set_transient('dt_api_' . md5('http://example.com/cached.json'), array('name' => 'Cached name'), 300);
+
+        $html = $this->value_list();
+        $this->assertSame(0, $calls, 'listing tags must not make the server fetch other sites');
+        $this->assertSame('', $this->value_cell($html, 'val_api'));
+        $this->assertSame('Cached name', $this->value_cell($html, 'val_cached'));
+    }
+
+    public function test_a_shortcode_that_prints_instead_of_returning_cannot_leak_into_the_list(): void
+    {
+        add_shortcode('val_echo', static function () {
+            echo 'STRAY OUTPUT';
+            return 'returned text';
+        });
+        $this->tag('val_printer', array('content' => '[val_echo]'));
+
+        $html = $this->value_list();
+        remove_shortcode('val_echo');
+        $this->assertStringNotContainsString('STRAY OUTPUT', $html, 'whatever a shortcode prints is discarded');
+        $this->assertSame('returned text', $this->value_cell($html, 'val_printer'));
+    }
+
+    public function test_the_value_is_escaped_plain_text(): void
+    {
+        $this->tag('val_evil', array('content' => '<script>alert(41)</script>Safe &lt;b&gt; text <img src=x onerror=alert(42)>'));
+
+        $html = $this->value_list();
+        $this->assertStringNotContainsString('alert(41)', $html);
+        $this->assertStringNotContainsString('<img src=x', $html);
+        $cell = (string) $this->value_cell($html, 'val_evil');
+        $this->assertStringContainsString('Safe', $cell);
+        $this->assertStringContainsString('&lt;b&gt;', $cell, 'text that looks like markup is shown as text');
+        $this->assertStringNotContainsString('<b>', $cell);
+    }
+
+    // ------------------------------------------------------------------ the content editor
+
+    public function test_the_content_field_is_wordpresss_visual_and_text_editor(): void
+    {
+        global $wp_rich_edit, $is_chrome;
+        $wp_rich_edit = null;
+        $is_chrome = true; // user_can_richedit() asks the browser globals; the command line has none
+        try {
+            $id = $this->tag('editor_probe', array('content' => '<p>Hello {site_name}</p>'));
+            $_GET = array('page' => 'dt-tag-edit', 'tag' => (string) $id);
+            $_REQUEST = $_GET;
+            $html = $this->page('page_edit');
+        } finally {
+            $wp_rich_edit = null;
+            $is_chrome = false;
+        }
+
+        $this->assertStringContainsString('id="wp-dt-content-wrap"', $html, 'the field is a wp_editor');
+        $this->assertStringContainsString('id="dt-content-tmce"', $html, 'with the Visual tab');
+        $this->assertStringContainsString('id="dt-content-html"', $html, 'and the Code tab');
+        $this->assertStringContainsString('name="content"', $html, 'it still posts the field the save handler reads');
+        $this->assertStringContainsString('&lt;p&gt;Hello {site_name}&lt;/p&gt;', $html, 'the stored content is in the editor, escaped for the textarea');
+        $this->assertStringContainsString('Code tab', $html, 'with a hint for templates that contain < or >');
+    }
+
+    public function test_a_delegated_capability_opens_the_tag_screens_but_not_the_site_level_ones(): void
+    {
+        // dt_manage_capability hands tag management to another capability; the import/export, tools, migration, settings and licence
+        // screens stay with administrators, so a delegate never sees a menu entry whose buttons all fail
+        add_filter('dt_manage_capability', static fn() => 'edit_pages');
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
+
+        $this->assertNull($this->outcome(function () {
+            $this->page('page_list');
+        }), 'the list is open to the delegate');
+        $this->assertNull($this->outcome(function () {
+            $this->page('page_edit');
+        }), 'and so is the form');
+
+        foreach (array('page_import', 'page_tools') as $method) {
+            $this->assertStringStartsWith('DIE:', (string) $this->outcome(function () use ($method) {
+                $this->page($method);
+            }), $method . ' stays with administrators');
+        }
+
+        global $submenu;
+        $this->admin->register_menu();
+        $caps = array();
+        foreach ((array) ($submenu[WP_Dynamic_Tags_Admin::MENU] ?? array()) as $item) {
+            $caps[$item[2]] = $item[1];
+        }
+        $this->assertSame('edit_pages', $caps[WP_Dynamic_Tags_Admin::MENU]);
+        $this->assertSame('edit_pages', $caps[WP_Dynamic_Tags_Admin::PAGE_EDIT]);
+        // WordPress leaves out the entries a user cannot open, so the delegate's menu has no dead links
+        $this->assertArrayNotHasKey(WP_Dynamic_Tags_Admin::PAGE_IMPORT, $caps, 'no Import / Export entry for a delegate');
+        $this->assertArrayNotHasKey(WP_Dynamic_Tags_Admin::PAGE_TOOLS, $caps, 'no Tools entry for a delegate');
+
+        wp_set_current_user(self::factory()->user->create(array('role' => 'administrator')));
+        $submenu = array();
+        $this->admin->register_menu();
+        $admin_pages = array_column((array) $submenu[WP_Dynamic_Tags_Admin::MENU], 1, 2);
+        $this->assertSame('manage_options', $admin_pages[WP_Dynamic_Tags_Admin::PAGE_IMPORT], 'administrators have both entries');
+        $this->assertSame('manage_options', $admin_pages[WP_Dynamic_Tags_Admin::PAGE_TOOLS]);
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
+
+        $_POST = array('nonce' => wp_create_nonce('dt_table_manager'));
+        $_REQUEST = $_POST;
+        foreach (array('ajax_statistics', 'ajax_create_table', 'ajax_check_table_health') as $endpoint) {
+            ob_start();
+            $this->outcome(function () use ($endpoint) {
+                $this->admin->$endpoint();
+            });
+            $json = json_decode((string) ob_get_clean(), true);
+            $this->assertFalse($json['success'] ?? true, $endpoint . ' must refuse a user who only holds the delegated capability');
+            $this->assertStringContainsString('permission', (string) ($json['data'] ?? ''), $endpoint);
         }
     }
 

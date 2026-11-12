@@ -48,10 +48,32 @@
         done(ok);
     });
 
+    // The content field is WordPress's editor: while its Visual tab is showing, the text lives in TinyMCE and the textarea
+    // behind it is only updated when the tab is switched or the form is sent.
+    function visualEditor() {
+        var ed = window.tinymce && window.tinymce.get ? window.tinymce.get('dt-content') : null;
+        return ed && !ed.isHidden() ? ed : null;
+    }
+
+    // The content as it would be saved: WordPress's own getContent() undoes the paragraph markup the Visual tab adds.
+    function contentValue() {
+        if (window.wp && window.wp.editor && typeof window.wp.editor.getContent === 'function') {
+            return window.wp.editor.getContent('dt-content');
+        }
+        var ed = visualEditor();
+        return ed ? ed.getContent() : $('#dt-content').val();
+    }
+
     $(document).on('click', '.dt-insert', function () {
+        var text = this.getAttribute('data-insert') || '';
+        var ed = visualEditor();
+        if (ed) {
+            ed.execCommand('mceInsertContent', false, text);
+            ed.focus();
+            return;
+        }
         var area = document.getElementById('dt-content');
         if (!area) { return; }
-        var text = this.getAttribute('data-insert') || '';
         var start = area.selectionStart || 0;
         var end = area.selectionEnd || 0;
         area.value = area.value.slice(0, start) + text + area.value.slice(end);
@@ -69,7 +91,7 @@
         $.post(cfg.ajaxUrl, {
             action: 'dt_preview_tag',
             nonce: cfg.previewNonce,
-            content: $('#dt-content').val()
+            content: contentValue()
         }).done(function (response) {
             box.textContent = '';
             if (response && response.success) {

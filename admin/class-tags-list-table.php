@@ -26,6 +26,7 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
             'cb'            => '<input type="checkbox" />',
             'tag_name'      => __('Name', 'wp-dynamic-tags'),
             'shortcode'     => __('Shortcode', 'wp-dynamic-tags'),
+            'value'         => __('Value', 'wp-dynamic-tags'),
             'category'      => __('Group', 'wp-dynamic-tags'),
             'status'        => __('Status', 'wp-dynamic-tags'),
             'priority'      => __('Priority', 'wp-dynamic-tags'),
@@ -187,6 +188,17 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
             esc_attr(sprintf(__('Copy %s', 'wp-dynamic-tags'), $code)),
             esc_html__('Copy', 'wp-dynamic-tags')
         );
+    }
+
+    /** What the tag renders to, as plain text and cut short; blank when it cannot be rendered. */
+    protected function column_value($item)
+    {
+        $text = WP_Dynamic_Tags_Admin::value_preview($item);
+        if ($text === '') {
+            return '';
+        }
+        $cut = mb_strlen($text) > 120;
+        return esc_html(mb_substr($text, 0, 120)) . ($cut ? '&hellip;' : '');
     }
 
     protected function column_category($item)
