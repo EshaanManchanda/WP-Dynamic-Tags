@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!-- Taint analysis for the plugin; not shipped. Run psalm with the taint-analysis flag. -->
+<psalm
+    xmlns="https://getpsalm.org/schema/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    errorLevel="8"
+    resolveFromConfigFile="true"
+    findUnusedBaselineEntry="false"
+    findUnusedCode="false"
+    phpVersion="8.2"
+>
+    <projectFiles>
+        <file name="negctl/taint-neg.php" />
+    </projectFiles>
+    <plugins>
+        <pluginClass class="PsalmWordPress\Plugin" />
+    </plugins>
+</psalm>

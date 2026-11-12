@@ -1,0 +1,17 @@
+# WordPress minimum-version compatibility check (floor = WP 7.0).
+# The stubs (php-stubs/wordpress-stubs) carry @since tags; wp-compat flags any
+# function, class, method or hook newer than requiresAtLeast that is not guarded.
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+  - vendor/johnbillion/wp-compat/extension.neon
+
+parameters:
+  level: 0
+  phpVersion: 80200
+  paths:
+    - ../../includes
+    - ../../admin
+    - ../../wp-dynamic-tags.php
+    - ../../uninstall.php
+  WPCompat:
+    requiresAtLeast: '7.0.0'

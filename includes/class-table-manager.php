@@ -13,21 +13,14 @@ class WP_Dynamic_Tags_Table_Manager {
 
     private static $instance = null;
     private $db_manager;
-    private $migration_manager;
     private $cache = array();
     private $cache_expiry = 3600; // 1 hour
 
     public function __construct() {
         $this->db_manager = WP_Dynamic_Tags_Database_Manager::get_instance();
-        $this->migration_manager = WP_Dynamic_Tags_Migration_Manager::get_instance();
 
         // Hook into WordPress actions
         add_action('init', array($this, 'init'));
-        add_action('wp_ajax_dt_table_create_tag', array($this, 'ajax_create_tag'));
-        add_action('wp_ajax_dt_table_update_tag', array($this, 'ajax_update_tag'));
-        add_action('wp_ajax_dt_table_delete_tag', array($this, 'ajax_delete_tag'));
-        add_action('wp_ajax_dt_table_get_tags', array($this, 'ajax_get_tags'));
-        add_action('wp_ajax_dt_table_bulk_action', array($this, 'ajax_bulk_action'));
     }
 
     /**
@@ -57,13 +50,17 @@ class WP_Dynamic_Tags_Table_Manager {
             }
         }
 
-        // Run migration if needed
-        if ($this->migration_manager->is_migration_needed()) {
-            // Don't run automatically in admin, let user trigger it
-            if (!is_admin()) {
-                $this->migration_manager->migrate_posts_to_table();
-            }
-        }
+        // Migration of legacy posts is deliberately NOT started here. It used to run on frontend requests,
+        // which let any visitor trigger a bulk database write. It now runs only from the admin (batched,
+        // with a progress notice), WP-CLI or WP-Cron: see WP_Dynamic_Tags_Migration_Engine.
+    }
+
+    /**
+     * Drop every cached query result held by this request. Called after code that writes to the table
+     * without going through this facade (the migration engine, restores).
+     */
+    public function flush_cache() {
+        $this->cache = array();
     }
 
     /**
@@ -77,14 +74,23 @@ class WP_Dynamic_Tags_Table_Manager {
     }
 
     /**
-     * Create a new dynamic tag
+     * Create a new dynamic tag.
+     *
+     * @param array  $data   The tag's fields.
+     * @param string $origin 'api' (the default) for code that creates tags, such as another plugin's sync: the tag is marked in
+     *                       its meta_data and is never blocked by or counted toward the Free limit. The plugin's own screens
+     *                       (Add New, Duplicate, Import) pass 'user'; anything that is not 'api' counts as a person.
+     * @return int|WP_Error The new id, or why the tag was refused.
      */
-    public function create_tag($data) {
+    public function create_tag($data, $origin = WP_Dynamic_Tags_Tag_Service::ORIGIN_API) {
+        $origin = $origin === WP_Dynamic_Tags_Tag_Service::ORIGIN_API ? WP_Dynamic_Tags_Tag_Service::ORIGIN_API : WP_Dynamic_Tags_Tag_Service::ORIGIN_USER;
         // Check table availability first
         $table_check = $this->ensure_table_available();
         if (is_wp_error($table_check)) {
             return $table_check;
         }
+        $data = $this->normalize_input($data);
+
         // Validate input
         $validation = $this->validate_tag_data($data);
         if (is_wp_error($validation)) {
@@ -106,6 +112,15 @@ class WP_Dynamic_Tags_Table_Manager {
         );
 
         $data = wp_parse_args($data, $defaults);
+        $data['meta_data'] = WP_Dynamic_Tags_Tag_Service::normalize_meta($data['meta_data'], $origin === WP_Dynamic_Tags_Tag_Service::ORIGIN_API);
+
+        // The Tag Service: reserved and foreign shortcode names, circular references, the creation limit, and markup the
+        // writing user may not post unfiltered (plan Phase 6).
+        $guard = WP_Dynamic_Tags_Tag_Service::guard_create($data, $origin);
+        if (is_wp_error($guard)) {
+            return $guard;
+        }
+        $data['content'] = WP_Dynamic_Tags_Tag_Service::prepare_content($data['content'] ?? '');
 
         // Insert into database
         $result = $this->db_manager->insert_tag($data);
@@ -113,11 +128,6 @@ class WP_Dynamic_Tags_Table_Manager {
         if (!is_wp_error($result)) {
             // Clear cache
             $this->clear_cache();
-
-            // Create corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled()) {
-                $this->create_corresponding_post($result, $data);
-            }
 
             // Log the creation
             do_action('wp_dynamic_tags_tag_created', $result, $data);
@@ -147,10 +157,26 @@ class WP_Dynamic_Tags_Table_Manager {
             return new WP_Error('tag_not_found', 'Tag not found.');
         }
 
-        // Validate input
-        $validation = $this->validate_tag_data($data, $id);
+        // Validate input. A partial update sends only the fields it changes, so the name is not required here (B1).
+        $data = $this->normalize_input($data);
+        $validation = $this->validate_tag_data($data, $id, false);
         if (is_wp_error($validation)) {
             return $validation;
+        }
+
+        // The Tag Service checks what changes only (a new shortcode name, new content) and filters markup by capability.
+        $guard = WP_Dynamic_Tags_Tag_Service::guard_update($existing_tag, $data);
+        if (is_wp_error($guard)) {
+            return $guard;
+        }
+        if (array_key_exists('content', $data)) {
+            $data['content'] = WP_Dynamic_Tags_Tag_Service::prepare_content($data['content']);
+        }
+        // Who created a tag is decided when it is created and never by an update: the mark follows the stored row.
+        if (array_key_exists('meta_data', $data)) {
+            $stored = $existing_tag->meta_data;
+            $created_by_plugin = is_array($stored) && ($stored[WP_Dynamic_Tags_Tag_Service::ORIGIN_KEY] ?? '') === WP_Dynamic_Tags_Tag_Service::ORIGIN_API;
+            $data['meta_data'] = WP_Dynamic_Tags_Tag_Service::normalize_meta($data['meta_data'], $created_by_plugin);
         }
 
         // Update in database
@@ -159,11 +185,6 @@ class WP_Dynamic_Tags_Table_Manager {
         if (!is_wp_error($result)) {
             // Clear cache
             $this->clear_cache();
-
-            // Update corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled() && $existing_tag->post_id > 0) {
-                $this->update_corresponding_post($existing_tag->post_id, $data);
-            }
 
             // Log the update
             do_action('wp_dynamic_tags_tag_updated', $id, $data, $existing_tag);
@@ -193,11 +214,6 @@ class WP_Dynamic_Tags_Table_Manager {
         if (!is_wp_error($result)) {
             // Clear cache
             $this->clear_cache();
-
-            // Delete corresponding post if dual mode is enabled
-            if ($this->is_dual_mode_enabled() && $existing_tag->post_id > 0) {
-                wp_delete_post($existing_tag->post_id, true);
-            }
 
             // Log the deletion
             do_action('wp_dynamic_tags_tag_deleted', $id, $existing_tag);
@@ -388,24 +404,52 @@ class WP_Dynamic_Tags_Table_Manager {
         return $result;
     }
 
+    /** Columns a caller may set through create_tag()/update_tag(); everything else (notably `id`) is dropped. */
+    private static $writable_fields = array(
+        'tag_name', 'shortcode', 'content', 'description', 'category_id', 'priority', 'usage_count', 'status',
+        'post_id', 'meta_data', 'created_date', 'modified_date', 'last_used_date',
+    );
+
+    /**
+     * Normalizes the data array of create_tag()/update_tag(): the legacy keys `title` (= tag_name) and `group_id`
+     * (= category_id) used by chatbot-by-eshaan are accepted as aliases (B4), and keys that are not table columns are
+     * dropped so a caller cannot choose the row id or inject columns. When both an alias and the real field are given, the
+     * real field wins.
+     *
+     * @param mixed $data
+     * @return array<string, mixed>
+     */
+    private function normalize_input($data) {
+        if (!is_array($data)) {
+            return array();
+        }
+        if (!array_key_exists('tag_name', $data) && array_key_exists('title', $data)) {
+            $data['tag_name'] = $data['title'];
+        }
+        if (!array_key_exists('category_id', $data) && array_key_exists('group_id', $data)) {
+            $data['category_id'] = $data['group_id'];
+        }
+        return array_intersect_key($data, array_flip(self::$writable_fields));
+    }
+
     /**
      * Validate tag data
      */
-    private function validate_tag_data($data, $exclude_id = 0) {
+    private function validate_tag_data($data, $exclude_id = 0, $require_name = true) {
         $errors = array();
 
-        // Required fields
-        if (empty($data['tag_name'])) {
+        // Required fields: a new tag needs a name; an update only has to be valid for the fields it sends (B1).
+        if (empty($data['tag_name']) && ($require_name || array_key_exists('tag_name', $data))) {
             $errors[] = 'Tag name is required.';
         }
 
         // Validate tag name format
-        if (!empty($data['tag_name']) && !preg_match('/^[a-zA-Z0-9_\-\s]+$/', $data['tag_name'])) {
+        if (!empty($data['tag_name']) && !preg_match(WP_Dynamic_Tags_Tag_Service::NAME_PATTERN, $data['tag_name'])) {
             $errors[] = 'Tag name can only contain letters, numbers, spaces, hyphens and underscores.';
         }
 
         // Validate shortcode format
-        if (!empty($data['shortcode']) && !preg_match('/^[a-zA-Z0-9_\-]+$/', $data['shortcode'])) {
+        if (!empty($data['shortcode']) && !preg_match(WP_Dynamic_Tags_Tag_Service::SHORTCODE_PATTERN, $data['shortcode'])) {
             $errors[] = 'Shortcode can only contain letters, numbers, hyphens and underscores.';
         }
 
@@ -461,115 +505,13 @@ class WP_Dynamic_Tags_Table_Manager {
     }
 
     /**
-     * Check if dual mode is enabled (both table and posts)
-     */
-    private function is_dual_mode_enabled() {
-        return get_option('wp_dynamic_tags_dual_mode', false);
-    }
-
-    /**
-     * Create corresponding post for dual mode
-     */
-    private function create_corresponding_post($tag_id, $data) {
-        $post_data = array(
-            'post_title' => $data['tag_name'],
-            'post_content' => $data['content'],
-            'post_excerpt' => $data['description'],
-            'post_type' => 'dynamic_tag',
-            'post_status' => $data['status'] === 'active' ? 'publish' : 'draft'
-        );
-
-        $post_id = wp_insert_post($post_data);
-
-        if (!is_wp_error($post_id)) {
-            // Update table record with post_id
-            $this->db_manager->update_tag($tag_id, array('post_id' => $post_id));
-
-            // Add meta data
-            update_post_meta($post_id, '_dt_tag_name', $data['tag_name']);
-            update_post_meta($post_id, '_dt_shortcode', $data['shortcode']);
-            update_post_meta($post_id, '_dt_priority', $data['priority']);
-
-            // Set category if specified
-            if (!empty($data['category_id'])) {
-                wp_set_post_terms($post_id, array($data['category_id']), 'tag_groups');
-            }
-        }
-
-        return $post_id;
-    }
-
-    /**
-     * Update corresponding post for dual mode
-     */
-    private function update_corresponding_post($post_id, $data) {
-        $post_data = array('ID' => $post_id);
-
-        if (isset($data['tag_name'])) {
-            $post_data['post_title'] = $data['tag_name'];
-        }
-
-        if (isset($data['content'])) {
-            $post_data['post_content'] = $data['content'];
-        }
-
-        if (isset($data['description'])) {
-            $post_data['post_excerpt'] = $data['description'];
-        }
-
-        if (isset($data['status'])) {
-            $post_data['post_status'] = $data['status'] === 'active' ? 'publish' : 'draft';
-        }
-
-        if (count($post_data) > 1) {
-            wp_update_post($post_data);
-        }
-
-        // Update meta data
-        if (isset($data['tag_name'])) {
-            update_post_meta($post_id, '_dt_tag_name', $data['tag_name']);
-        }
-
-        if (isset($data['shortcode'])) {
-            update_post_meta($post_id, '_dt_shortcode', $data['shortcode']);
-        }
-
-        if (isset($data['priority'])) {
-            update_post_meta($post_id, '_dt_priority', $data['priority']);
-        }
-
-        // Update category
-        if (isset($data['category_id'])) {
-            wp_set_post_terms($post_id, array($data['category_id']), 'tag_groups');
-        }
-    }
-
-    /**
      * Clear all cache — both instance-level and WordPress transients used by the main plugin.
      * Called after any programmatic write (create/update/delete), including from external plugins.
      */
     private function clear_cache() {
+        // The per-request result cache of this facade is all there is: the old tag-list transients of the post path are
+        // gone, so a write no longer deletes transients or runs a DELETE against wp_options.
         $this->cache = array();
-
-        // Invalidate the main plugin's transient so shortcodes are re-registered on next load.
-        delete_transient('wp_dynamic_tags_cache');
-
-        // Clear any versioned transient keys the main plugin uses (pattern: wp_dynamic_tags_cache_X.Y.Z)
-        global $wpdb;
-        $wpdb->query(
-            "DELETE FROM {$wpdb->options}
-             WHERE option_name LIKE '_transient_wp_dynamic_tags_cache_%'
-                OR option_name LIKE '_transient_timeout_wp_dynamic_tags_cache_%'"
-        );
-
-        // Clear main plugin static cache if the class is available
-        if (class_exists('WP_Dynamic_Tags_Plugin')) {
-            $plugin = WP_Dynamic_Tags_Plugin::get_instance();
-            if (property_exists($plugin, 'shared_tags_cache')) {
-                // Reflection is heavy; instead trigger a re-registration via a short-circuit action
-                do_action('wp_dynamic_tags_cache_cleared');
-            }
-        }
     }
 
     /**
@@ -664,160 +606,4 @@ class WP_Dynamic_Tags_Table_Manager {
         return $xml->asXML();
     }
 
-    /**
-     * AJAX: Create tag
-     */
-    public function ajax_create_tag() {
-        check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized');
-        }
-
-        $data = array(
-            'tag_name' => sanitize_text_field($_POST['tag_name']),
-            'shortcode' => sanitize_text_field($_POST['shortcode']),
-            'content' => wp_kses_post($_POST['content']),
-            'description' => sanitize_textarea_field($_POST['description']),
-            'category_id' => intval($_POST['category_id']),
-            'priority' => intval($_POST['priority'])
-        );
-
-        $result = $this->create_tag($data);
-
-        if (is_wp_error($result)) {
-            wp_send_json_error($result->get_error_message());
-        }
-
-        wp_send_json_success(array(
-            'id' => $result,
-            'message' => 'Tag created successfully.'
-        ));
-    }
-
-    /**
-     * AJAX: Update tag
-     */
-    public function ajax_update_tag() {
-        check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized');
-        }
-
-        $id = intval($_POST['id']);
-        $data = array(
-            'tag_name' => sanitize_text_field($_POST['tag_name']),
-            'shortcode' => sanitize_text_field($_POST['shortcode']),
-            'content' => wp_kses_post($_POST['content']),
-            'description' => sanitize_textarea_field($_POST['description']),
-            'category_id' => intval($_POST['category_id']),
-            'priority' => intval($_POST['priority'])
-        );
-
-        $result = $this->update_tag($id, $data);
-
-        if (is_wp_error($result)) {
-            wp_send_json_error($result->get_error_message());
-        }
-
-        wp_send_json_success(array(
-            'message' => 'Tag updated successfully.'
-        ));
-    }
-
-    /**
-     * AJAX: Delete tag
-     */
-    public function ajax_delete_tag() {
-        check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized');
-        }
-
-        $id = intval($_POST['id']);
-        $result = $this->delete_tag($id);
-
-        if (is_wp_error($result)) {
-            wp_send_json_error($result->get_error_message());
-        }
-
-        wp_send_json_success(array(
-            'message' => 'Tag deleted successfully.'
-        ));
-    }
-
-    /**
-     * AJAX: Get tags
-     */
-    public function ajax_get_tags() {
-        check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
-
-        $args = array(
-            'status' => sanitize_text_field($_POST['status'] ?? 'active'),
-            'orderby' => sanitize_text_field($_POST['orderby'] ?? 'priority'),
-            'order' => sanitize_text_field($_POST['order'] ?? 'DESC'),
-            'limit' => intval($_POST['limit'] ?? 50),
-            'offset' => intval($_POST['offset'] ?? 0)
-        );
-
-        if (!empty($_POST['search'])) {
-            $args['search'] = sanitize_text_field($_POST['search']);
-        }
-
-        if (!empty($_POST['category_id'])) {
-            $args['category_id'] = intval($_POST['category_id']);
-        }
-
-        $tags = $this->get_tags($args);
-        $total = $this->db_manager->get_tags_count($args);
-
-        wp_send_json_success(array(
-            'tags' => $tags,
-            'total' => $total
-        ));
-    }
-
-    /**
-     * AJAX: Bulk action
-     */
-    public function ajax_bulk_action() {
-        check_ajax_referer('wp_dynamic_tags_nonce', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized');
-        }
-
-        $action = sanitize_text_field($_POST['action']);
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
-        $data = array();
-
-        if (isset($_POST['category_id'])) {
-            $data['category_id'] = intval($_POST['category_id']);
-        }
-
-        if (isset($_POST['priority'])) {
-            $data['priority'] = intval($_POST['priority']);
-        }
-
-        $results = $this->bulk_action($action, $tag_ids, $data);
-
-        $success_count = 0;
-        $error_count = 0;
-
-        foreach ($results as $result) {
-            if (is_wp_error($result)) {
-                $error_count++;
-            } else {
-                $success_count++;
-            }
-        }
-
-        wp_send_json_success(array(
-            'success_count' => $success_count,
-            'error_count' => $error_count,
-            'message' => sprintf('Bulk action completed: %d successful, %d errors.', $success_count, $error_count)
-        ));
-    }
 }

@@ -1,0 +1,7 @@
+{
+  "name": "eshaanmanchanda/wp-dynamic-tags-tools-fuzz",
+  "description": "nikic/php-fuzzer for the pure parsers. Not shipped.",
+  "type": "project",
+  "require-dev": { "nikic/php-fuzzer": "^0.0.11" },
+  "config": { "platform": { "php": "8.2.29" }, "sort-packages": true }
+}

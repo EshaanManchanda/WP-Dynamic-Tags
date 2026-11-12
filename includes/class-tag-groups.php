@@ -13,36 +13,21 @@ class WP_Dynamic_Tags_Groups {
 
     private $post_type = 'dynamic_tag';
     private $taxonomy = 'tag_groups';
-    private $transient_key = 'wp_dynamic_tags_cache';
-
-    // Performance optimization - integrate with main plugin cache
-    private static $static_cache = array();
-    private $cache_version = '2.0.1';
 
     public function __construct() {
         // Register taxonomy immediately to ensure it's available for AJAX operations
         $this->register_taxonomy();
 
         add_action('admin_menu', array($this, 'add_admin_menu'), 15);
-        add_action('admin_init', array($this, 'handle_group_actions'));
         add_action('wp_ajax_dt_create_group', array($this, 'ajax_create_group'));
         add_action('wp_ajax_dt_edit_group', array($this, 'ajax_edit_group'));
         add_action('wp_ajax_dt_delete_group', array($this, 'ajax_delete_group'));
-        add_action('wp_ajax_dt_assign_groups', array($this, 'ajax_assign_groups'));
         add_action('wp_ajax_dt_get_group_details', array($this, 'ajax_get_group_details'));
         add_action('wp_ajax_dt_get_group_edit_data', array($this, 'ajax_get_group_edit_data'));
 
-        // Add meta box to edit screens
-        add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
-        add_action('save_post', array($this, 'save_meta_boxes'));
-
-        // Add columns to admin list
-        add_filter('manage_' . $this->post_type . '_posts_columns', array($this, 'add_groups_column'), 15);
-        add_action('manage_' . $this->post_type . '_posts_custom_column', array($this, 'display_groups_column'), 15, 2);
-
-        // Add quick edit support
-        add_action('quick_edit_custom_box', array($this, 'add_quick_edit_fields'), 10, 2);
-        add_action('wp_ajax_dt_quick_edit_groups', array($this, 'ajax_quick_edit_groups'));
+        // A tag is a row of the table and its group is the row's category_id: when a group goes, whoever removed it (this page,
+        // WP-CLI, another plugin), its tags are released instead of keeping the id of a group that no longer exists.
+        add_action('delete_' . $this->taxonomy, array($this, 'release_tags'), 10, 1);
 
         // Migration hook
         add_action('admin_init', array($this, 'maybe_migrate_categories'));
@@ -103,7 +88,7 @@ class WP_Dynamic_Tags_Groups {
      */
     public function add_admin_menu() {
         add_submenu_page(
-            'edit.php?post_type=' . $this->post_type,
+            WP_Dynamic_Tags_Admin::MENU,
             __('Groups', 'wp-dynamic-tags'),
             __('Groups', 'wp-dynamic-tags'),
             'manage_options',
@@ -116,8 +101,7 @@ class WP_Dynamic_Tags_Groups {
      * Groups admin page (unified interface)
      */
     public function group_manager_page() {
-        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
-        $group_id = isset($_GET['group_id']) ? intval($_GET['group_id']) : 0;
+        $this->group_counts = null;
 
         // Get all groups organized hierarchically
         $groups = $this->get_hierarchical_groups();
@@ -125,7 +109,7 @@ class WP_Dynamic_Tags_Groups {
 
         ?>
         <div class="wrap">
-            <h1><?php _e('Dynamic Tags - Groups', 'wp-dynamic-tags'); ?></h1>
+            <h1><?php esc_html_e('Dynamic Tags - Groups', 'wp-dynamic-tags'); ?></h1>
 
             <?php $this->show_notices(); ?>
 
@@ -133,18 +117,18 @@ class WP_Dynamic_Tags_Groups {
                 <!-- Groups Tree -->
                 <div class="dt-groups-tree" style="flex: 1; min-width: 300px;">
                     <div class="card">
-                        <h2><?php _e('Tag Groups', 'wp-dynamic-tags'); ?></h2>
+                        <h2><?php esc_html_e('Tag Groups', 'wp-dynamic-tags'); ?></h2>
 
                         <div class="dt-tree-actions" style="margin-bottom: 15px;">
                             <button type="button" id="dt-add-root-group" class="button button-primary">
                                 <span class="dashicons dashicons-plus"></span>
-                                <?php _e('Add Root Group', 'wp-dynamic-tags'); ?>
+                                <?php esc_html_e('Add Root Group', 'wp-dynamic-tags'); ?>
                             </button>
                             <button type="button" id="dt-expand-all" class="button">
-                                <?php _e('Expand All', 'wp-dynamic-tags'); ?>
+                                <?php esc_html_e('Expand All', 'wp-dynamic-tags'); ?>
                             </button>
                             <button type="button" id="dt-collapse-all" class="button">
-                                <?php _e('Collapse All', 'wp-dynamic-tags'); ?>
+                                <?php esc_html_e('Collapse All', 'wp-dynamic-tags'); ?>
                             </button>
                         </div>
 
@@ -157,14 +141,14 @@ class WP_Dynamic_Tags_Groups {
                 <!-- Group Details & Tag List -->
                 <div class="dt-group-details" style="flex: 2; min-width: 400px;">
                     <div class="card">
-                        <h2 id="dt-details-title"><?php _e('Group Details', 'wp-dynamic-tags'); ?></h2>
+                        <h2 id="dt-details-title"><?php esc_html_e('Group Details', 'wp-dynamic-tags'); ?></h2>
 
                         <div id="dt-group-info" style="display: none;">
                             <div id="dt-group-form">
                                 <table class="form-table">
                                     <tr>
                                         <th scope="row">
-                                            <label for="group-name"><?php _e('Group Name', 'wp-dynamic-tags'); ?></label>
+                                            <label for="group-name"><?php esc_html_e('Group Name', 'wp-dynamic-tags'); ?></label>
                                         </th>
                                         <td>
                                             <input type="text" id="group-name" class="regular-text" placeholder="<?php esc_attr_e('Enter group name...', 'wp-dynamic-tags'); ?>">
@@ -172,7 +156,7 @@ class WP_Dynamic_Tags_Groups {
                                     </tr>
                                     <tr>
                                         <th scope="row">
-                                            <label for="group-description"><?php _e('Description', 'wp-dynamic-tags'); ?></label>
+                                            <label for="group-description"><?php esc_html_e('Description', 'wp-dynamic-tags'); ?></label>
                                         </th>
                                         <td>
                                             <textarea id="group-description" class="large-text" rows="3" placeholder="<?php esc_attr_e('Optional description...', 'wp-dynamic-tags'); ?>"></textarea>
@@ -180,20 +164,20 @@ class WP_Dynamic_Tags_Groups {
                                     </tr>
                                     <tr>
                                         <th scope="row">
-                                            <label for="group-color"><?php _e('Color', 'wp-dynamic-tags'); ?></label>
+                                            <label for="group-color"><?php esc_html_e('Color', 'wp-dynamic-tags'); ?></label>
                                         </th>
                                         <td>
                                             <input type="color" id="group-color" value="#2271b1">
-                                            <p class="description"><?php _e('Choose a color for visual identification', 'wp-dynamic-tags'); ?></p>
+                                            <p class="description"><?php esc_html_e('Choose a color for visual identification', 'wp-dynamic-tags'); ?></p>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th scope="row">
-                                            <label for="group-parent"><?php _e('Parent Group', 'wp-dynamic-tags'); ?></label>
+                                            <label for="group-parent"><?php esc_html_e('Parent Group', 'wp-dynamic-tags'); ?></label>
                                         </th>
                                         <td>
                                             <select id="group-parent">
-                                                <option value="0"><?php _e('None (Root Group)', 'wp-dynamic-tags'); ?></option>
+                                                <option value="0"><?php esc_html_e('None (Root Group)', 'wp-dynamic-tags'); ?></option>
                                                 <?php $this->render_group_options($groups); ?>
                                             </select>
                                         </td>
@@ -202,32 +186,32 @@ class WP_Dynamic_Tags_Groups {
 
                                 <p class="submit">
                                     <button type="button" id="dt-save-group" class="button button-primary">
-                                        <?php _e('Save Group', 'wp-dynamic-tags'); ?>
+                                        <?php esc_html_e('Save Group', 'wp-dynamic-tags'); ?>
                                     </button>
                                     <button type="button" id="dt-cancel-group" class="button">
-                                        <?php _e('Cancel', 'wp-dynamic-tags'); ?>
+                                        <?php esc_html_e('Cancel', 'wp-dynamic-tags'); ?>
                                     </button>
                                     <button type="button" id="dt-delete-group" class="button button-secondary" style="float: right; display: none;">
-                                        <?php _e('Delete Group', 'wp-dynamic-tags'); ?>
+                                        <?php esc_html_e('Delete Group', 'wp-dynamic-tags'); ?>
                                     </button>
                                 </p>
                             </div>
                         </div>
 
                         <div id="dt-group-tags" style="display: none;">
-                            <h3><?php _e('Tags in this Group', 'wp-dynamic-tags'); ?></h3>
+                            <h3><?php esc_html_e('Tags in this Group', 'wp-dynamic-tags'); ?></h3>
                             <div id="dt-tags-list"></div>
                         </div>
 
                         <div id="dt-welcome-message">
-                            <p><?php _e('Select a group from the tree to view details and manage tags, or create a new group to get started.', 'wp-dynamic-tags'); ?></p>
+                            <p><?php esc_html_e('Select a group from the tree to view details and manage tags, or create a new group to get started.', 'wp-dynamic-tags'); ?></p>
 
-                            <h3><?php _e('Quick Actions', 'wp-dynamic-tags'); ?></h3>
+                            <h3><?php esc_html_e('Quick Actions', 'wp-dynamic-tags'); ?></h3>
                             <ul>
-                                <li><strong><?php _e('Create Groups:', 'wp-dynamic-tags'); ?></strong> <?php _e('Organize your tags into logical categories', 'wp-dynamic-tags'); ?></li>
-                                <li><strong><?php _e('Hierarchical Structure:', 'wp-dynamic-tags'); ?></strong> <?php _e('Create parent-child relationships', 'wp-dynamic-tags'); ?></li>
-                                <li><strong><?php _e('Color Coding:', 'wp-dynamic-tags'); ?></strong> <?php _e('Assign colors for visual organization', 'wp-dynamic-tags'); ?></li>
-                                <li><strong><?php _e('Bulk Assignment:', 'wp-dynamic-tags'); ?></strong> <?php _e('Assign multiple tags to groups at once', 'wp-dynamic-tags'); ?></li>
+                                <li><strong><?php esc_html_e('Create Groups:', 'wp-dynamic-tags'); ?></strong> <?php esc_html_e('Organize your tags into logical categories', 'wp-dynamic-tags'); ?></li>
+                                <li><strong><?php esc_html_e('Hierarchical Structure:', 'wp-dynamic-tags'); ?></strong> <?php esc_html_e('Create parent-child relationships', 'wp-dynamic-tags'); ?></li>
+                                <li><strong><?php esc_html_e('Color Coding:', 'wp-dynamic-tags'); ?></strong> <?php esc_html_e('Assign colors for visual organization', 'wp-dynamic-tags'); ?></li>
+                                <li><strong><?php esc_html_e('Bulk Assignment:', 'wp-dynamic-tags'); ?></strong> <?php esc_html_e('Assign multiple tags to groups at once', 'wp-dynamic-tags'); ?></li>
                             </ul>
                         </div>
                     </div>
@@ -236,7 +220,7 @@ class WP_Dynamic_Tags_Groups {
 
             <!-- Statistics Card -->
             <div class="card" style="margin-top: 20px;">
-                <h2><?php _e('Group Statistics', 'wp-dynamic-tags'); ?></h2>
+                <h2><?php esc_html_e('Group Statistics', 'wp-dynamic-tags'); ?></h2>
                 <?php $this->display_group_statistics(); ?>
             </div>
         </div>
@@ -296,11 +280,11 @@ class WP_Dynamic_Tags_Groups {
             // Delete group
             $('#dt-delete-group').on('click', function() {
                 if (!currentGroupId || currentGroupId <= 0) {
-                    alert('<?php _e('No group selected for deletion. Please select a group first.', 'wp-dynamic-tags'); ?>');
+                    alert('<?php echo esc_js(__('No group selected for deletion. Please select a group first.', 'wp-dynamic-tags')); ?>');
                     return;
                 }
 
-                if (confirm('<?php _e('Are you sure you want to delete this group? Tags will not be deleted, only removed from this group.', 'wp-dynamic-tags'); ?>')) {
+                if (confirm('<?php echo esc_js(__('Are you sure you want to delete this group? Tags will not be deleted, only removed from this group.', 'wp-dynamic-tags')); ?>')) {
                     deleteGroup(currentGroupId);
                 }
             });
@@ -332,7 +316,7 @@ class WP_Dynamic_Tags_Groups {
                 $('#dt-group-tags').hide();
                 $('#dt-group-info').show();
 
-                $('#dt-details-title').text(isEditing ? '<?php _e('Edit Group', 'wp-dynamic-tags'); ?>' : '<?php _e('New Group', 'wp-dynamic-tags'); ?>');
+                $('#dt-details-title').text(isEditing ? '<?php echo esc_js(__('Edit Group', 'wp-dynamic-tags')); ?>' : '<?php echo esc_js(__('New Group', 'wp-dynamic-tags')); ?>');
                 $('#dt-delete-group').toggle(isEditing);
 
                 if (isEditing) {
@@ -349,7 +333,7 @@ class WP_Dynamic_Tags_Groups {
                 $('#dt-group-info').hide();
                 $('#dt-group-tags').hide();
                 $('#dt-welcome-message').show();
-                $('#dt-details-title').text('<?php _e('Group Details', 'wp-dynamic-tags'); ?>');
+                $('#dt-details-title').text('<?php echo esc_js(__('Group Details', 'wp-dynamic-tags')); ?>');
                 $('.dt-group-item').removeClass('selected');
                 currentGroupId = 0;
                 isEditing = false;
@@ -364,17 +348,17 @@ class WP_Dynamic_Tags_Groups {
                     data: {
                         action: 'dt_get_group_details',
                         group_id: groupId,
-                        nonce: '<?php echo wp_create_nonce('dt_get_group_details'); ?>'
+                        nonce: '<?php echo esc_js(wp_create_nonce('dt_get_group_details')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
                             displayGroupDetails(response.data);
                         } else {
-                            alert('<?php _e('Error loading group details:', 'wp-dynamic-tags'); ?> ' + (response.data || '<?php _e('Unknown error occurred.', 'wp-dynamic-tags'); ?>'));
+                            alert('<?php echo esc_js(__('Error loading group details:', 'wp-dynamic-tags')); ?> ' + (response.data || '<?php echo esc_js(__('Unknown error occurred.', 'wp-dynamic-tags')); ?>'));
                         }
                     },
                     error: function() {
-                        alert('<?php _e('Network error occurred while loading group details. Please try again.', 'wp-dynamic-tags'); ?>');
+                        alert('<?php echo esc_js(__('Network error occurred while loading group details. Please try again.', 'wp-dynamic-tags')); ?>');
                     }
                 });
             }
@@ -395,7 +379,7 @@ class WP_Dynamic_Tags_Groups {
                     data: {
                         action: 'dt_get_group_edit_data',
                         group_id: groupId,
-                        nonce: '<?php echo wp_create_nonce('dt_get_group_edit_data'); ?>'
+                        nonce: '<?php echo esc_js(wp_create_nonce('dt_get_group_edit_data')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -410,12 +394,12 @@ class WP_Dynamic_Tags_Groups {
                             }
                             $('#group-parent').val(data.parent);
                         } else {
-                            alert('<?php _e('Error loading group data:', 'wp-dynamic-tags'); ?> ' + (response.data || '<?php _e('Unknown error occurred.', 'wp-dynamic-tags'); ?>'));
+                            alert('<?php echo esc_js(__('Error loading group data:', 'wp-dynamic-tags')); ?> ' + (response.data || '<?php echo esc_js(__('Unknown error occurred.', 'wp-dynamic-tags')); ?>'));
                             hideGroupForm();
                         }
                     },
                     error: function() {
-                        alert('<?php _e('Network error occurred while loading group data. Please try again.', 'wp-dynamic-tags'); ?>');
+                        alert('<?php echo esc_js(__('Network error occurred while loading group data. Please try again.', 'wp-dynamic-tags')); ?>');
                         hideGroupForm();
                     }
                 });
@@ -429,7 +413,7 @@ class WP_Dynamic_Tags_Groups {
                     description: $('#group-description').val(),
                     color: $('#group-color').val(),
                     parent: $('#group-parent').val(),
-                    nonce: '<?php echo wp_create_nonce('dt_group_operation'); ?>'
+                    nonce: '<?php echo esc_js(wp_create_nonce('dt_group_operation')); ?>'
                 };
 
                 $.ajax({
@@ -440,18 +424,18 @@ class WP_Dynamic_Tags_Groups {
                         if (response.success) {
                             location.reload();
                         } else {
-                            alert('<?php _e('Error:', 'wp-dynamic-tags'); ?> ' + response.data);
+                            alert('<?php echo esc_js(__('Error:', 'wp-dynamic-tags')); ?> ' + response.data);
                         }
                     },
                     error: function() {
-                        alert('<?php _e('Network error occurred while saving group. Please try again.', 'wp-dynamic-tags'); ?>');
+                        alert('<?php echo esc_js(__('Network error occurred while saving group. Please try again.', 'wp-dynamic-tags')); ?>');
                     }
                 });
             }
 
             function deleteGroup(groupId) {
                 if (!groupId || groupId <= 0) {
-                    alert('<?php _e('Invalid group selected for deletion.', 'wp-dynamic-tags'); ?>');
+                    alert('<?php echo esc_js(__('Invalid group selected for deletion.', 'wp-dynamic-tags')); ?>');
                     return;
                 }
 
@@ -461,18 +445,18 @@ class WP_Dynamic_Tags_Groups {
                     data: {
                         action: 'dt_delete_group',
                         group_id: groupId,
-                        nonce: '<?php echo wp_create_nonce('dt_group_operation'); ?>'
+                        nonce: '<?php echo esc_js(wp_create_nonce('dt_group_operation')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
-                            alert(response.data.message || '<?php _e('Group deleted successfully.', 'wp-dynamic-tags'); ?>');
+                            alert(response.data.message || '<?php echo esc_js(__('Group deleted successfully.', 'wp-dynamic-tags')); ?>');
                             location.reload();
                         } else {
-                            alert('<?php _e('Error deleting group:', 'wp-dynamic-tags'); ?> ' + (response.data || '<?php _e('Unknown error occurred.', 'wp-dynamic-tags'); ?>'));
+                            alert('<?php echo esc_js(__('Error deleting group:', 'wp-dynamic-tags')); ?> ' + (response.data || '<?php echo esc_js(__('Unknown error occurred.', 'wp-dynamic-tags')); ?>'));
                         }
                     },
                     error: function() {
-                        alert('<?php _e('Network error occurred while deleting group. Please try again.', 'wp-dynamic-tags'); ?>');
+                        alert('<?php echo esc_js(__('Network error occurred while deleting group. Please try again.', 'wp-dynamic-tags')); ?>');
                     }
                 });
             }
@@ -526,7 +510,7 @@ class WP_Dynamic_Tags_Groups {
 
         .dt-group-count {
             background: #ddd;
-            color: #666;
+            color: #50575e; /* WordPress's admin grey: 5.4:1 on #ddd (#666 was 4.2:1, below the 4.5:1 AA needs) */
             padding: 2px 6px;
             border-radius: 10px;
             font-size: 11px;
@@ -601,7 +585,7 @@ class WP_Dynamic_Tags_Groups {
      */
     private function render_groups_tree($groups, $level = 0) {
         if (empty($groups)) {
-            echo '<p class="dt-no-groups">' . __('No groups created yet. Click "Add Root Group" to get started.', 'wp-dynamic-tags') . '</p>';
+            echo '<p class="dt-no-groups">' . esc_html__('No groups created yet. Click "Add Root Group" to get started.', 'wp-dynamic-tags') . '</p>';
             return;
         }
 
@@ -626,7 +610,7 @@ class WP_Dynamic_Tags_Groups {
 
             echo '<div class="dt-group-color" style="background-color: ' . esc_attr($color) . ';"></div>';
             echo '<span class="dt-group-name">' . esc_html($group->name) . '</span>';
-            echo '<span class="dt-group-count">' . $count . '</span>';
+            echo '<span class="dt-group-count">' . esc_html((string) $count) . '</span>';
 
             echo '<div class="dt-group-actions">';
             echo '<button type="button" class="dt-add-child button-link" title="' . esc_attr__('Add Child Group', 'wp-dynamic-tags') . '">';
@@ -664,7 +648,7 @@ class WP_Dynamic_Tags_Groups {
             }
 
             $indent = str_repeat('&nbsp;&nbsp;&nbsp;', $level);
-            echo '<option value="' . esc_attr($group->term_id) . '">' . $indent . esc_html($group->name) . '</option>';
+            echo '<option value="' . esc_attr($group->term_id) . '">' . $indent . esc_html($group->name) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $indent is fixed &nbsp; markup
 
             if (!empty($group->children)) {
                 $this->render_group_options($group->children, $level + 1, $exclude_id);
@@ -673,71 +657,104 @@ class WP_Dynamic_Tags_Groups {
     }
 
     /**
-     * Get tag count for a group
+     * How many tags each group holds, from one query over the table: a tag is a row and its group is the row's category_id
+     * (0 = none). Dropped at the start of every render of the page.
+     *
+     * @var array<int,int>|null
      */
-    /**
-     * Optimized group tag counting with caching
-     */
-    private function get_group_tag_count($group_id) {
-        $cache_key = 'group_count_' . $group_id;
+    private $group_counts = null;
 
-        // Check static cache first
-        if (isset(self::$static_cache[$cache_key])) {
-            return self::$static_cache[$cache_key];
+    /** @return array<int,int> group id => tags (only groups that exist here; 0 holds every tag without a group) */
+    private function group_counts() {
+        if ($this->group_counts === null) {
+            global $wpdb;
+            $table = WP_Dynamic_Tags_Database_Manager::get_instance()->get_table_name();
+            $rows = (array) $wpdb->get_results($wpdb->prepare('SELECT category_id, COUNT(*) AS total FROM %i GROUP BY category_id', $table));
+            $existing = get_terms(array('taxonomy' => $this->taxonomy, 'hide_empty' => false, 'fields' => 'ids'));
+            $existing = is_array($existing) ? array_map('intval', $existing) : array();
+
+            $this->group_counts = array(0 => 0);
+            foreach ($rows as $row) {
+                $group = (int) $row->category_id;
+                // A tag whose group is gone (removed before tags were released) counts as having none.
+                $key = in_array($group, $existing, true) ? $group : 0;
+                $this->group_counts[$key] = ($this->group_counts[$key] ?? 0) + (int) $row->total;
+            }
         }
+        return $this->group_counts;
+    }
 
+    private function get_group_tag_count($group_id) {
+        return $this->group_counts()[(int) $group_id] ?? 0;
+    }
+
+    private function get_total_tag_count() {
+        return array_sum($this->group_counts());
+    }
+
+    private function get_ungrouped_tag_count() {
+        return $this->group_counts()[0] ?? 0;
+    }
+
+    /** @return array{name: string, count: int}|null */
+    private function get_most_used_group() {
+        $counts = $this->group_counts();
+        unset($counts[0]);
+        arsort($counts);
+        foreach ($counts as $group_id => $count) {
+            $term = get_term($group_id, $this->taxonomy);
+            if ($count > 0 && $term instanceof WP_Term) {
+                return array('name' => $term->name, 'count' => $count);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Releases the tags of a group that was deleted (action delete_tag_groups).
+     *
+     * @param int $term_id The group.
+     */
+    public function release_tags($term_id) {
         global $wpdb;
-
-        // Use direct SQL for better performance
-        $count = $wpdb->get_var($wpdb->prepare("
-            SELECT COUNT(DISTINCT p.ID)
-            FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-            INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            WHERE p.post_type = %s
-            AND p.post_status = 'publish'
-            AND tt.taxonomy = %s
-            AND tt.term_id = %d
-        ", $this->post_type, $this->taxonomy, $group_id));
-
-        $count = (int) $count;
-
-        // Cache the result
-        self::$static_cache[$cache_key] = $count;
-
-        return $count;
+        $table = WP_Dynamic_Tags_Database_Manager::get_instance()->get_table_name();
+        $wpdb->update($table, array('category_id' => 0), array('category_id' => (int) $term_id), array('%d'), array('%d'));
+        WP_Dynamic_Tags_Table_Manager::get_instance()->flush_cache();
+        $this->group_counts = null;
     }
 
     /**
      * Display group statistics
      */
     private function display_group_statistics() {
-        $total_groups = wp_count_terms($this->taxonomy);
-        $total_tags = wp_count_posts($this->post_type)->publish;
+        $total_groups = wp_count_terms(array('taxonomy' => $this->taxonomy, 'hide_empty' => false));
+        $total_groups = is_wp_error($total_groups) ? 0 : (int) $total_groups;
+        $total_tags = $this->get_total_tag_count();
         $ungrouped_tags = $this->get_ungrouped_tag_count();
         $most_used_group = $this->get_most_used_group();
 
         echo '<div style="display: flex; gap: 20px; flex-wrap: wrap;">';
 
         echo '<div class="dt-stat-box" style="flex: 1; min-width: 200px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 4px;">';
-        echo '<div style="font-size: 24px; font-weight: bold; color: #0073aa;">' . $total_groups . '</div>';
-        echo '<div>' . __('Total Groups', 'wp-dynamic-tags') . '</div>';
+        echo '<div style="font-size: 24px; font-weight: bold; color: #0073aa;">' . esc_html((string) $total_groups) . '</div>';
+        echo '<div>' . esc_html__('Total Groups', 'wp-dynamic-tags') . '</div>';
         echo '</div>';
 
         echo '<div class="dt-stat-box" style="flex: 1; min-width: 200px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 4px;">';
-        echo '<div style="font-size: 24px; font-weight: bold; color: #0073aa;">' . $total_tags . '</div>';
-        echo '<div>' . __('Total Tags', 'wp-dynamic-tags') . '</div>';
+        echo '<div style="font-size: 24px; font-weight: bold; color: #0073aa;">' . esc_html((string) $total_tags) . '</div>';
+        echo '<div>' . esc_html__('Total Tags', 'wp-dynamic-tags') . '</div>';
         echo '</div>';
 
         echo '<div class="dt-stat-box" style="flex: 1; min-width: 200px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 4px;">';
-        echo '<div style="font-size: 24px; font-weight: bold; color: #d63638;">' . $ungrouped_tags . '</div>';
-        echo '<div>' . __('Ungrouped Tags', 'wp-dynamic-tags') . '</div>';
+        echo '<div style="font-size: 24px; font-weight: bold; color: #d63638;">' . esc_html((string) $ungrouped_tags) . '</div>';
+        echo '<div>' . esc_html__('Ungrouped Tags', 'wp-dynamic-tags') . '</div>';
         echo '</div>';
 
         if ($most_used_group) {
             echo '<div class="dt-stat-box" style="flex: 1; min-width: 200px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 4px;">';
             echo '<div style="font-size: 16px; font-weight: bold; color: #0073aa;">' . esc_html($most_used_group['name']) . '</div>';
-            echo '<div>' . sprintf(__('Most Used Group (%d tags)', 'wp-dynamic-tags'), $most_used_group['count']) . '</div>';
+            /* translators: %d: number of tags in the group */
+            echo '<div>' . esc_html(sprintf(__('Most Used Group (%d tags)', 'wp-dynamic-tags'), $most_used_group['count'])) . '</div>';
             echo '</div>';
         }
 
@@ -745,304 +762,10 @@ class WP_Dynamic_Tags_Groups {
     }
 
     /**
-     * Get count of ungrouped tags
-     */
-    /**
-     * Optimized ungrouped tag counting with direct SQL
-     */
-    private function get_ungrouped_tag_count() {
-        $cache_key = 'ungrouped_count';
-
-        // Check static cache first
-        if (isset(self::$static_cache[$cache_key])) {
-            return self::$static_cache[$cache_key];
-        }
-
-        global $wpdb;
-
-        // Use direct SQL with LEFT JOIN to count ungrouped tags efficiently
-        $count = $wpdb->get_var($wpdb->prepare("
-            SELECT COUNT(*)
-            FROM {$wpdb->posts} p
-            LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-            LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = %s
-            WHERE p.post_type = %s
-            AND p.post_status = 'publish'
-            AND tt.term_id IS NULL
-        ", $this->taxonomy, $this->post_type));
-
-        $count = (int) $count;
-
-        // Cache the result
-        self::$static_cache[$cache_key] = $count;
-
-        return $count;
-    }
-
-    /**
-     * Get most used group
-     */
-    private function get_most_used_group() {
-        $terms = get_terms(array(
-            'taxonomy' => $this->taxonomy,
-            'hide_empty' => true,
-            'orderby' => 'count',
-            'order' => 'DESC',
-            'number' => 1
-        ));
-
-        if (is_wp_error($terms) || empty($terms)) {
-            return null;
-        }
-
-        return array(
-            'name' => $terms[0]->name,
-            'count' => $terms[0]->count
-        );
-    }
-
-    /**
      * Get group colors option
      */
     private function get_group_colors() {
         return get_option('dt_group_colors', array());
-    }
-
-    /**
-     * Add meta boxes
-     */
-    public function add_meta_boxes() {
-        add_meta_box(
-            'dt-tag-groups',
-            __('Tag Groups', 'wp-dynamic-tags'),
-            array($this, 'render_groups_meta_box'),
-            $this->post_type,
-            'side',
-            'default'
-        );
-
-        add_meta_box(
-            'dt-tag-metadata',
-            __('Tag Metadata', 'wp-dynamic-tags'),
-            array($this, 'render_metadata_meta_box'),
-            $this->post_type,
-            'side',
-            'default'
-        );
-    }
-
-    /**
-     * Render groups meta box
-     */
-    public function render_groups_meta_box($post) {
-        wp_nonce_field('dt_save_groups_meta', 'dt_groups_nonce');
-
-        $groups = get_terms(array(
-            'taxonomy' => $this->taxonomy,
-            'hide_empty' => false,
-            'orderby' => 'name'
-        ));
-
-        $selected_groups = wp_get_post_terms($post->ID, $this->taxonomy, array('fields' => 'ids'));
-
-        if (empty($groups)) {
-            echo '<p>' . __('No groups available.', 'wp-dynamic-tags') . ' ';
-            echo '<a href="' . admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-group-manager') . '">';
-            echo __('Create groups', 'wp-dynamic-tags') . '</a></p>';
-            return;
-        }
-
-        echo '<div id="dt-groups-checklist">';
-        foreach ($groups as $group) {
-            // Ensure $group is an object and has the required properties
-            if (!is_object($group) || !isset($group->term_id) || !isset($group->name)) {
-                continue;
-            }
-
-            $checked = in_array($group->term_id, $selected_groups) ? 'checked' : '';
-            $color = get_term_meta($group->term_id, 'color', true) ?: '#2271b1';
-
-            echo '<label style="display: block; margin-bottom: 5px;">';
-            echo '<input type="checkbox" name="dt_groups[]" value="' . esc_attr($group->term_id) . '" ' . $checked . '> ';
-            echo '<span class="dt-group-color-indicator" style="display: inline-block; width: 12px; height: 12px; background-color: ' . esc_attr($color) . '; border-radius: 50%; margin-right: 5px;"></span>';
-            echo esc_html($group->name);
-            echo '</label>';
-        }
-        echo '</div>';
-
-        echo '<p class="description">' . __('Select the groups this tag belongs to.', 'wp-dynamic-tags') . '</p>';
-    }
-
-    /**
-     * Render metadata meta box
-     */
-    public function render_metadata_meta_box($post) {
-        wp_nonce_field('dt_save_metadata_meta', 'dt_metadata_nonce');
-
-        $priority = get_post_meta($post->ID, '_dt_priority', true) ?: 0;
-        $usage_count = get_post_meta($post->ID, '_dt_usage_count', true) ?: 0;
-        $last_used = get_post_meta($post->ID, '_dt_last_used', true);
-
-        echo '<table class="form-table">';
-
-        echo '<tr>';
-        echo '<th scope="row"><label for="dt-priority">' . __('Priority', 'wp-dynamic-tags') . '</label></th>';
-        echo '<td>';
-        echo '<input type="number" id="dt-priority" name="dt_priority" value="' . esc_attr($priority) . '" min="0" max="100" class="small-text">';
-        echo '<p class="description">' . __('Higher numbers appear first in lists (0-100)', 'wp-dynamic-tags') . '</p>';
-        echo '</td>';
-        echo '</tr>';
-
-        echo '<tr>';
-        echo '<th scope="row">' . __('Usage Count', 'wp-dynamic-tags') . '</th>';
-        echo '<td>' . number_format($usage_count) . ' <span class="description">' . __('times used', 'wp-dynamic-tags') . '</span></td>';
-        echo '</tr>';
-
-        if ($last_used) {
-            echo '<tr>';
-            echo '<th scope="row">' . __('Last Used', 'wp-dynamic-tags') . '</th>';
-            echo '<td>' . wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_used)) . '</td>';
-            echo '</tr>';
-        }
-
-        echo '</table>';
-    }
-
-    /**
-     * Save meta boxes
-     */
-    public function save_meta_boxes($post_id) {
-        // Skip autosave
-        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-            return;
-        }
-
-        // Check post type
-        if (get_post_type($post_id) !== $this->post_type) {
-            return;
-        }
-
-        // Check permissions
-        if (!current_user_can('edit_post', $post_id)) {
-            return;
-        }
-
-        // Save groups
-        if (isset($_POST['dt_groups_nonce']) && wp_verify_nonce($_POST['dt_groups_nonce'], 'dt_save_groups_meta')) {
-            $groups = isset($_POST['dt_groups']) ? array_map('intval', $_POST['dt_groups']) : array();
-            wp_set_post_terms($post_id, $groups, $this->taxonomy);
-        }
-
-        // Save metadata
-        if (isset($_POST['dt_metadata_nonce']) && wp_verify_nonce($_POST['dt_metadata_nonce'], 'dt_save_metadata_meta')) {
-            if (isset($_POST['dt_priority'])) {
-                $priority = intval($_POST['dt_priority']);
-                update_post_meta($post_id, '_dt_priority', max(0, min(100, $priority)));
-            }
-        }
-
-        // Clear cache
-        delete_transient($this->transient_key);
-    }
-
-    /**
-     * Add groups column to admin list
-     */
-    public function add_groups_column($columns) {
-        $new_columns = array();
-
-        foreach ($columns as $key => $title) {
-            $new_columns[$key] = $title;
-
-            if ($key === 'shortcode') {
-                $new_columns['groups'] = __('Groups', 'wp-dynamic-tags');
-            }
-        }
-
-        return $new_columns;
-    }
-
-    /**
-     * Display groups column content
-     */
-    public function display_groups_column($column, $post_id) {
-        if ($column === 'groups') {
-            $groups = wp_get_post_terms($post_id, $this->taxonomy);
-
-            if (is_wp_error($groups) || empty($groups)) {
-                echo '<span class="dt-no-groups" style="color: #999;">' . __('No groups', 'wp-dynamic-tags') . '</span>';
-                return;
-            }
-
-            $group_badges = array();
-            foreach ($groups as $group) {
-                // Ensure $group is an object and has the required properties
-                if (!is_object($group) || !isset($group->term_id) || !isset($group->name)) {
-                    continue;
-                }
-
-                $color = get_term_meta($group->term_id, 'color', true) ?: '#2271b1';
-                $group_badges[] = '<span class="dt-group-badge" style="background-color: ' . esc_attr($color) . '; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-right: 4px;">' . esc_html($group->name) . '</span>';
-            }
-
-            if (empty($group_badges)) {
-                echo '<span class="dt-no-groups" style="color: #999;">' . __('No groups', 'wp-dynamic-tags') . '</span>';
-            } else {
-                echo implode('', $group_badges);
-            }
-        }
-    }
-
-    /**
-     * Add quick edit fields
-     */
-    public function add_quick_edit_fields($column_name, $post_type) {
-        if ($post_type !== $this->post_type || $column_name !== 'groups') {
-            return;
-        }
-
-        $groups = get_terms(array(
-            'taxonomy' => $this->taxonomy,
-            'hide_empty' => false,
-            'orderby' => 'name'
-        ));
-
-        if (empty($groups)) {
-            return;
-        }
-
-        ?>
-        <fieldset class="inline-edit-col-right">
-            <div class="inline-edit-col">
-                <label>
-                    <span class="title"><?php _e('Groups', 'wp-dynamic-tags'); ?></span>
-                    <div id="dt-quick-edit-groups" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 8px;">
-                        <?php foreach ($groups as $group): ?>
-                            <?php
-                            // Ensure $group is an object and has the required properties
-                            if (!is_object($group) || !isset($group->term_id) || !isset($group->name)) {
-                                continue;
-                            }
-                            $color = get_term_meta($group->term_id, 'color', true) ?: '#2271b1';
-                            ?>
-                            <label style="display: block; margin-bottom: 3px;">
-                                <input type="checkbox" name="dt_quick_groups[]" value="<?php echo esc_attr($group->term_id); ?>">
-                                <span class="dt-group-color-indicator" style="display: inline-block; width: 10px; height: 10px; background-color: <?php echo esc_attr($color); ?>; border-radius: 50%; margin: 0 5px;"></span>
-                                <?php echo esc_html($group->name); ?>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </label>
-            </div>
-        </fieldset>
-        <?php
-    }
-
-    /**
-     * Handle group actions
-     */
-    public function handle_group_actions() {
-        // Actions will be handled via AJAX methods below
     }
 
     /**
@@ -1067,10 +790,10 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Taxonomy not registered. Please refresh the page and try again.', 'wp-dynamic-tags'));
         }
 
-        $name = sanitize_text_field($_POST['name']);
-        $description = sanitize_textarea_field($_POST['description']);
-        $color = sanitize_hex_color($_POST['color']);
-        $parent = intval($_POST['parent']);
+        $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+        $color = isset($_POST['color']) ? sanitize_hex_color(wp_unslash($_POST['color'])) : null;
+        $parent = isset($_POST['parent']) ? absint($_POST['parent']) : 0;
 
         if (empty($name)) {
             wp_send_json_error(__('Group name is required.', 'wp-dynamic-tags'));
@@ -1118,11 +841,11 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Taxonomy not registered. Please refresh the page and try again.', 'wp-dynamic-tags'));
         }
 
-        $group_id = intval($_POST['group_id']);
-        $name = sanitize_text_field($_POST['name']);
-        $description = sanitize_textarea_field($_POST['description']);
-        $color = sanitize_hex_color($_POST['color']);
-        $parent = intval($_POST['parent']);
+        $group_id = isset($_POST['group_id']) ? absint($_POST['group_id']) : 0;
+        $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+        $color = isset($_POST['color']) ? sanitize_hex_color(wp_unslash($_POST['color'])) : null;
+        $parent = isset($_POST['parent']) ? absint($_POST['parent']) : 0;
 
         if (empty($name)) {
             wp_send_json_error(__('Group name is required.', 'wp-dynamic-tags'));
@@ -1180,7 +903,7 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Taxonomy not registered. Please refresh the page and try again.', 'wp-dynamic-tags'));
         }
 
-        $group_id = intval($_POST['group_id']);
+        $group_id = isset($_POST['group_id']) ? absint(wp_unslash($_POST['group_id'])) : 0;
 
         if (empty($group_id)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1234,7 +957,7 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Unauthorized', 'wp-dynamic-tags'));
         }
 
-        $group_id = intval($_POST['group_id']);
+        $group_id = isset($_POST['group_id']) ? absint(wp_unslash($_POST['group_id'])) : 0;
 
         if (empty($group_id)) {
             wp_send_json_error(__('Invalid group ID.', 'wp-dynamic-tags'));
@@ -1248,50 +971,35 @@ class WP_Dynamic_Tags_Groups {
         }
 
         // Get tags in this group
-        $tags = get_posts(array(
-            'post_type' => $this->post_type,
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC',
-            'tax_query' => array(
-                array(
-                    'taxonomy' => $this->taxonomy,
-                    'field' => 'term_id',
-                    'terms' => $group_id
-                )
-            )
-        ));
+        $tags = WP_Dynamic_Tags_Table_Manager::get_instance()->get_tags(array('category_id' => $group_id, 'status' => '', 'orderby' => 'tag_name', 'order' => 'ASC'));
 
         // Build tags HTML
         $tags_html = '';
         if (empty($tags)) {
-            $tags_html = '<p class="description">' . __('No tags in this group yet.', 'wp-dynamic-tags') . '</p>';
+            $tags_html = '<p class="description">' . esc_html__('No tags in this group yet.', 'wp-dynamic-tags') . '</p>';
         } else {
             $tags_html .= '<table class="wp-list-table widefat fixed striped">';
             $tags_html .= '<thead><tr>';
-            $tags_html .= '<th>' . __('Tag Name', 'wp-dynamic-tags') . '</th>';
-            $tags_html .= '<th>' . __('Shortcode', 'wp-dynamic-tags') . '</th>';
-            $tags_html .= '<th>' . __('Actions', 'wp-dynamic-tags') . '</th>';
+            $tags_html .= '<th>' . esc_html__('Tag Name', 'wp-dynamic-tags') . '</th>';
+            $tags_html .= '<th>' . esc_html__('Shortcode', 'wp-dynamic-tags') . '</th>';
+            $tags_html .= '<th>' . esc_html__('Actions', 'wp-dynamic-tags') . '</th>';
             $tags_html .= '</tr></thead>';
             $tags_html .= '<tbody>';
 
             foreach ($tags as $tag) {
-                $edit_url = get_edit_post_link($tag->ID);
-                $shortcode = '[' . sanitize_title($tag->post_title) . ']';
-
                 $tags_html .= '<tr>';
-                $tags_html .= '<td><strong>' . esc_html($tag->post_title) . '</strong></td>';
-                $tags_html .= '<td><code>' . esc_html($shortcode) . '</code></td>';
+                $tags_html .= '<td><strong>' . esc_html($tag->tag_name) . '</strong></td>';
+                $tags_html .= '<td><code>' . esc_html('[' . $tag->shortcode . ']') . '</code></td>';
                 $tags_html .= '<td>';
-                $tags_html .= '<a href="' . esc_url($edit_url) . '" class="button button-small">' . __('Edit', 'wp-dynamic-tags') . '</a>';
+                $tags_html .= '<a href="' . esc_url(WP_Dynamic_Tags_Admin::edit_url((int) $tag->id)) . '" class="button button-small">' . esc_html__('Edit', 'wp-dynamic-tags') . '</a>';
                 $tags_html .= '</td>';
                 $tags_html .= '</tr>';
             }
 
             $tags_html .= '</tbody></table>';
             $tags_html .= '<p class="description" style="margin-top: 10px;">';
-            $tags_html .= sprintf(__('Total: %d tags', 'wp-dynamic-tags'), count($tags));
+            /* translators: %d: number of tags */
+            $tags_html .= esc_html(sprintf(__('Total: %d tags', 'wp-dynamic-tags'), count($tags)));
             $tags_html .= '</p>';
         }
 
@@ -1313,7 +1021,7 @@ class WP_Dynamic_Tags_Groups {
             wp_send_json_error(__('Unauthorized', 'wp-dynamic-tags'));
         }
 
-        $group_id = intval($_POST['group_id']);
+        $group_id = isset($_POST['group_id']) ? absint(wp_unslash($_POST['group_id'])) : 0;
 
         if (empty($group_id)) {
             wp_send_json_error(__('Invalid group ID.', 'wp-dynamic-tags'));
@@ -1342,51 +1050,6 @@ class WP_Dynamic_Tags_Groups {
             'color' => $color,
             'parent' => $group->parent,
             'parent_options' => $parent_options_html
-        ));
-    }
-
-    /**
-     * AJAX: Assign groups to tags
-     */
-    public function ajax_assign_groups() {
-        check_ajax_referer('dt_assign_groups', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-
-        $tag_ids = array_map('intval', $_POST['tag_ids']);
-        $group_ids = array_map('intval', $_POST['group_ids']);
-        $action = sanitize_text_field($_POST['assign_action']); // 'add', 'remove', 'replace'
-
-        $updated = 0;
-
-        foreach ($tag_ids as $tag_id) {
-            $current_groups = wp_get_post_terms($tag_id, $this->taxonomy, array('fields' => 'ids'));
-
-            switch ($action) {
-                case 'add':
-                    $new_groups = array_unique(array_merge($current_groups, $group_ids));
-                    break;
-                case 'remove':
-                    $new_groups = array_diff($current_groups, $group_ids);
-                    break;
-                case 'replace':
-                default:
-                    $new_groups = $group_ids;
-                    break;
-            }
-
-            wp_set_post_terms($tag_id, $new_groups, $this->taxonomy);
-            $updated++;
-        }
-
-        // Clear cache
-        delete_transient($this->transient_key);
-
-        wp_send_json_success(array(
-            'updated' => $updated,
-            'message' => sprintf(__('Updated %d tags.', 'wp-dynamic-tags'), $updated)
         ));
     }
 
@@ -1427,6 +1090,7 @@ class WP_Dynamic_Tags_Groups {
 
                 if (!$group) {
                     $result = wp_insert_term(ucfirst($category), $this->taxonomy, array(
+                        /* translators: %s: the name of the old category */
                         'description' => sprintf(__('Migrated from category: %s', 'wp-dynamic-tags'), $category)
                     ));
 
@@ -1460,10 +1124,6 @@ class WP_Dynamic_Tags_Groups {
         }
 
         update_option('dt_categories_migrated', true);
-
-        if (!empty($created_groups)) {
-            delete_transient($this->transient_key);
-        }
     }
 
     /**
@@ -1546,8 +1206,8 @@ class WP_Dynamic_Tags_Groups {
      * Show admin notices
      */
     private function show_notices() {
-        if (isset($_GET['message'])) {
-            $message = sanitize_text_field($_GET['message']);
+        if (isset($_GET['message'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- selects a fixed notice text, changes nothing
+            $message = sanitize_key(wp_unslash($_GET['message'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- selects a fixed notice text, changes nothing
             $notices = array(
                 'group_created' => __('Group created successfully.', 'wp-dynamic-tags'),
                 'group_updated' => __('Group updated successfully.', 'wp-dynamic-tags'),
@@ -1557,7 +1217,7 @@ class WP_Dynamic_Tags_Groups {
 
             if (isset($notices[$message])) {
                 $class = $message === 'error' ? 'notice-error' : 'notice-success';
-                echo '<div class="notice ' . $class . ' is-dismissible"><p>' . $notices[$message] . '</p></div>';
+                echo '<div class="notice ' . esc_attr($class) . ' is-dismissible"><p>' . esc_html($notices[$message]) . '</p></div>';
             }
         }
     }

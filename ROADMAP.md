@@ -1,13 +1,14 @@
 # WP Dynamic Tags — Product Roadmap
 
-Last updated: 2026-09-19
+Last updated: 2026-11-12, released as 3.1.0 (the storage, admin and import/export parts of section 1 describe 3.1.0; the rest is the 3.0 plan)
 
 ## 1. Where the plugin stands today
 
-Two storage systems (legacy CPT + custom table with a bridge), groups/taxonomy,
-bulk manager, conflict resolver, import/export (JSON/CSV/XML/SQL), migration
-tooling, and a dynamic-placeholder engine that (as of the V1 Core update)
-covers:
+One tag store (the custom table; the old post type is an empty hidden shim),
+groups/taxonomy, one admin screen with bulk actions, a Tag Service that refuses
+reserved, foreign and circular tags, import (JSON/CSV/XML) and export
+(JSON/CSV/XML/SQL), migration tooling for tags stored by older versions, and a
+dynamic-placeholder engine that (as of the V1 Core update) covers:
 
 - **Post/Page**: title, ID, slug, content, excerpt, status, type, dates,
   featured image (+ alt/caption), parent post, comment count/status, shortlink
@@ -32,6 +33,11 @@ This is a solid **content-snippet / merge-tag engine**. It is not yet a
 are — those let a *field on the current record* drive a widget's output
 (image, link, repeater loop, visibility) anywhere in a page builder, not just
 inside a manually-authored shortcode string.
+
+**After 3.1.0 (not part of it):** licensing and the 15-tag free limit (the single
+`dt_can_create_tag` seam is in place), a bulk *Assign group* action on the list,
+group names in exports so groups travel between sites, and removal of the
+legacy-post compatibility window in 4.0.
 
 ---
 
@@ -153,8 +159,8 @@ edge worth fixing before adding new surface area:
   undocumented, placeholder-registration-only, and doesn't cover formatters
   or data sources, so it can't yet serve as the "real" developer API (see
   gap #10).
-- **Version constant mismatch** — `WP_DYNAMIC_TAGS_VERSION` is `2.0.0` while
-  the plugin header says `3.0.0`. Low-risk but confusing for support/debugging.
+- **Version constant mismatch** — `WP_DYNAMIC_TAGS_VERSION` was `2.0.0` while
+  the plugin header said `3.0.0`. Fixed: the constant and the header both say `3.1.0`.
 - **`README.md`'s documented DB schema is stale** — it doesn't list several
   real columns from `class-database-manager.php` (`shortcode`, `priority`,
   `meta_data`, `post_id`, etc.), so anyone reading the README to understand

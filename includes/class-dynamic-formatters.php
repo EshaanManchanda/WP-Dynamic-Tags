@@ -35,6 +35,20 @@ class WP_Dynamic_Tags_Formatters {
     }
 
     /**
+     * Parses a date/time string to a UTC timestamp. A string without a timezone is read as wall-clock time in the site's
+     * timezone (what an author typing "2026-11-11 10:00" means); a string with an explicit timezone keeps it.
+     *
+     * @return int|null null when the text is not a date.
+     */
+    private static function parse_moment($value) {
+        try {
+            return (new DateTimeImmutable((string) $value, wp_timezone()))->getTimestamp();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Apply a single formatter spec ("upper", "round:2", "date:F j, Y") to a value.
      * Unknown formatter names are a no-op, matching this codebase's defensive style
      * of leaving unrecognized directives unchanged rather than erroring.
@@ -89,28 +103,42 @@ class WP_Dynamic_Tags_Formatters {
                 return wp_strip_all_tags($value);
 
             case 'currency':
-                return '$' . number_format((float) $value, 2);
+                // The symbol was hardcoded to "$" (L5); filter dt_currency_symbol changes it. Separators follow the site locale.
+                return apply_filters('dt_currency_symbol', '$') . number_format_i18n((float) $value, 2);
 
             case 'decimal':
-                return number_format((float) $value, $arg !== null ? (int) $arg : 2);
+                return number_format_i18n((float) $value, $arg !== null ? (int) $arg : 2);
 
             case 'thousands':
-                return number_format((float) $value);
+                return number_format_i18n((float) $value);
 
             case 'round':
                 return (string) round((float) $value, $arg !== null ? (int) $arg : 0);
 
             case 'date':
-                return $value ? date_i18n($arg ? $arg : get_option('date_format'), strtotime($value)) : '';
+                if (!$value) {
+                    return '';
+                }
+                // A value that cannot be parsed is returned as written. It used to be passed to date_i18n() as `false`,
+                // which means "now", so a typo silently showed the current date (L5).
+                $moment = self::parse_moment($value);
+                return $moment === null ? $value : wp_date($arg ? $arg : get_option('date_format'), $moment);
 
             case 'relative':
                 if (!$value) {
                     return '';
                 }
+                $moment = self::parse_moment($value);
+                if ($moment === null) {
+                    return $value;
+                }
+                // Both timestamps are real UTC timestamps. The old call compared strtotime() with
+                // current_time('timestamp') (shifted by the site's offset), so a value with an explicit timezone was off by
+                // that offset.
                 return sprintf(
                     /* translators: %s: human-readable time difference, e.g. "2 days" */
                     __('%s ago', 'wp-dynamic-tags'),
-                    human_time_diff(strtotime($value), current_time('timestamp'))
+                    human_time_diff($moment, time())
                 );
 
             default:

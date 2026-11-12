@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Same suite, but bootstrapped as an admin request (WP_ADMIN defined), like admin-ajax.php. -->
+<phpunit bootstrap="../../tests/wp-admin/bootstrap.php" colors="true" convertDeprecationsToExceptions="false"
+         beStrictAboutTestsThatDoNotTestAnything="true">
+  <testsuites>
+    <testsuite name="wp-admin">
+      <directory suffix="Test.php">../../tests/wp-admin</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

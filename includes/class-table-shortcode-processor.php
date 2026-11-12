@@ -55,29 +55,19 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Register all shortcodes from table
      */
     public function register_table_shortcodes() {
-        // Skip registration during REST API requests to prevent timeouts
-        if (defined('REST_REQUEST') && REST_REQUEST) {
+        // REST requests render content too (L4); see WP_Dynamic_Tags_Plugin::should_register_shortcodes().
+        if (!WP_Dynamic_Tags_Plugin::should_register_shortcodes()) {
             return;
         }
 
-        // Lock mechanism to prevent duplicate registration calls
-        $lock_key = 'dt_table_registration_lock';
-        if (get_transient($lock_key)) {
-            return; // Registration already in progress or recently completed
-        }
-
-        // Set lock for 3 seconds
-        set_transient($lock_key, true, 3);
-
+        // No lock: registering twice is harmless (a name this class registered is skipped) and the lock cost two database
+        // writes per request. The tags are the one registry query of the request; the order does not matter (the shortcode
+        // column is unique), so the primary key is used.
         $start_time = microtime(true);
+        $this->tag_index = null; // the registry is read again, so the lookup index of the core shortcodes is rebuilt too
 
         try {
-            // Get active tags from table
-            $tags = $this->table_manager->get_tags(array(
-                'status' => 'active',
-                'orderby' => 'usage_count',
-                'order' => 'DESC'
-            ));
+            $tags = $this->all_active_tags();
 
             $registered_count = 0;
             $failed_count = 0;
@@ -92,6 +82,9 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
 
             // Register special shortcodes
             $this->register_special_shortcodes();
+
+            // Tag posts that were not migrated yet keep their shortcode (read-only, only while the flag says so)
+            $this->register_legacy_post_tags();
 
             $execution_time = microtime(true) - $start_time;
 
@@ -117,6 +110,139 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         }
     }
 
+    /** @var array<string, array<string, object>>|null Lookup index of the core shortcodes, built from the registry on first use. */
+    private $tag_index = null;
+
+    /** @var object[] Virtual rows of published legacy tag posts that have no table row yet (read-only compatibility window). */
+    private $legacy_rows = array();
+
+    /**
+     * Every active tag: the registry of the request. Registration and the core shortcodes ask with exactly these
+     * arguments, so the table is read once (the facade caches by arguments).
+     *
+     * @return object[]
+     */
+    public function all_active_tags() {
+        return $this->table_manager->get_tags(array('status' => 'active', 'orderby' => 'id', 'order' => 'ASC'));
+    }
+
+    /**
+     * Active tags for the list shortcodes ([dt_group], [dt_list], [dt_random]).
+     *
+     * @param int|null $category_id Group (term id), null for every group.
+     * @param string   $orderby     title|name, date, modified, id, priority, usage_count (the old post-based names are accepted).
+     * @param string   $order       ASC or DESC.
+     * @param int      $limit       0 or less: no limit.
+     * @return object[]
+     */
+    public function active_tags($category_id = null, $orderby = 'title', $order = 'ASC', $limit = 0) {
+        $columns = array(
+            'title' => 'tag_name', 'name' => 'tag_name', 'date' => 'created_date', 'modified' => 'modified_date',
+            'id' => 'id', 'priority' => 'priority', 'usage_count' => 'usage_count',
+        );
+        $orderby = $columns[strtolower((string) $orderby)] ?? 'tag_name';
+        $order = strtoupper((string) $order) === 'DESC' ? 'DESC' : 'ASC';
+
+        if ($category_id === null && $orderby === 'id' && $order === 'ASC' && (int) $limit <= 0) {
+            return $this->all_active_tags();
+        }
+
+        $args = array('status' => 'active', 'orderby' => $orderby, 'order' => $order, 'limit' => (int) $limit);
+        if ($category_id !== null) {
+            $args['category_id'] = (int) $category_id;
+        }
+        return $this->table_manager->get_tags($args);
+    }
+
+    /**
+     * The active tag a [dt tag="..."] style key points at: its shortcode as written, the key normalized the way tag keys
+     * always were (lower case, other characters to underscores), its name, or a legacy alias recorded by the migration.
+     * Read from the registry, no extra query.
+     *
+     * @return object|null
+     */
+    public function find_tag($key) {
+        $key = trim((string) $key);
+        if ($key === '') {
+            return null;
+        }
+
+        if ($this->tag_index === null) {
+            $this->tag_index = array('shortcode' => array(), 'name' => array(), 'alias' => array());
+            foreach (array_merge($this->all_active_tags(), $this->legacy_rows) as $tag) {
+                $this->tag_index['shortcode'][$tag->shortcode] = $tag;
+                $this->tag_index['name'][strtolower($tag->tag_name)] = $tag;
+                $aliases = (is_array($tag->meta_data) && isset($tag->meta_data['legacy']['aliases'])) ? (array) $tag->meta_data['legacy']['aliases'] : array();
+                foreach ($aliases as $alias) {
+                    $this->tag_index['alias'][strtolower((string) $alias)] = $tag;
+                }
+            }
+        }
+
+        $normalized = trim((string) preg_replace('/_{2,}/', '_', (string) preg_replace('/[^a-z0-9]/', '_', strtolower($key))), '_');
+        $lower = strtolower($key);
+
+        return $this->tag_index['shortcode'][$key]
+            ?? $this->tag_index['shortcode'][$normalized]
+            ?? $this->tag_index['name'][$lower]
+            ?? $this->tag_index['alias'][$lower]
+            ?? $this->tag_index['alias'][$normalized]
+            ?? null;
+    }
+
+    /**
+     * Renders one tag the way its own shortcode does (render stack, depth and size guard, the unified pipeline). The core
+     * shortcodes use this, so [dt tag="x"] and [x] cannot drift apart.
+     *
+     * @param object              $tag
+     * @param array<string,mixed> $atts Shortcode attributes (format, default, cache, processing).
+     * @return string
+     */
+    public function render_row($tag, $atts = array()) {
+        return (string) $this->process_shortcode($tag, $atts);
+    }
+
+    /**
+     * Compatibility window for tag posts that have no row yet (a 3.0 site that is not migrated, or a post saved while the
+     * migration was running). While the autoloaded flag option wp_dynamic_tags_legacy_pending is '1' they are read from
+     * wp_posts (one query) and registered like any tag: same pipeline, no row, no usage counting. Nothing is written except
+     * the flag, once, when it does not exist yet. The migration (or the capture hooks) turns them into rows.
+     */
+    private function register_legacy_post_tags() {
+        $this->legacy_rows = array();
+
+        $pending = get_option(WP_Dynamic_Tags_Migration_Engine::OPTION_PENDING, 'unknown');
+        if ($pending === 'unknown') {
+            $pending = WP_Dynamic_Tags_Migration_Engine::get_instance()->refresh_pending_flag() ? '1' : '0';
+        }
+        if ((string) $pending !== '1') {
+            return;
+        }
+
+        global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table names are $wpdb's and the plugin's own; every value goes through prepare()
+        $posts = $wpdb->get_results($wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_content FROM {$wpdb->posts} p LEFT JOIN {$this->db_manager->get_table_name()} t ON t.post_id = p.ID WHERE p.post_type = %s AND p.post_status = 'publish' AND t.id IS NULL ORDER BY p.ID ASC",
+            WP_Dynamic_Tags_Migration_Engine::POST_TYPE
+        ));
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        $reserved = array('dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_else', 'dt_template');
+        foreach ((array) $posts as $post) {
+            $code = WP_Dynamic_Tags_Migration_Planner::derive_shortcode((string) $post->post_title);
+            if (trim((string) $post->post_title) === '' || (string) $post->post_content === '' || in_array($code, $reserved, true) || isset($this->registered_shortcodes[$code])) {
+                continue; // nothing to show, a name of the core shortcodes, or a real row already owns the name
+            }
+            $row = (object) array(
+                'id' => -((int) $post->ID), 'tag_name' => (string) $post->post_title, 'shortcode' => $code, 'content' => (string) $post->post_content,
+                'description' => '', 'category_id' => 0, 'priority' => 0, 'usage_count' => 0, 'status' => 'active', 'meta_data' => '', 'post_id' => (int) $post->ID,
+            );
+            if ($this->register_single_shortcode($row)) {
+                $this->legacy_rows[] = $row;
+            }
+        }
+    }
+
     /**
      * Register a single shortcode from table data
      */
@@ -135,8 +261,13 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             return $this->process_shortcode($tag, $atts);
         };
 
-        // Register shortcode
+        // Register shortcode. A name that another plugin (or WordPress) owns is skipped and recorded, never removed (F1);
+        // filter dt_allow_shortcode_override restores the old "last one wins" on purpose.
         if (shortcode_exists($tag->shortcode)) {
+            if (!WP_Dynamic_Tags_Plugin::shortcode_is_ours($tag->shortcode) && !apply_filters('dt_allow_shortcode_override', false, $tag->shortcode)) {
+                WP_Dynamic_Tags_Plugin::note_shortcode_conflict($tag->shortcode);
+                return false;
+            }
             remove_shortcode($tag->shortcode);
         }
 
@@ -147,10 +278,57 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     }
 
     /**
-     * Process shortcode with enhanced features
+     * Tags currently being rendered in this request, keyed by tag id (L8). A tag whose content refers to itself, or two
+     * tags that refer to each other, used to render until PHP ran out of memory and took the page down.
+     *
+     * @var array<int|string, true>
+     */
+    private static $render_stack = array();
+
+    /** Incremented every time a guard trips; a result produced while it changed is context-dependent and not cached. */
+    private static $guard_trips = 0;
+
+    /** How often the render guard cut something off in this request (cycles, depth, output size). */
+    public static function guard_trips() {
+        return self::$guard_trips;
+    }
+
+    /**
+     * Process shortcode with enhanced features.
+     *
+     * Wrapper that applies the recursion guard (cycle detection by tag id, maximum depth, maximum output size, all
+     * filterable) and delegates to render_tag().
      */
     private function process_shortcode($tag, $atts = array()) {
+        $fallback = (is_array($atts) && isset($atts['default'])) ? (string) $atts['default'] : '';
+
+        if (isset(self::$render_stack[$tag->id])) {
+            self::$guard_trips++;
+            WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'cycle'));
+            return $fallback; // cycle: this tag is already being rendered further up
+        }
+
+        $max_depth = max(1, (int) apply_filters('dt_max_render_depth', 10));
+        if (count(self::$render_stack) >= $max_depth) {
+            self::$guard_trips++;
+            WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'depth'));
+            return $fallback;
+        }
+
+        self::$render_stack[$tag->id] = true;
+        try {
+            return $this->render_tag($tag, $atts);
+        } finally {
+            unset(self::$render_stack[$tag->id]);
+        }
+    }
+
+    /**
+     * Render one tag (the body process_shortcode() used to have).
+     */
+    private function render_tag($tag, $atts) {
         $start_time = microtime(true);
+        $trips_before = self::$guard_trips;
 
         try {
             // Track usage
@@ -184,16 +362,34 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
                 $content = $this->process_content($content, $tag, $atts);
             }
 
+            // S10: the output of a tag is not run through wp_kses_post by default (an administrator writes tags and may
+            // add scripts or iframes on purpose); the filter turns it on, per tag.
+            if (apply_filters('dt_kses_tag_output', false, $tag)) {
+                $content = wp_kses_post($content);
+            }
+
             // Apply formatting
             $content = $this->apply_formatting($content, $atts['format'], $tag);
 
-            // Cache result
-            if ($atts['cache'] === 'true') {
+            // Output size guard (L8): nested expansion can multiply output; drop anything beyond the limit.
+            $max_size = (int) apply_filters('dt_max_render_size', 1048576);
+            if ($max_size > 0 && strlen($content) > $max_size) {
+                self::$guard_trips++;
+                WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'size'));
+                return $atts['default'];
+            }
+
+            // Cache result, unless a guard tripped while rendering it: such a result depends on where the tag was
+            // reached from (the render stack), so serving it from the cache elsewhere would be wrong.
+            if ($atts['cache'] === 'true' && self::$guard_trips === $trips_before) {
                 $this->cache[$cache_key] = $content;
             }
 
-            // Performance tracking
+            // Performance tracking: keep only the most recent entries, the list used to grow with every render (L9).
             $execution_time = microtime(true) - $start_time;
+            if (count($this->performance_stats['shortcode_executions']) >= 50) {
+                array_shift($this->performance_stats['shortcode_executions']);
+            }
             $this->performance_stats['shortcode_executions'][] = array(
                 'shortcode' => $tag->shortcode,
                 'execution_time' => $execution_time,
@@ -212,105 +408,33 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Process content with placeholders and dynamic features
      */
     private function process_content($content, $tag, $atts) {
-        // Basic placeholder processing
-        $placeholders = array(
-            '{current_date}' => current_time('Y-m-d'),
-            '{current_time}' => current_time('H:i:s'),
-            '{current_year}' => current_time('Y'),
-            '{site_name}' => get_bloginfo('name'),
-            '{site_url}' => get_site_url(),
-            '{admin_email}' => get_option('admin_email'),
-            '{tag_name}' => $tag->tag_name,
-            '{tag_id}' => $tag->id,
-            '{usage_count}' => $tag->usage_count
+        // Tokens only a table row can answer: the placeholder engine has no tag context. Everything else ({site_name},
+        // {user_name}, {meta:}, {acf:}, {wc:}, formatters, {if}{else}{/if} blocks, ...) belongs to the engine, so a tag
+        // renders the same whatever it came from. (Table-native tags never went through the engine before: {meta:} and
+        // formatters stayed raw in them, and this class kept its own, smaller list of tokens and conditions.)
+        $content = str_replace(
+            array('{tag_name}', '{tag_id}', '{usage_count}', '{user_id}'),
+            array($tag->tag_name, $tag->id, $tag->usage_count, get_current_user_id()),
+            (string) $content
         );
 
-        // User-specific placeholders (if user is logged in)
-        if (is_user_logged_in()) {
-            $current_user = wp_get_current_user();
-            $placeholders['{user_name}'] = $current_user->display_name;
-            $placeholders['{user_email}'] = $current_user->user_email;
-            $placeholders['{user_id}'] = $current_user->ID;
-        } else {
-            $placeholders['{user_name}'] = 'Guest';
-            $placeholders['{user_email}'] = '';
-            $placeholders['{user_id}'] = '0';
-        }
+        // Placeholders, formatters and conditional blocks (filter dt_process_value, hooked by WP_Dynamic_Tags_Placeholders)
+        $content = apply_filters('dt_process_value', $content);
 
-        // Post-specific placeholders (if in post context)
-        if (is_singular()) {
-            global $post;
-            if ($post) {
-                $placeholders['{post_title}'] = $post->post_title;
-                $placeholders['{post_id}'] = $post->ID;
-                $placeholders['{post_url}'] = get_permalink($post->ID);
-                $placeholders['{post_author}'] = get_the_author_meta('display_name', $post->post_author);
-            }
-        }
-
-        // Apply placeholders
-        $content = str_replace(array_keys($placeholders), array_values($placeholders), $content);
-
-        // Process conditional content
-        $content = $this->process_conditionals($content);
-
-        // Process nested shortcodes
-        $content = do_shortcode($content);
-
-        return $content;
+        // Nested shortcodes
+        return do_shortcode($content);
     }
 
     /**
-     * Process conditional content blocks
+     * Whether a time of day (minutes since midnight) lies inside [start, end], both inclusive. A window whose end is
+     * before its start runs through midnight (22:00-06:00); the old string comparison could never be true for it (L2).
+     * Pure, so it is unit tested without WordPress.
      */
-    private function process_conditionals($content) {
-        // Pattern: {if:condition}content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{\/if\}/s';
-
-        return preg_replace_callback($pattern, function($matches) {
-            $condition = trim($matches[1]);
-            $conditional_content = $matches[2];
-
-            if ($this->evaluate_condition($condition)) {
-                return $conditional_content;
-            }
-
-            return '';
-        }, $content);
-    }
-
-    /**
-     * Evaluate conditional expressions
-     */
-    private function evaluate_condition($condition) {
-        // Simple condition evaluation
-        if (strpos($condition, 'user_logged_in') !== false) {
-            return is_user_logged_in();
+    public static function time_in_window(int $now, int $start, int $end): bool {
+        if ($start <= $end) {
+            return $now >= $start && $now <= $end;
         }
-
-        if (strpos($condition, 'is_admin') !== false) {
-            return current_user_can('manage_options');
-        }
-
-        if (strpos($condition, 'is_mobile') !== false) {
-            return wp_is_mobile();
-        }
-
-        if (preg_match('/time_between\((\d{1,2}):(\d{2}),(\d{1,2}):(\d{2})\)/', $condition, $matches)) {
-            $start_hour = intval($matches[1]);
-            $start_min = intval($matches[2]);
-            $end_hour = intval($matches[3]);
-            $end_min = intval($matches[4]);
-
-            $current_time = current_time('H:i');
-            $start_time = sprintf('%02d:%02d', $start_hour, $start_min);
-            $end_time = sprintf('%02d:%02d', $end_hour, $end_min);
-
-            return ($current_time >= $start_time && $current_time <= $end_time);
-        }
-
-        // Default to false for unknown conditions
-        return false;
+        return $now >= $start || $now <= $end;
     }
 
     /**
@@ -331,7 +455,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
                 return wp_trim_words($content, 55, '...');
 
             case 'no_html':
-                return strip_tags($content);
+                return wp_strip_all_tags($content); // also drops what is inside <script> and <style>, which strip_tags() leaves behind as text
 
             case 'html_entities':
                 return htmlentities($content);
@@ -641,12 +765,70 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         }
     }
 
+    /** @var array<int|string, int> Renders per tag id of this request, waiting for the shutdown flush. */
+    private $usage_counts = array();
+
+    /** @var bool */
+    private $usage_flush_hooked = false;
+
+    /**
+     * Whether this request counts tag usage: off by default (option wp_dynamic_tags_track_usage, filter dt_track_usage),
+     * and never on admin, AJAX, cron or REST requests or in a preview, whatever the setting says.
+     */
+    public static function usage_tracking_enabled() {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron() || (defined('REST_REQUEST') && REST_REQUEST) || is_preview()) {
+            return false;
+        }
+        return (bool) apply_filters('dt_track_usage', (bool) get_option('wp_dynamic_tags_track_usage', false));
+    }
+
+    /**
+     * Writes the counts of this request: one UPDATE per distinct tag (usage_count + n), at shutdown. The modification date
+     * is left alone (a view is not an edit). A failing write is swallowed: it must never reach the page that was rendered.
+     */
+    public function flush_usage() {
+        if (!$this->usage_counts) {
+            return;
+        }
+        global $wpdb;
+        $counts = $this->usage_counts;
+        $this->usage_counts = array();
+        $table = $this->db_manager->get_table_name();
+        $previous = $wpdb->suppress_errors(true);
+        try {
+            $now = current_time('mysql');
+            foreach ($counts as $tag_id => $n) {
+                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table names are $wpdb's and the plugin's own; every value goes through prepare()
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$table} SET usage_count = usage_count + %d, last_used_date = %s, modified_date = modified_date WHERE id = %d",
+                    $n,
+                    $now,
+                    (int) $tag_id
+                ));
+                // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            }
+        } catch (Throwable $e) {
+            // swallowed on purpose
+        } finally {
+            $wpdb->suppress_errors($previous);
+        }
+    }
+
     /**
      * Track shortcode usage
      */
     private function track_usage($tag_id) {
-        // Update usage count in table
-        $this->table_manager->track_usage($tag_id);
+        // Counted in memory and written once at shutdown, and only when counting is switched on: this used to be an UPDATE
+        // on every render (40 renders = 40 writes). The facade method Table_Manager::track_usage() still writes at once for
+        // callers that ask for it.
+        if ($tag_id > 0 && self::usage_tracking_enabled()) {
+            $this->usage_counts[$tag_id] = ($this->usage_counts[$tag_id] ?? 0) + 1;
+            if (!$this->usage_flush_hooked) {
+                add_action('shutdown', array($this, 'flush_usage'));
+                $this->usage_flush_hooked = true;
+            }
+        }
+        do_action('wp_dynamic_tags_tag_used', $tag_id); // in memory, as before; listeners decide what to do with it
 
         // Track in performance stats
         if (!isset($this->performance_stats['usage_tracking'])) {
@@ -664,13 +846,17 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Generate cache key
      */
     private function get_cache_key($tag, $atts) {
-        return 'dt_cache_' . $tag->id . '_' . md5(serialize($atts));
+        // The output depends on where and for whom a tag is rendered ({post_title}, {meta:}, {user_role}, ...): the same tag
+        // shown in several posts of one archive page, or after the current user changed, must not reuse the first output.
+        return 'dt_cache_' . $tag->id . '_' . md5(serialize($atts)) . '_' . (int) get_the_ID() . '_' . get_current_user_id();
     }
 
     /**
      * Handle tag creation
      */
     public function on_tag_created($tag_id, $data) {
+        $this->tag_index = null;
+
         // Register new shortcode if it has one
         if (!empty($data['shortcode'])) {
             $tag = $this->table_manager->get_tag($tag_id);
@@ -681,22 +867,25 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     }
 
     /**
-     * Handle tag update
+     * Handle tag update.
+     *
+     * The callback of a registered shortcode holds the row it was registered with, so after any change the shortcode is
+     * registered again from the stored row: an edit shows at once (also to code that edits and renders in the same
+     * request), a tag switched off stops rendering, one switched on starts, and a renamed one moves to its new name.
      */
     public function on_tag_updated($tag_id, $data, $old_data) {
-        // If shortcode changed, update registration
-        if (isset($data['shortcode']) && $data['shortcode'] !== $old_data->shortcode) {
-            // Remove old shortcode
-            if (shortcode_exists($old_data->shortcode)) {
-                remove_shortcode($old_data->shortcode);
-                unset($this->registered_shortcodes[$old_data->shortcode]);
-            }
+        $old_code = isset($old_data->shortcode) ? (string) $old_data->shortcode : '';
 
-            // Register new shortcode
-            $tag = $this->table_manager->get_tag($tag_id);
-            if ($tag) {
-                $this->register_single_shortcode($tag);
+        if ($old_code !== '' && isset($this->registered_shortcodes[$old_code])) {
+            if (shortcode_exists($old_code) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_code)) {
+                remove_shortcode($old_code);
             }
+            unset($this->registered_shortcodes[$old_code]);
+        }
+
+        $tag = $this->table_manager->get_tag($tag_id);
+        if ($tag && $tag->status === 'active') {
+            $this->register_single_shortcode($tag);
         }
 
         // Clear cache for this tag
@@ -708,7 +897,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      */
     public function on_tag_deleted($tag_id, $old_data) {
         // Remove shortcode
-        if (!empty($old_data->shortcode) && shortcode_exists($old_data->shortcode)) {
+        if (!empty($old_data->shortcode) && shortcode_exists($old_data->shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_data->shortcode)) {
             remove_shortcode($old_data->shortcode);
             unset($this->registered_shortcodes[$old_data->shortcode]);
         }
@@ -721,6 +910,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      * Clear cache for specific tag
      */
     private function clear_tag_cache($tag_id) {
+        $this->tag_index = null;
         $keys_to_remove = array();
 
         foreach ($this->cache as $key => $value) {
@@ -766,6 +956,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
      */
     public function clear_all_caches() {
         $this->cache = array();
+        $this->tag_index = null;
     }
 
     /**
@@ -774,7 +965,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     public function force_reregister() {
         // Remove existing shortcodes
         foreach ($this->registered_shortcodes as $shortcode => $tag_id) {
-            if (shortcode_exists($shortcode)) {
+            if (shortcode_exists($shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($shortcode)) {
                 remove_shortcode($shortcode);
             }
         }

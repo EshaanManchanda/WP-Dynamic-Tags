@@ -1,0 +1,11 @@
+{
+  "name": "eshaanmanchanda/wp-dynamic-tags-tools-mutation",
+  "description": "Infection mutation testing for the pure-logic classes. Not shipped.",
+  "type": "project",
+  "require-dev": { "infection/infection": "^0.29" },
+  "config": {
+    "allow-plugins": { "infection/extension-installer": true },
+    "platform": { "php": "8.2.29" },
+    "sort-packages": true
+  }
+}

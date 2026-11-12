@@ -1,17 +1,17 @@
 # WP Dynamic Tags
 
-> Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders.
+> Create and manage dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders. Free for up to 15 tags you create yourself; Paid is unlimited and adds the dynamic-data layer.
 
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
-[![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-brightgreen.svg)](https://wordpress.org/)
-[![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
+[![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-brightgreen.svg)](https://wordpress.org/)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-purple.svg)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPL%20v2%2B-red.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 
 ---
 
 ## 📋 Description
 
-**WP Dynamic Tags** is a powerful WordPress plugin that allows you to create unlimited dynamic content tags and use them as shortcodes throughout your website. Whether you're using the default WordPress editor, Elementor, or any other page builder, this plugin seamlessly integrates to provide dynamic, reusable content snippets.
+**WP Dynamic Tags** is a powerful WordPress plugin that allows you to create dynamic content tags and use them as shortcodes throughout your website. Whether you're using the default WordPress editor, Elementor, or any other page builder, this plugin seamlessly integrates to provide dynamic, reusable content snippets.
 
 Perfect for:
 - 🏢 **Agencies** managing multiple client sites with reusable content
@@ -25,16 +25,16 @@ Perfect for:
 ## ✨ Key Features
 
 ### 🎯 Core Functionality
-- **Unlimited Dynamic Tags** - Create as many tags as you need with custom content
-- **Universal Shortcode Support** - Works with WordPress core, Elementor, and all major page builders
-- **Dual Storage System** - Choose between WordPress post types or optimized custom database table
-- **Smart Migration** - Seamlessly migrate between storage systems without data loss
+- **Free and Paid** - Free is complete on its own: 15 tags you create yourself (tags other plugins create never count, and existing tags always keep working). Paid is unlimited and adds `{wc:}`, `{user_meta:}`, `{term_meta:}`, `{query:}`, `{api:}`, `{func:}`, ACF repeaters and relationships, `[dt_loop]`, `[dt_template]` and field-based conditions. A Paid feature on a Free site renders nothing; the admin labels it. Details: [Free and Paid](docs/RELEASE-NOTES-3.1.0.md#free-and-paid) and `LICENSE-PLAN.md`
+- **Universal Shortcode Support** - Works with the block editor, Elementor and any builder or theme that runs shortcodes
+- **One tag store** - Tags live in a single optimized database table, and nothing is written to the database while a page renders
+- **Safe migration** - Tags from older versions (stored as posts) are migrated in batches, verified, and only removed when you confirm
 
 ### 📁 Organization & Management
-- **Tag Groups (Taxonomy)** - Organize tags hierarchically with custom categories
-- **Bulk Operations Manager** - Edit, delete, or modify multiple tags at once
-- **Inline Editing** - Quick edit tags directly from the admin list view
-- **Advanced Filtering** - Filter by groups, conflict status, usage, date, and content length
+- **One screen** - Search, filter, sort and page through your tags, see what each one renders to, edit, duplicate, activate, deactivate or delete them, singly or in bulk
+- **Live preview** - See a tag's output while you edit it, rendered by the same engine as your pages
+- **Tag Groups** - Organize tags in a hierarchy of groups (a tag belongs to one group)
+- **Safe by design** - No tag can take a shortcode name that belongs to the plugin, to WordPress or to another plugin, and no tag can render itself
 
 ### 🔄 Dynamic Placeholders
 Automatically inject real-time data into your tags:
@@ -157,27 +157,28 @@ Render an existing Dynamic Tag once per post in a query:
 [dt_template tag="product_card" query="post_type=product&posts_per_page=6"]
 ```
 
-### 🛡️ Conflict Resolution System
-- **Automatic Detection** - Identifies duplicate tag names and shortcode conflicts
-- **Smart Resolution** - Multiple strategies to resolve conflicts:
-  - Group-based organization
-  - ID prefix generation
-  - Automatic merging options
-- **Visual Indicators** - Clear admin UI showing conflict status
-- **Bulk Resolution** - Resolve multiple conflicts at once
+### 🛡️ Safe by Design
+- **Reserved and foreign names** - A tag cannot be named like one of the plugin's own shortcodes (`dt`, `dt_group`, `dt_loop`, anything starting with `dt_table_`, ...) or like a shortcode WordPress or another plugin already owns
+- **No loops** - A tag that would render itself, directly or through other tags, is refused when you save it (and cut off at render time as a second line of defence)
+- **Filtered markup** - Content written by a user without the `unfiltered_html` capability is filtered like post content
+- **Render limits** - Nesting depth and output size are capped (`dt_max_render_depth`, `dt_max_render_size`)
+- **Token safety** - `{query:}` and `[dt_template]` only see what the visitor may read, `{meta:}` refuses protected keys, and `{api:}` only fetches public hosts, with size, type and count limits
 
 ### 📤 Import/Export Capabilities
-- **Multiple Formats**: JSON, CSV, XML, SQL
-- **Selective Export** - Export all tags or by group
-- **Conflict Handling** - Choose how to handle duplicates on import
-- **Sample Files Included** - Get started quickly with examples
+- **Formats**: export to JSON, CSV, XML or SQL; import from JSON, CSV or XML (SQL is export only)
+- **Selective Export** - Export all tags, only the active or inactive ones, or one group
+- **Check first** - *Validate* lists every problem by row number and changes nothing
+- **Good rows are imported, bad rows are reported** - each by its number in the file, with the reason
+- **Duplicates** - skip tags whose shortcode already exists, or update them
+- **Spreadsheet safe** - CSV cells a spreadsheet would run as a formula (they start with `=`, `+`, `-`, `@`, a tab or a carriage return) get a leading apostrophe on export; the import removes it again, so an export read back is identical
+- **Sample files** - a minimal and a full CSV in the exact export layout
 
-### ⚡ Performance Optimizations
-- **Multi-level Caching** - WordPress transients, object cache, and static caching
-- **Query Optimization** - Reduced database queries with smart caching
-- **Lazy Loading** - Load tags on-demand for better performance
-- **Cache Invalidation** - Automatic cache clearing on content updates
-- **Performance Monitoring** - Built-in performance statistics tracking
+### ⚡ Performance
+- **No writes while rendering** - Rendering a page does not update a counter, set a transient or check the schema
+- **One query** - All active tags are loaded with a single query per request
+- **Opt-in usage counting** - Off by default; when on, counts are kept in memory and written once at the end of the request, never on admin, AJAX, REST, cron or preview requests
+- **Fast imports** - 5,000 rows import in about 15 to 20 seconds on a development PC
+- **How many tags?** There is no built-in limit. Every request registers every active tag as a shortcode, so the cost grows with the number of tags. Measured on a development PC (PHP 8.2, MySQL 8.4, ten plugins active, no page cache), per uncached page: 1,000 tags about +2 MB and +10 ms; 5,000 about +10 MB and +55 ms; 10,000 about +20 MB and +110 ms; 20,000 about +40 MB and +210 ms; 50,000 about +106 MB and +550 ms. **On shared hosting (one CPU core, 1 GB RAM) keep a site to 5,000 tags, or 10,000 behind a page cache.** Larger sets work (a 50,000-tag site was imported, listed, searched and exported without errors) but every uncached request pays for them. Part of the cost is WordPress itself: `do_shortcode()` compares every registered shortcode name on each call. The same explanation, with this site's live numbers and a status, is on **Dynamic Tags > Settings**.
 
 ---
 
@@ -192,18 +193,15 @@ Render an existing Dynamic Tag once per post in a query:
 
 ### Method 2: Manual Installation
 1. Download and extract the plugin files
-2. Upload the `wp-dynamic-tags-v2` folder to `/wp-content/plugins/`
+2. Upload the plugin folder to `/wp-content/plugins/`
 3. Activate the plugin through the **Plugins** menu in WordPress
 
-### Method 3: FTP
-1. Extract the plugin ZIP file
-2. Upload via FTP to `/wp-content/plugins/wp-dynamic-tags-v2`
-3. Activate through WordPress admin
-
 ### Requirements
-- ✅ WordPress 5.0 or higher
-- ✅ PHP 7.4 or higher
-- ✅ MySQL 5.6 or higher
+- ✅ WordPress 7.0 or higher (single site or network)
+- ✅ PHP 8.2 or higher
+- ✅ A database version supported by WordPress 7.0 (tested on MySQL 8.4)
+
+On a network the plugin works per site: each site has its own tags, table and settings, and the table is created the first time a site needs it.
 
 ---
 
@@ -211,17 +209,17 @@ Render an existing Dynamic Tag once per post in a query:
 
 ### Creating Your First Dynamic Tag
 
-1. **Navigate to Dynamic Tags**
-   - Go to **Dynamic Tags > All Tags** or **Dynamic Tags > Quick Create**
+1. **Open Dynamic Tags > Add New**
 
-2. **Create a New Tag**
-   - **Tag Name**: Enter a unique name (e.g., "company_phone")
-   - **Tag Content**: Enter the content (e.g., "1-800-555-0100")
-   - **Assign to Group** (optional): Organize with tag groups
+2. **Fill in the form**
+   - **Name**: letters, numbers, spaces, hyphens and underscores (e.g. "Company Phone")
+   - **Shortcode**: optional; made from the name when left empty (e.g. `company_phone`)
+   - **Content**: e.g. `1-800-555-0100`. WordPress's editor, with its **Visual** and **Code** tabs; use **Code** for conditions that contain `<` or `>`. **Preview** shows the output.
+   - **Group**, **Priority** and **Status** are optional
 
-3. **Use the Shortcode**
-   - Use `[company_phone]` anywhere on your site
-   - Works in posts, pages, widgets, and page builders
+3. **Save, then use the shortcode**
+   - Click **Copy** next to the shortcode in **All Tags**
+   - Use `[company_phone]` anywhere on your site: posts, pages, widgets and page builders
 
 ### Using Dynamic Placeholders
 
@@ -246,147 +244,132 @@ Output: © 2025 My Website. All rights reserved.
 ### Tag Groups / Organization
 
 **Creating Tag Groups:**
-1. Go to **Dynamic Tags > Tag Groups**
-2. Click **Add New Group**
-3. Enter group name and description
-4. Organize tags by assigning them to groups
+1. Go to **Dynamic Tags > Groups**
+2. Add a group, with an optional parent, colour and description
+3. Put a tag in a group on its form, or filter **All Tags** by group
 
-**Benefits of Tag Groups:**
-- Logical organization of related tags
-- Bulk operations on grouped tags
-- Group-specific shortcodes (`[dt_group]`, `[dt_random group="..."]`)
-- Filter and search by group
+**What groups give you:**
+- Logical organization of related tags, as a tree
+- Group shortcodes (`[dt_group]`, `[dt_random group="..."]`, `[dt_count]`, `[dt_list]`)
+- Filtering and exporting by group
 
-### Bulk Operations
+A tag belongs to one group. Deleting a group does not delete its tags; they simply have no group afterwards.
 
-**Access Bulk Manager:**
-- Go to **Dynamic Tags > Bulk Manager**
+### Managing Many Tags at Once
 
-**Available Operations:**
-- ✏️ Inline editing of tag content
-- 🗑️ Bulk delete multiple tags
-- 📁 Bulk assign to groups
-- 🔄 Bulk status changes
+On **Dynamic Tags > All Tags**, select rows and choose a bulk action:
+- ✅ Activate / ⏸ Deactivate
+- 📋 Duplicate
+- 🗑 Delete
+
+Each row also has **Edit**, **Duplicate**, **Activate / Deactivate** and **Delete** links. The **Value** column shows what each tag renders to (blank when it cannot be rendered outside a page).
 
 ### Import/Export Workflows
 
 #### Exporting Tags
 
-1. Go to **Dynamic Tags > Import/Export**
-2. Choose export format (JSON, CSV, XML, SQL)
-3. Select tags to export:
-   - All tags
-   - By specific group
-   - Selected tags
-4. Click **Export** - file downloads automatically
+1. Go to **Dynamic Tags > Import / Export**
+2. Choose the format (JSON, CSV, XML, SQL)
+3. Optionally filter by status and group
+4. Click **Export**. The file downloads once, only for the person who exported, and the link works for ten minutes.
 
 #### Importing Tags
 
-1. Go to **Dynamic Tags > Import/Export**
-2. Select import format
-3. Upload your file
-4. Choose conflict handling:
-   - **Skip**: Skip duplicate tags
-   - **Update**: Update existing tags
-   - **Create New**: Create with modified names
-5. Click **Import**
+1. Go to **Dynamic Tags > Import / Export**
+2. Choose a `.json`, `.csv` or `.xml` file (SQL files are refused). Up to 5 MB and 5,000 rows by default.
+3. Click **Validate** to see every problem by row number. Nothing is changed.
+4. Tick the options you want:
+   - **Skip duplicates** (on by default): a row whose shortcode already exists is left alone
+   - **Update existing tags**: such a row replaces the content, description, priority and status of the existing tag. If both are ticked, update wins.
+5. Click **Import**. Valid rows are imported; the rest are listed with their row numbers.
 
-### Database Migration
+What to know about a file:
 
-**Migrating from Post Type to Custom Table:**
+- **CSV** needs the header row the export writes (at least `Tag Name` and `Shortcode`); a spreadsheet's byte order mark, CRLF line endings, quoted values that span lines and unknown extra columns are fine. The sample files are in `assets/`.
+- **XML** must be UTF-8 and must not contain a DOCTYPE or entity declaration.
+- **Names and shortcodes** follow the same rules as the editor (letters, numbers, spaces, hyphens and underscores; the plugin's own shortcodes such as `dt_group` and names owned by WordPress or other plugins are refused; a tag may not refer back to itself).
+- **Groups**: a group id that does not exist on this site is dropped (the tag is imported without a group), because ids differ between sites. An update never removes a tag from its group, and never replaces this site's usage counter or meta data with the file's.
+- **Content** is filtered like everything saved in the editor: users without the `unfiltered_html` capability get post-style filtering.
+- **Limits** can be changed with the filters `dt_import_max_bytes` (default 5 MB) and `dt_import_max_rows` (default 5,000).
 
-1. Go to **Dynamic Tags > Table Manager**
-2. View migration status
-3. Click **Migrate to Custom Table**
-4. Migration runs with progress indicator
-5. Automatic verification of migrated data
+### Moving from an Older Version
 
-**Benefits of Custom Table:**
-- ⚡ Better performance for large numbers of tags
-- 🔍 Advanced query capabilities
-- 📊 Better scalability
-- 🔄 Maintains compatibility with post type system via bridge
+Tags created by earlier versions as `dynamic_tag` posts are moved into the table:
+
+1. Back up your database
+2. Open **Dynamic Tags > Tools**. The migration panel shows how many old tag posts are not yet migrated
+3. Run the dry run, then migrate; it works in batches with a progress indicator
+4. Verify. Old posts are **never deleted automatically**: after the verification passes you can choose to clean them up, and a backup of exactly what is deleted is written first
+
+The same steps are available from WP-CLI: `wp dynamic-tags status | migrate [--dry-run] | verify | cleanup | conflicts | resolve | restore | rescan`.
+
+Until you clean up, a write to an old tag post (by another plugin, for example) is copied into the table, and an old post that has no row yet still renders.
+
+### Diagnostics and the Debug Log
+
+**Dynamic Tags > Tools** shows the table's health, the shortcodes that were not registered because another plugin owns the name, the migration state, and the debug log. The log is off unless the filter `dt_debug_mode` (or the constant `DT_DEBUG_MODE`) is true; it records only tag ids, shortcodes, the kind of problem and the time, never content or credentials.
 
 ---
 
 ## 🎛️ Advanced Features
 
-### Conflict Resolution
+### Shortcodes Owned by Other Plugins
 
-**Automatic Conflict Detection:**
-The plugin automatically detects:
-- Duplicate tag names
-- Shortcode conflicts with other plugins
-- Group assignment conflicts
+A tag whose shortcode name is already registered by WordPress or another plugin is never allowed to replace it: the form refuses the name, and a tag that is already in the table with such a name is skipped at render time and listed on the Tools screen (action `dt_shortcode_conflict`). The filter `dt_allow_shortcode_override` lets you allow a specific name.
 
-**Resolution Strategies:**
+### Delegating Tag Management
 
-1. **Group-Based Organization**
-   - Assigns tags to groups to create unique shortcodes
-   - Example: `[promo]` becomes `[promo-group-seasonal]`
+By default everything needs `manage_options`. The filter `dt_manage_capability` hands the **All Tags** and **Add New** screens (and the preview) to another capability, for example `edit_pages`. Import / Export, Tools, Settings, the licence settings and the migration always need `manage_options`.
 
-2. **ID Prefix Strategy**
-   - Adds post ID prefix to shortcode
-   - Example: `[promo]` becomes `[promo-123]`
+### Edits Show on the Whole Site
 
-3. **Manual Merge**
-   - Merge duplicate tags into one
-   - Combine content and groups
+The plugin keeps nothing between requests, so an edit to a tag shows on the next page load. If your site has a page
+cache, it is purged for you when a tag or a group changes (WP Rocket, LiteSpeed Cache, W3 Total Cache, WP Super Cache,
+WP Fastest Cache, SiteGround Optimizer, Hummingbird, Breeze, Cache Enabler, Nginx Helper and the Cloudflare plugin): once
+per request, and only when something a page shows really changed. Other cache layers can listen to the action
+`dt_tags_changed`; the filter `dt_purge_page_caches` turns the built-in purge off.
 
-**Access Conflict Manager:**
-- Go to **Dynamic Tags > Conflict Manager**
-- View all detected conflicts
-- Apply bulk resolution strategies
+### Usage Counting
 
-### Performance Optimization
-
-**Built-in Optimizations:**
-- 🚀 Multi-level caching (transients, object cache, static)
-- 📉 Query reduction (up to 80% fewer database calls)
-- ⚡ Lazy shortcode registration
-- 🔄 Smart cache invalidation
-- 📊 Performance monitoring dashboard
-
-**Manual Cache Control:**
-- Clear cache from admin bar
-- Force refresh shortcodes
-- Monitor query counts and execution time
+Off by default. Switch it on in **Dynamic Tags > Settings** (or with the filter `dt_track_usage`) to fill the **Used** column. Counts are kept in memory while the page renders and written once when the request ends.
 
 ### Developer Features
 
-**Available Hooks & Filters:**
+**Hooks:** the complete list of filters and actions, with arguments and defaults, is in [`docs/API.md`](docs/API.md). A few examples:
 
 ```php
-// Modify tag content before display
-add_filter('dt_process_value', function($content) {
-    return strtoupper($content);
+// Change the content of every tag before it is displayed
+add_filter('dt_process_value', function ($content) {
+    return $content;
 });
 
-// Add custom placeholders
-add_filter('dt_register_placeholder', function($placeholders) {
-    $placeholders['custom_data'] = 'Your custom value';
-    return $placeholders;
-});
+// Allow another plugin's shortcode name for a tag
+add_filter('dt_allow_shortcode_override', function ($allow, $shortcode) {
+    return $shortcode === 'my_known_name' ? true : $allow;
+}, 10, 2);
 
-// Modify shortcode output
-add_filter('dt_shortcode_output', function($output, $tag_id) {
-    return '<div class="dynamic-tag">' . $output . '</div>';
+// Refuse new tags beyond a limit
+add_filter('dt_can_create_tag', function ($allowed, $data) {
+    return count(WP_Dynamic_Tags_Table_Manager::get_instance()->get_tags(array('status' => ''))) >= 100
+        ? new WP_Error('my_limit', 'Tag limit reached.')
+        : $allowed;
 }, 10, 2);
 ```
 
-**Database Access:**
+**Creating tags from code** goes through the stable facade:
 
 ```php
-// Get table manager instance
-$table_manager = WP_Dynamic_Tags_Plugin::get_instance()->get_table_manager();
+$dt = WP_Dynamic_Tags_Table_Manager::get_instance();
 
-// Create tag programmatically
-$result = $table_manager->create_tag(array(
-    'tag_key' => 'promo_text',
-    'tag_value' => 'Special Offer!',
-    'tag_group' => 'marketing',
-    'status' => 'active'
+$id = $dt->create_tag(array(
+    'tag_name'  => 'Promo Text',
+    'shortcode' => 'promo_text',
+    'content'   => 'Special offer for {user_display_name}!',
+    'status'    => 'active',
 ));
+if (is_wp_error($id)) {
+    // for example dt_reserved_shortcode, dt_shortcode_conflict, dt_circular_reference, validation_failed
+}
 ```
 
 ---
@@ -452,33 +435,37 @@ $result = $table_manager->create_tag(array(
 ### Common Issues
 
 **Shortcodes Not Working**
-- ✅ Ensure plugin is activated
-- ✅ Check tag name is correct (case-sensitive)
-- ✅ Clear cache (WordPress cache, page builder cache)
-- ✅ Go to **Dynamic Tags > All Tags** and click "Refresh Shortcodes"
+- ✅ Ensure the plugin is activated and the tag is **Active**
+- ✅ Check the shortcode in **All Tags** (use the **Copy** button)
+- ✅ Open **Dynamic Tags > Tools**: it lists names another plugin owns
+- ✅ Clear page and builder caches
 
-**Duplicate Tag Names**
-- ✅ Use **Conflict Manager** to auto-resolve
-- ✅ Assign tags to different groups
-- ✅ Use unique tag names
+**A Name Is Refused**
+- ✅ Names and shortcodes must be unique
+- ✅ `dt`, `dt_group`, `dt_loop` and the other plugin shortcodes are reserved, as is anything starting with `dt_table_`
+- ✅ A name WordPress or another plugin uses cannot be taken
+
+**A Tag Is Refused Because It Would Render Itself**
+- ✅ Remove the `[shortcode]` of the tag (or of a tag that refers back to it) from its content
 
 **Import Fails**
-- ✅ Check file format matches selected import type
-- ✅ Ensure file encoding is UTF-8
-- ✅ Verify file structure against sample files
+- ✅ Use a `.json`, `.csv` or `.xml` file (SQL cannot be imported)
+- ✅ Ensure file encoding is UTF-8 (XML must be UTF-8)
+- ✅ Click **Validate**: every problem is listed by row number
+- ✅ Compare the file with the sample files in `assets/`
+- ✅ Too many rows? Split the file or raise the `dt_import_max_rows` filter
 - ✅ Check PHP upload limits (upload_max_filesize, post_max_size)
 
 **Performance Issues**
-- ✅ Enable object caching (Redis, Memcached)
-- ✅ Clear old transient data
-- ✅ Migrate to custom table for better performance
-- ✅ Reduce number of dynamic placeholders
+- ✅ Keep usage counting off unless you need the counts
+- ✅ Use a page cache for pages with many tags; rendering itself writes nothing
+- ✅ Reduce the number of `{query:}` and `{api:}` placeholders on one page
 
 **Migration Issues**
-- ✅ Backup database before migration
-- ✅ Ensure adequate database permissions
-- ✅ Check PHP memory limit (256M+ recommended)
-- ✅ Monitor migration progress log
+- ✅ Back up the database before you migrate
+- ✅ Check PHP memory (256M or more is recommended for large sites)
+- ✅ Use the dry run first, then **Verify**; every run keeps a log on the Tools screen
+- ✅ A migration backup is a file in `uploads/wp-dynamic-tags-private/`; `wp dynamic-tags restore <file>` puts it back
 
 ---
 
@@ -527,15 +514,29 @@ CREATE TABLE wp_dynamic_tags (
 - `usage_count` - Number of times used
 - `created_date` / `modified_date` - Timestamps, auto-managed by MySQL
 - `last_used_date` - Last time the shortcode was rendered
-- `status` - active/inactive/trash
-- `meta_data` - Serialized extra metadata
-- `post_id` - Linked CPT post ID, when using the dual-storage bridge
+- `status` - active/inactive
+- `meta_data` - Extra data (JSON or serialized; never instantiated as objects)
+- `post_id` - Link to a legacy tag post (kept for the migration only)
 
 ---
 
 ## 🔄 Changelog
 
-### Version 3.0.0 (Current)
+### Version 3.1.0
+**One tag store, no writes while rendering, one admin screen**
+
+- ✨ The custom table is the only place tags live; the Bridge, dual mode and the post editor for tags are gone
+- ✨ Nothing is written while a page renders; usage counting is opt-in
+- ✨ A new admin: one menu, a searchable and sortable list with a **Value** column, bulk actions, a form with live preview, Tools and diagnostics
+- ✨ Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved
+- ✨ Import and export rebuilt: lossless CSV, per-row reports, limits, SQL is export only
+- ✨ **Free and Paid plans are enforced:** 15 tags you create yourself on Free (Add New, Duplicate, Import; tags other plugins create are never blocked or counted, existing tags keep working), Paid unlimited; Paid features render nothing on a Free site and are labelled in the admin; the license server is `https://tlvapi.techlovev.in` by default and a key is accepted only from it (https only)
+- ✨ All Tags and Add New warn when a site has more active tags than its server is advised to carry
+- ✨ **Settings > Tags and your server** explains how tags work and why a lot of tags slow a site down, shows this site's live numbers (tags, PHP memory limit, page cache, load time) with a Fine / Watch / Too many status, and recommends tag counts by kind of hosting
+- 🐛 The audit findings of 3.0.0 are fixed (see `docs/BUG-REGISTER.md`), including token safety, the missing recursion guard, export and import hardening and uninstall
+- 📖 Every deliberate difference in output is listed in `docs/RELEASE-NOTES-3.1.0.md`; the public API is in `docs/API.md`
+
+### Version 3.0.0
 **The Placeholder Engine: array data, WooCommerce/ACF, conditionals, external data**
 
 - ✨ 50+ new flat placeholders (post, taxonomy, author, site, URL, date)
@@ -625,7 +626,7 @@ cd wp-dynamic-tags
 This plugin is licensed under the GPL v2 or later.
 
 ```
-WP Dynamic Tags - Create and manage unlimited dynamic tags
+WP Dynamic Tags - Create and manage dynamic tags
 Copyright (C) 2025 Eshaan Manchanda
 
 This program is free software; you can redistribute it and/or modify

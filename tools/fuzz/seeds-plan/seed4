@@ -1,0 +1,1 @@
+{wc:price|currency} {if:meta:k=v}x{else}y{/if} [dt_loop source="query:post_type=page"]{item:title}[/dt_loop] [dt_if condition="wc:price>1"]

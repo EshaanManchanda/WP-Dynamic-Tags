@@ -1,0 +1,38 @@
+/* WP Dynamic Tags admin screens */
+.dt-wrap .dt-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; line-height: 1.6; }
+.dt-wrap .dt-badge-on { background: #d7f0dd; color: #1a5b2a; }
+.dt-wrap .dt-badge-off { background: #e8e8e8; color: #50575e; }
+.dt-wrap .dt-badge-warn { background: #fcf0c8; color: #6b4a00; }
+.dt-wrap .dt-badge-bad { background: #f7d7d9; color: #7a1219; }
+
+/* Settings: "Tags and your server" */
+.dt-wrap .dt-capacity { margin: 20px 0; }
+.dt-wrap .dt-capacity .inside { padding: 4px 16px 16px; }
+.dt-wrap .dt-capacity h2 { margin: 12px 0 0; padding: 0; font-size: 1.3em; }
+.dt-wrap .dt-capacity h3 { margin: 22px 0 8px; font-size: 1.05em; }
+.dt-wrap .dt-capacity ul { margin-left: 20px; list-style: disc; line-height: 1.7; }
+.dt-wrap .dt-capacity table { max-width: 900px; }
+.dt-wrap .dt-capacity caption { caption-side: bottom; padding: 6px 0 0; text-align: left; color: #50575e; }
+.dt-wrap .dt-capacity .dt-facts th { width: 34%; }
+.dt-wrap .dt-capacity .description { max-width: 900px; }
+@media (max-width: 782px) {
+    .dt-wrap .dt-capacity .dt-facts th, .dt-wrap .dt-capacity .dt-facts td { display: block; width: auto; }
+}
+
+.dt-wrap .column-shortcode code { user-select: all; }
+.dt-wrap .column-value { width: 24%; color: #50575e; word-break: break-word; }
+.dt-wrap .column-priority, .dt-wrap .column-usage_count { width: 7em; }
+.dt-wrap .column-status { width: 8em; }
+.dt-wrap .column-cb { width: 2.2em; }
+
+.dt-wrap .dt-form textarea.code { font-family: Menlo, Consolas, monospace; font-size: 13px; }
+.dt-wrap .dt-placeholders { margin: 8px 0; }
+.dt-wrap .dt-placeholders summary { cursor: pointer; }
+.dt-wrap .dt-placeholders code { background: #f0f0f1; padding: 1px 4px; }
+
+.dt-wrap #dt-preview { margin-top: 8px; border: 1px solid #c3c4c7; background: #fff; }
+.dt-wrap .dt-preview-frame { display: block; width: 100%; min-height: 160px; border: 0; }
+
+.dt-wrap .dt-facts th { width: 30%; font-weight: 600; }
+.dt-wrap #dt-import-results { margin-top: 12px; padding: 8px 12px; border-left: 4px solid #72aee6; background: #fff; }
+.dt-wrap #dt-health-result { background: #f6f7f7; padding: 8px 12px; max-width: 640px; overflow: auto; }

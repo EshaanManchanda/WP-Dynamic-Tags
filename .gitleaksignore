@@ -1,0 +1,4 @@
+# Known false positive: a dummy license key used as a test fixture ("PAID-ABCDEFGH-1234" in the Settings page test, which checks that the
+# page masks a stored key). It is not a credential; the generic-api-key rule matches on the option name and the shape of the value.
+73480bbbf894db7ed1cbedde025a6cb9775caa08:tests/wp-admin/SettingsPageTest.php:generic-api-key:176
+tests/wp-admin/SettingsPageTest.php:generic-api-key:176

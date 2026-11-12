@@ -1,0 +1,202 @@
+{
+    "meta": {
+        "php": "8.2.29",
+        "wp": "7.1.4",
+        "dt_posts_before": 0,
+        "rows_before": 7,
+        "certificates_group_exists": true,
+        "actions_fired": {
+            "created": 4,
+            "updated": 0,
+            "deleted": 1,
+            "used": 3
+        }
+    },
+    "cg": {
+        "lookup_missing": {
+            "type": "NULL",
+            "is_int_gt0": false,
+            "value": null
+        },
+        "create": {
+            "type": "integer",
+            "is_int_gt0": true,
+            "value": null
+        },
+        "dt_posts_after_create": 1,
+        "lookup_after_create": {
+            "type": "object:stdClass",
+            "keys": [
+                "category_id",
+                "content",
+                "created_date",
+                "description",
+                "id",
+                "last_used_date",
+                "meta_data",
+                "modified_date",
+                "post_id",
+                "priority",
+                "shortcode",
+                "status",
+                "tag_name",
+                "usage_count"
+            ],
+            "scalar_types": {
+                "category_id": "string",
+                "content": "string",
+                "created_date": "string",
+                "description": "string",
+                "id": "string",
+                "last_used_date": "NULL",
+                "meta_data": "array",
+                "modified_date": "string",
+                "post_id": "string",
+                "priority": "string",
+                "shortcode": "string",
+                "status": "string",
+                "tag_name": "string",
+                "usage_count": "string"
+            }
+        },
+        "render_after_create": "Jane Doe",
+        "update_content": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Tag name is required."
+        },
+        "render_after_update": "Jane Doe",
+        "stale_cache_lookup_content": "Jane Doe",
+        "create_duplicate_shortcode": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Shortcode already exists."
+        },
+        "create_second": {
+            "type": "integer",
+            "is_int_gt0": true,
+            "value": null
+        }
+    },
+    "gema": {
+        "get_tags_cg": {
+            "type": "array",
+            "count": 0,
+            "first_item": {
+                "type": "NULL",
+                "is_int_gt0": false,
+                "value": null
+            }
+        },
+        "get_tags_event": {
+            "type": "array",
+            "count": 0
+        },
+        "cg_matches_our_two": 0
+    },
+    "chatbot": {
+        "create_legacy_keys": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Tag name is required."
+        },
+        "lookup_after_legacy_create": {
+            "type": "NULL",
+            "is_int_gt0": false,
+            "value": null
+        },
+        "create_correct_keys": {
+            "type": "integer",
+            "is_int_gt0": true,
+            "value": null
+        },
+        "update_by_id": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Tag name is required."
+        },
+        "add_tag_method_exists": false,
+        "post_type_exists_dynamic_tag": true,
+        "cpt_lookup_by__dt_shortcode_finds_mirror_post": true
+    },
+    "other": {
+        "get_tag_by_name": {
+            "type": "object:stdClass",
+            "keys": [
+                "category_id",
+                "content",
+                "created_date",
+                "description",
+                "id",
+                "last_used_date",
+                "meta_data",
+                "modified_date",
+                "post_id",
+                "priority",
+                "shortcode",
+                "status",
+                "tag_name",
+                "usage_count"
+            ],
+            "scalar_types": {
+                "category_id": "string",
+                "content": "string",
+                "created_date": "string",
+                "description": "string",
+                "id": "string",
+                "last_used_date": "NULL",
+                "meta_data": "array",
+                "modified_date": "string",
+                "post_id": "string",
+                "priority": "string",
+                "shortcode": "string",
+                "status": "string",
+                "tag_name": "string",
+                "usage_count": "string"
+            }
+        },
+        "get_tag_missing_id": {
+            "type": "NULL",
+            "is_int_gt0": false,
+            "value": null
+        },
+        "update_missing_id": {
+            "type": "WP_Error",
+            "code": "tag_not_found",
+            "message": "Tag not found."
+        },
+        "delete_missing_id": {
+            "type": "WP_Error",
+            "code": "tag_not_found",
+            "message": "Tag not found."
+        },
+        "invalid_tag_name_chars": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Tag name can only contain letters, numbers, spaces, hyphens and underscores."
+        },
+        "bad_shortcode_chars": {
+            "type": "WP_Error",
+            "code": "validation_failed",
+            "message": "Shortcode can only contain letters, numbers, hyphens and underscores."
+        },
+        "auto_shortcode_when_missing": {
+            "create": {
+                "type": "integer",
+                "is_int_gt0": true,
+                "value": null
+            },
+            "generated_shortcode": "gm_chat_auto_name"
+        },
+        "bulk_deactivate": {
+            "549": "validation_failed"
+        },
+        "render_when_inactive": "Jane Doe",
+        "delete": {
+            "type": "boolean",
+            "is_int_gt0": false,
+            "value": true
+        },
+        "dt_posts_after_delete": 4
+    }
+}

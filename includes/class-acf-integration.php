@@ -38,9 +38,16 @@ add_action('init', function () {
             $subfield = substr($arg, $dot_pos + 1);
         }
 
-        $value = get_field($field_name, $post->ID);
         $field = get_field_object($field_name, $post->ID);
         $type = $field ? $field['type'] : null;
+
+        // Scalar fields are free; repeaters, groups, galleries, relationships and sub-fields ({acf:rows.name}) are Paid. A Free
+        // site gets what a field with no value gives: nothing (and the field is not even read).
+        if (class_exists('DT_License_Manager') && !DT_License_Manager::acf_allowed($subfield, $type)) {
+            return '';
+        }
+
+        $value = get_field($field_name, $post->ID);
 
         switch ($type) {
             case 'repeater':

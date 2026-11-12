@@ -30,6 +30,15 @@ class WP_Dynamic_Tags_Placeholders {
     /** Tracks the active instance so external code can call get_instance(). */
     private static $_instance = null;
 
+    /** {api:} responses larger than this are refused; WordPress stops reading the body at this size (S11). */
+    private const API_MAX_BYTES = 1048576; // literal, not MB_IN_BYTES: the pure unit tests instantiate this class without WordPress
+
+    /** {api:} payloads larger than this are used but not stored in a transient (wp_options) (S11). */
+    private const API_CACHE_MAX_BYTES = 262144; // 256 KB
+
+    /** Remote fetches made by this request; capped by filter dt_api_max_fetches (default 5) (S11). */
+    private static $api_fetches = 0;
+
     public function __construct() {
         self::$_instance = $this; // Register self so get_instance() works
         $this->register_default_placeholders();
@@ -152,6 +161,24 @@ class WP_Dynamic_Tags_Placeholders {
     }
     
     /**
+     * The tokens an author can use, for the placeholder helper of the tag form: {key} for the simple ones and {prefix:...}
+     * for the ones that take an argument. Names only, no callback is run.
+     *
+     * @return string[]
+     */
+    public function get_placeholder_names() {
+        $names = array();
+        foreach (array_keys($this->placeholders) as $key) {
+            $names[] = '{' . $key . '}';
+        }
+        foreach (array_keys($this->parameterized_placeholders) as $prefix) {
+            $names[] = '{' . $prefix . ':...}';
+        }
+        sort($names);
+        return $names;
+    }
+
+    /**
      * Register a placeholder
      */
     public function register_placeholder($key, $callback) {
@@ -272,14 +299,9 @@ class WP_Dynamic_Tags_Placeholders {
         // Generic placeholder pass: {key}, {key:arg}, {key|formatter}, {key??fallback}, etc.
         $content = preg_replace_callback('/\{([a-z_][^{}]*)\}/i', array($this, 'replace_generic_token'), $content);
 
-        // Handle square bracket placeholders (for backward compatibility)
-        $original_content = $content;
+        // Handle square bracket placeholders (for backward compatibility). The per-call debug logging that wrote the whole
+        // tag content (which can contain personal data) to debug.log is gone (L3).
         $content = preg_replace_callback('/\[([a-z_]+[0-9]*)\]/', array($this, 'replace_square_bracket_placeholder'), $content);
-
-        // Debug logging for square bracket replacements
-        if (defined('WP_DEBUG') && WP_DEBUG && $original_content !== $content) {
-            error_log("WP Dynamic Tags: Square bracket replacement - Before: " . $original_content . " | After: " . $content);
-        }
 
         return $content;
     }
@@ -350,6 +372,12 @@ class WP_Dynamic_Tags_Placeholders {
     private function replace_generic_token($matches) {
         $parsed = self::parse_token_body($matches[1]);
 
+        // A Paid placeholder on a Free site renders as no data: nothing, or the author's own ??fallback. Decided before the
+        // formatters so that |currency cannot turn the missing value into "$0.00".
+        if ($parsed['arg'] !== null && $this->has_token($parsed['key'], $parsed['arg']) && !self::plan_allows($parsed['key'])) {
+            return $parsed['fallback'] ?? '';
+        }
+
         $value = $this->resolve_token($parsed['key'], $parsed['arg']);
         if ($value === false) {
             // Unknown key: leave the original token text unchanged, same as before.
@@ -408,9 +436,54 @@ class WP_Dynamic_Tags_Placeholders {
         }
 
         if (isset($this->parameterized_placeholders[$key]) && is_callable($this->parameterized_placeholders[$key])) {
+            // The one gate of the Paid placeholders: every way to read one ({token}, [dt_loop source=], a field condition)
+            // comes through here. On a Free site the source is not asked at all (no query, no request, no function call).
+            if (!self::plan_allows($key)) {
+                return '';
+            }
             return call_user_func($this->parameterized_placeholders[$key], $arg);
         }
         return false;
+    }
+
+    /**
+     * Whether this site's plan lets a {key:...} placeholder run: every one on Paid, and on Free all but the Paid ones
+     * (DT_License_Manager::GATED_PREFIXES). Reads the plan option; writes nothing.
+     */
+    private static function plan_allows($key) {
+        return !class_exists('DT_License_Manager') || !DT_License_Manager::is_gated_prefix($key) || DT_License_Manager::is_paid();
+    }
+
+    /** Whether a {key} or {key:arg} placeholder is registered: a name lookup, nothing is called. */
+    private function has_token($key, $arg) {
+        if ($arg === null) {
+            return isset($this->placeholders[$key]) && is_callable($this->placeholders[$key]);
+        }
+        return isset($this->parameterized_placeholders[$key]) && is_callable($this->parameterized_placeholders[$key]);
+    }
+
+    /** Conditions the plugin decides itself (evaluate_condition()): free on every plan. */
+    private const BUILTIN_CONDITIONS = array('user_logged_in', 'user_not_logged_in', 'is_admin', 'is_mobile', 'is_front_page', 'is_home', 'is_single', 'is_page');
+
+    /** Whether a condition is one of the built-in ones, with or without a leading "!". Pure. */
+    public static function is_builtin_condition($condition) {
+        $condition = ltrim(trim((string) $condition));
+        $condition = ltrim($condition, '!');
+        return in_array($condition, self::BUILTIN_CONDITIONS, true)
+            || strpos($condition, 'user_role:') === 0
+            || preg_match('/^time_between\(\s*\d{1,2}:\d{2}\s*,\s*\d{1,2}:\d{2}\s*\)$/', $condition) === 1;
+    }
+
+    /**
+     * Whether a condition reads a field (a registered token, compared or tested for a value): a Paid feature. A built-in
+     * condition, or one a site adds through the dt_evaluate_condition filter, is not.
+     */
+    public function is_field_condition($condition) {
+        if (self::is_builtin_condition($condition)) {
+            return false;
+        }
+        $parsed = self::parse_condition_expression(ltrim(trim((string) $condition), '!'));
+        return $this->has_token($parsed['key'], $parsed['arg']);
     }
 
     /**
@@ -429,10 +502,11 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_meta_value($key) {
         $post_id = get_the_ID();
-        if (!$post_id) {
+        if (!$post_id || !self::is_meta_key_allowed($key, 'post')) {
             return '';
         }
-        return (string) get_post_meta($post_id, $key, true);
+        $value = get_post_meta($post_id, $key, true);
+        return is_scalar($value) ? (string) $value : '';
     }
 
     /**
@@ -441,10 +515,11 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_user_meta_value($key) {
         global $post;
-        if (!$post) {
+        if (!$post || !self::is_meta_key_allowed($key, 'user')) {
             return '';
         }
-        return (string) get_user_meta($post->post_author, $key, true);
+        $value = get_user_meta($post->post_author, $key, true);
+        return is_scalar($value) ? (string) $value : '';
     }
 
     /**
@@ -452,10 +527,125 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function get_term_meta_value($key) {
         $term = $this->get_primary_term();
-        if (!$term) {
+        if (!$term || !self::is_meta_key_allowed($key, 'term')) {
             return '';
         }
-        return (string) get_term_meta($term->term_id, $key, true);
+        $value = get_term_meta($term->term_id, $key, true);
+        return is_scalar($value) ? (string) $value : '';
+    }
+
+    /**
+     * Whether a token may read this meta key (S3). Tags are written by administrators but rendered for anonymous
+     * visitors, so a token must not be able to print protected or credential-like meta (post `_edit_lock`, the author's
+     * `session_tokens`, `wp_capabilities`, ...). An empty key is refused too: get_post_meta() with no key returns every
+     * meta value as an array, which used to render as "Array" (B7).
+     *
+     * Filter `dt_allow_meta_key( bool $allowed, string $key, string $type )` re-enables a key on purpose.
+     *
+     * @param string $type post|user|term
+     */
+    public static function is_meta_key_allowed($key, $type = 'post') {
+        $key = trim((string) $key);
+        if ($key === '') {
+            return false;
+        }
+
+        $allowed = !is_protected_meta($key, $type);
+
+        if ($allowed && $type === 'user') {
+            // Credential-like or capability keys; "wp_capabilities" is stored under the site's own table prefix.
+            $allowed = !preg_match('/(pass(word)?|secret|token|session|api[_-]?key|nonce|capabilit|user_level|activation)/i', $key);
+        }
+
+        return (bool) apply_filters('dt_allow_meta_key', $allowed, $key, $type);
+    }
+
+    /** WP_Query arguments a {query:} token or [dt_template query=] may set; everything else in the string is ignored. */
+    private static $query_allowed_args = array(
+        'post_type', 'posts_per_page', 'orderby', 'order', 'category_name', 'cat', 'tag', 'tag_id', 'author', 'author_name',
+        's', 'p', 'page_id', 'name', 'post__in', 'post__not_in', 'post_parent', 'paged', 'offset', 'year', 'monthnum', 'day',
+        'ignore_sticky_posts', 'meta_key', 'meta_value', 'post_status',
+    );
+
+    /**
+     * Post statuses the current viewer may be shown (S2): published posts for everyone, private posts for users who can
+     * read them, drafts/pending/scheduled posts for users who can edit others' posts.
+     *
+     * @return string[]
+     */
+    public static function readable_post_statuses() {
+        $statuses = array('publish');
+        if (current_user_can('read_private_posts')) {
+            $statuses[] = 'private';
+        }
+        if (current_user_can('edit_others_posts')) {
+            array_push($statuses, 'draft', 'pending', 'future');
+        }
+        return $statuses;
+    }
+
+    /**
+     * Turns the query string of a {query:} token or a [dt_template query=] attribute into WP_Query arguments (S2).
+     *
+     * The author's string used to be merged over the defaults, so `post_status=any` or `posts_per_page=-1` let anonymous
+     * visitors read private and draft posts, password-protected posts and any number of rows. Now only whitelisted
+     * arguments are taken (filter `dt_query_allowed_args`), the post type must be public, the status is limited to what
+     * the current viewer may read (the filter `dt_query_post_statuses` can narrow or reorder it but never widen it),
+     * password-protected posts are excluded and the row count is capped (filter `dt_query_max_posts`, default 50).
+     *
+     * @param string               $query_string URL-style query string.
+     * @param array<string, mixed> $defaults     Arguments used when the string does not set them.
+     * @return array<string, mixed>
+     */
+    public static function build_query_args($query_string, array $defaults) {
+        $args = $defaults;
+        $parsed = array();
+        if ($query_string !== '' && $query_string !== null) {
+            wp_parse_str((string) $query_string, $parsed);
+        }
+
+        $allowed = (array) apply_filters('dt_query_allowed_args', self::$query_allowed_args);
+        foreach ($parsed as $name => $value) {
+            if (in_array($name, $allowed, true)) {
+                // post__in=1,2 arrives as a string, but WP_Query wants an array of ids for every *__in / *__not_in
+                // argument and dies with a TypeError on a string: an author's comma list must not take the page down.
+                if (is_string($value) && (substr($name, -4) === '__in' || substr($name, -8) === '__not_in')) {
+                    $value = wp_parse_id_list($value);
+                }
+                $args[$name] = $value;
+            }
+        }
+
+        // Post type: only public ones; anything else falls back to the default.
+        $public = get_post_types(array('public' => true));
+        $requested = isset($args['post_type']) ? array_filter(array_map('sanitize_key', (array) $args['post_type'])) : array();
+        $types = array_values(array_intersect($requested, $public));
+        $args['post_type'] = $types ? $types : (isset($defaults['post_type']) ? $defaults['post_type'] : 'post');
+
+        // Post status: what was asked for, narrowed to what this viewer may read. "any" means "everything readable".
+        $wanted = array('publish');
+        if (isset($parsed['post_status']) && in_array('post_status', $allowed, true)) {
+            $wanted = array_filter(array_map('sanitize_key', explode(',', is_array($parsed['post_status']) ? implode(',', $parsed['post_status']) : (string) $parsed['post_status'])));
+        }
+        $wanted = (array) apply_filters('dt_query_post_statuses', $wanted);
+        $readable = self::readable_post_statuses();
+        $final = in_array('any', $wanted, true) ? $readable : array_values(array_intersect($wanted, $readable));
+        $args['post_status'] = $final ? $final : array('publish');
+
+        // Never list password-protected posts.
+        $args['has_password'] = false;
+
+        // Row cap.
+        $max = max(1, (int) apply_filters('dt_query_max_posts', 50));
+        $per_page = isset($args['posts_per_page']) ? (int) $args['posts_per_page'] : 5;
+        $args['posts_per_page'] = ($per_page < 1 || $per_page > $max) ? $max : $per_page;
+
+        // A protected meta key cannot be used to select or sort posts either.
+        if (isset($args['meta_key']) && !self::is_meta_key_allowed($args['meta_key'], 'post')) {
+            unset($args['meta_key'], $args['meta_value']);
+        }
+
+        return $args;
     }
 
     /**
@@ -465,19 +655,18 @@ class WP_Dynamic_Tags_Placeholders {
      * convention [dt_template]'s `query` attribute uses.
      */
     private function get_query_value($query_string) {
-        $query_args = array(
+        $query_args = self::build_query_args((string) $query_string, array(
             'post_type' => 'post',
             'posts_per_page' => 5,
             'post_status' => 'publish',
-        );
-        if (!empty($query_string)) {
-            wp_parse_str($query_string, $parsed_query);
-            $query_args = array_merge($query_args, $parsed_query);
-        }
+        ));
 
         $query = new WP_Query($query_args);
         $rows = array();
         foreach ($query->posts as $queried_post) {
+            if (!$queried_post instanceof WP_Post) {
+                continue; // an int when a filter allowed fields=ids
+            }
             $rows[] = array(
                 'id' => $queried_post->ID,
                 'title' => get_the_title($queried_post),
@@ -503,6 +692,10 @@ class WP_Dynamic_Tags_Placeholders {
      * mitigation against SSRF via a user-suppliable URL. Responses are cached
      * (success and failure) so this can't be used to hammer an external
      * endpoint or a broken one from slowing down every page load.
+     *
+     * Further limits (S11): at most dt_api_max_fetches (5) remote fetches per request, responses capped at 1 MB, a JSON
+     * (or plain text) content type, no transient for payloads over 256 KB, and an optional host allow-list through the
+     * filter dt_api_allowed_hosts (empty = any public host). Redirect hops are validated by WordPress itself (at most 3).
      */
     private function get_api_value($arg) {
         list($url, $path) = array_pad(explode('::', $arg, 2), 2, null);
@@ -511,19 +704,39 @@ class WP_Dynamic_Tags_Placeholders {
             return '';
         }
 
+        $allowed_hosts = array_filter(array_map('strtolower', (array) apply_filters('dt_api_allowed_hosts', array())));
+        if ($allowed_hosts && !in_array(strtolower((string) wp_parse_url($url, PHP_URL_HOST)), $allowed_hosts, true)) {
+            return '';
+        }
+
         $cache_key = 'dt_api_' . md5($url);
         $data = get_transient($cache_key);
         if ($data === false) {
-            $response = wp_safe_remote_get($url, array('timeout' => 5));
-            if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            if (self::$api_fetches >= (int) apply_filters('dt_api_max_fetches', 5)) {
+                return ''; // not remembered: the cap belongs to this request, not to the URL
+            }
+            if (!self::api_host_is_public(wp_parse_url($url, PHP_URL_HOST))) {
                 set_transient($cache_key, array(), MINUTE_IN_SECONDS);
                 return '';
             }
-            $data = json_decode(wp_remote_retrieve_body($response), true);
+            self::$api_fetches++;
+
+            $response = wp_safe_remote_get($url, array('timeout' => 5, 'redirection' => 3, 'limit_response_size' => self::API_MAX_BYTES));
+            $body = is_wp_error($response) ? '' : (string) wp_remote_retrieve_body($response);
+            $type = is_wp_error($response) ? '' : strtolower((string) wp_remote_retrieve_header($response, 'content-type'));
+            // A body as long as the limit was cut off, so it is not valid data: treated like a failed request.
+            if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
+                || strlen($body) >= self::API_MAX_BYTES || !preg_match('#json|^text/plain#', $type)) {
+                set_transient($cache_key, array(), MINUTE_IN_SECONDS);
+                return '';
+            }
+            $data = json_decode($body, true);
             if (!is_array($data)) {
                 $data = array();
             }
-            set_transient($cache_key, $data, 5 * MINUTE_IN_SECONDS);
+            if (strlen($body) <= self::API_CACHE_MAX_BYTES) {
+                set_transient($cache_key, $data, 5 * MINUTE_IN_SECONDS);
+            }
         }
 
         if (empty($data)) {
@@ -531,6 +744,30 @@ class WP_Dynamic_Tags_Placeholders {
         }
 
         return self::walk_path($data, $path);
+    }
+
+    /**
+     * Whether {api:} may contact this host: an IP literal, or a name that resolves to an address, on the public internet (S11).
+     * wp_safe_remote_get() already refuses private addresses, but WordPress 7.0 (this plugin's minimum) lets link-local and
+     * cloud metadata addresses (169.254.0.0/16) and CGNAT through; 7.1 refuses them. FILTER_FLAG_GLOBAL_RANGE (PHP 8.2)
+     * rejects the non-global ranges of the IANA special-purpose registry for IPv4 and IPv6, so the answer no longer depends
+     * on the WordPress version (multicast is not in that registry; TCP cannot connect to it and 7.1 refuses it).
+     * A name that does not resolve is passed on: there is nothing to contact and WordPress reports the failure. The check
+     * and the connection resolve the name separately, so DNS rebinding stays a residual risk, as with wp_safe_remote_get().
+     *
+     * @param string|false|null $host
+     */
+    private static function api_host_is_public($host) {
+        $host = trim((string) $host, '[]'); // an IPv6 literal comes back as [::1]
+        if ($host === '') {
+            return false;
+        }
+        $is_ip = filter_var($host, FILTER_VALIDATE_IP) !== false;
+        $ip = $is_ip ? $host : gethostbyname($host);
+        if (!$is_ip && $ip === $host) {
+            return true;
+        }
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE) !== false;
     }
 
     /**
@@ -577,37 +814,13 @@ class WP_Dynamic_Tags_Placeholders {
     private function replace_square_bracket_placeholder($matches) {
         $placeholder = $matches[1];
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WP Dynamic Tags: Attempting to replace square bracket placeholder: [$placeholder]");
-        }
-
-        // Handle specific date placeholders
-        $date_mappings = array(
-            'date1' => '25th Aug 2056',
-            'date2' => '26 Aug 2025',
-            'tagname' => 'dynamic_tag_name' // This could be dynamically replaced
-        );
-
-        if (isset($date_mappings[$placeholder])) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("WP Dynamic Tags: Found mapping for [$placeholder] -> " . $date_mappings[$placeholder]);
-            }
-            return $date_mappings[$placeholder];
-        }
-
-        // Check if it exists in the regular placeholder system
+        // Check if it exists in the regular placeholder system. (Hardcoded demo values for [date1], [date2] and
+        // [tagname] that were once mapped here replaced real text in production content; removed, L3.)
         if (isset($this->placeholders[$placeholder])) {
             $callback = $this->placeholders[$placeholder];
             if (is_callable($callback)) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log("WP Dynamic Tags: Using callback for placeholder: $placeholder");
-                }
                 return call_user_func($callback);
             }
-        }
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WP Dynamic Tags: No replacement found for placeholder: [$placeholder], returning original");
         }
 
         // Return original if not found
@@ -618,50 +831,24 @@ class WP_Dynamic_Tags_Placeholders {
      * Process conditional placeholders
      */
     private function process_conditionals($content) {
-        // Pattern: {if:condition}content{else}alt_content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{else\}(.*?)\{\/if\}/s';
-        $content = preg_replace_callback($pattern, array($this, 'process_conditional_with_else'), $content);
-        
-        // Pattern: {if:condition}content{/if}
-        $pattern = '/\{if:([^}]+)\}(.*?)\{\/if\}/s';
-        $content = preg_replace_callback($pattern, array($this, 'process_conditional_simple'), $content);
-        
-        return $content;
-    }
-    
-    /**
-     * Process conditional with else clause
-     */
-    private function process_conditional_with_else($matches) {
-        $condition = $matches[1];
-        $true_content = $matches[2];
-        $false_content = $matches[3];
-        
-        if ($this->evaluate_condition($condition)) {
-            return $true_content;
-        } else {
-            return $false_content;
-        }
-    }
-    
-    /**
-     * Process simple conditional
-     */
-    private function process_conditional_simple($matches) {
-        $condition = $matches[1];
-        $content = $matches[2];
-        
-        if ($this->evaluate_condition($condition)) {
-            return $content;
-        } else {
-            return '';
-        }
+        // {if:condition}content{else}alt_content{/if} and {if:condition}content{/if}, sequential or nested (L1):
+        // block matching lives in WP_Dynamic_Tags_Conditional_Parser, this class only decides the conditions.
+        return WP_Dynamic_Tags_Conditional_Parser::process((string) $content, function ($condition) {
+            return (bool) $this->evaluate_condition($condition);
+        });
     }
     
     /**
      * Evaluate condition
      */
     private function evaluate_condition($condition) {
+        $condition = trim((string) $condition);
+
+        // "!condition" negates (L2): {if:!user_logged_in}
+        if ($condition !== '' && $condition[0] === '!') {
+            return !$this->evaluate_condition(substr($condition, 1));
+        }
+
         switch ($condition) {
             case 'user_logged_in':
                 return is_user_logged_in();
@@ -688,6 +875,17 @@ class WP_Dynamic_Tags_Placeholders {
                 return is_page();
                 
             default:
+                // time_between(HH:MM,HH:MM): both ends inclusive; an end before the start is a window through midnight
+                // (22:00-06:00). The table renderer's own condition code is gone, this is its last condition (L2).
+                if (preg_match('/^time_between\(\s*(\d{1,2}):(\d{2})\s*,\s*(\d{1,2}):(\d{2})\s*\)$/', $condition, $matches)) {
+                    $now = explode(':', current_time('H:i'));
+                    return WP_Dynamic_Tags_Table_Shortcode_Processor::time_in_window(
+                        (int) $now[0] * 60 + (int) $now[1],
+                        (int) $matches[1] * 60 + (int) $matches[2],
+                        (int) $matches[3] * 60 + (int) $matches[4]
+                    );
+                }
+
                 // Check for user role conditions
                 if (strpos($condition, 'user_role:') === 0) {
                     $role = substr($condition, 10);
@@ -823,6 +1021,15 @@ class WP_Dynamic_Tags_Placeholders {
      */
     private function evaluate_field_condition($condition) {
         $parsed = self::parse_condition_expression($condition);
+
+        // Field-based conditions are a Paid feature: on a Free site a condition that reads a token is simply not met (a
+        // comparison against a Paid source would otherwise be decided by the empty string it resolves to: {if:wc:price!=5}).
+        // A leading "!" still negates the answer, as for any condition that is not met. A condition that is no token at all
+        // still reaches the dt_evaluate_condition filter below.
+        if (class_exists('DT_License_Manager') && !DT_License_Manager::is_paid() && $this->has_token($parsed['key'], $parsed['arg'])) {
+            return false;
+        }
+
         $value = $this->resolve_token($parsed['key'], $parsed['arg']);
 
         if ($value === false) {
@@ -977,7 +1184,12 @@ class WP_Dynamic_Tags_Placeholders {
 
     private function get_post_content() {
         global $post;
-        return $post ? $post->post_content : '';
+        // WordPress withholds a password-protected post's body until the password is entered (an administrator included);
+        // a tag in a widget or template part on that page must not print it either (A5).
+        if (!$post || post_password_required($post)) {
+            return '';
+        }
+        return $post->post_content;
     }
 
     private function get_post_status() {
@@ -1158,33 +1370,33 @@ class WP_Dynamic_Tags_Placeholders {
     // Request data is attacker-controlled, so these are escaped for safe HTML output
     // (unlike author-controlled fields above, which the rest of this class doesn't escape).
     private function get_url_current() {
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_url(home_url($request_uri));
     }
 
     private function get_url_path() {
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         $path = wp_parse_url($request_uri, PHP_URL_PATH);
         return esc_html($path ? $path : '');
     }
 
     private function get_url_query_string() {
-        $query = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : '';
+        $query = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($query);
     }
 
     private function get_url_host() {
-        $host = isset($_SERVER['HTTP_HOST']) ? wp_unslash($_SERVER['HTTP_HOST']) : '';
+        $host = isset($_SERVER['HTTP_HOST']) ? wp_unslash($_SERVER['HTTP_HOST']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($host);
     }
 
     private function get_url_referrer() {
-        $referrer = isset($_SERVER['HTTP_REFERER']) ? wp_unslash($_SERVER['HTTP_REFERER']) : '';
+        $referrer = isset($_SERVER['HTTP_REFERER']) ? wp_unslash($_SERVER['HTTP_REFERER']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_url($referrer);
     }
 
     private function get_url_user_agent() {
-        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? wp_unslash($_SERVER['HTTP_USER_AGENT']) : '';
+        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? wp_unslash($_SERVER['HTTP_USER_AGENT']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($agent);
     }
 

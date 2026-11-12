@@ -3,7 +3,7 @@
  * Uninstall WP Dynamic Tags Plugin
  *
  * @package WP_Dynamic_Tags
- * @version 3.0.0
+ * @version 3.1.0
  */
 
 // If uninstall not called from WordPress, exit
@@ -51,8 +51,8 @@ function wp_dynamic_tags_uninstall() {
     }
 
     try {
-        // Create a final backup before deletion
-        wp_dynamic_tags_create_backup_before_deletion();
+        // Create a final backup before deletion (true when it was written to the private folder)
+        $backup_in_file = wp_dynamic_tags_create_backup_before_deletion();
         // 1. Delete all dynamic tag posts (including trash)
         $post_type = 'dynamic_tag';
 
@@ -276,11 +276,15 @@ function wp_dynamic_tags_uninstall() {
         // 3. Delete custom table if it exists
         $table_name = $wpdb->prefix . 'dynamic_tags';
 
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
             // Count records before deletion
-            $table_record_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
+            $table_record_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$table_name}`");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-            $wpdb->query("DROP TABLE IF EXISTS $table_name");
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
+            $wpdb->query("DROP TABLE IF EXISTS `{$table_name}`");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log("WP Dynamic Tags: Dropped custom table with {$table_record_count} records");
@@ -288,13 +292,53 @@ function wp_dynamic_tags_uninstall() {
         }
 
         // 4. Delete all plugin options
+        // The option copy of the backup holds every tag (certificate tags carry student data). Once the private file exists it is
+        // not needed: it used to stay in wp_options for good, although a comment said it went with the other options. If the file
+        // could not be written the option stays, because then it is the only backup there is.
+        if (!empty($backup_in_file)) {
+            delete_option('wp_dynamic_tags_deletion_backup');
+        }
         delete_option('wp_dynamic_tags_version');
         delete_option('wp_dynamic_tags_db_version');
+        delete_option('wp_dynamic_tags_table_version'); // the schema version vouches for the table, which was just dropped
+        delete_option('wp_dynamic_tags_track_usage');
         delete_option('wp_dynamic_tags_delete_on_uninstall');
         delete_option('wp_dynamic_tags_storage_mode');
         delete_option('wp_dynamic_tags_migration_status');
         delete_option('wp_dynamic_tags_cache_version');
         delete_option('dt_menu_notice_dismissed');
+
+        // The rest of what the plugin keeps in wp_options: the debug log, the legacy-write record and flag, setup errors and
+        // activation markers, group colours, the import/export counters.
+        foreach (array(
+            'wp_dynamic_tags_debug_log', 'wp_dynamic_tags_legacy_writes', 'wp_dynamic_tags_legacy_pending',
+            'wp_dynamic_tags_table_creation_error', 'wp_dynamic_tags_table_error', 'wp_dynamic_tags_activated',
+            'wp_dynamic_tags_activation_time', 'wp_dynamic_tags_table_integration_enabled',
+            'dt_group_colors', 'dt_categories_migrated', 'dt_total_exports', 'dt_total_imports', 'dt_last_export', 'dt_last_import',
+            // what the keep-data path of an earlier uninstall left behind (a plugin that was removed, reinstalled, then removed again)
+            'wp_dynamic_tags_last_uninstall', 'wp_dynamic_tags_data_preserved',
+        ) as $own_option) {
+            delete_option($own_option);
+        }
+
+        // Migration state (see includes/class-migration-engine.php) and its own, now superseded, migration backups.
+        // The uninstall backup written above is deliberately left in place.
+        foreach (array('wp_dynamic_tags_migration', 'wp_dynamic_tags_migration_log', 'wp_dynamic_tags_migration_lock', 'wp_dynamic_tags_migration_status', 'wp_dynamic_tags_posts_cleaned') as $migration_option) {
+            delete_option($migration_option);
+        }
+        wp_clear_scheduled_hook('dt_migration_cron');
+        $migration_upload_dir = wp_upload_dir();
+        if (empty($migration_upload_dir['error']) && !empty($migration_upload_dir['basedir'])) {
+            foreach ((array) glob(trailingslashit($migration_upload_dir['basedir']) . 'wp-dynamic-tags-private/backup-*.json*') as $migration_backup) {
+                wp_delete_file($migration_backup);
+            }
+        }
+
+        // License state (see includes/class-license-manager.php)
+        foreach (array('dt_plan', 'dt_license_key', 'dt_license_expiry', 'dt_license_server_url', 'dt_last_heartbeat') as $license_option) {
+            delete_option($license_option);
+        }
+        wp_clear_scheduled_hook('dt_license_heartbeat');
 
         // 5. Delete all transients
         $transients = array(
@@ -304,28 +348,31 @@ function wp_dynamic_tags_uninstall() {
             'dt_performance_stats',
             'dt_tag_groups_',
             'dt_migration_progress',
-            'dt_table_stats'
+            'dt_table_stats',
+            'dt_heartbeat_',
+            'dt_api_',                       // cached answers of {api:} placeholders
+            'dt_export_',                    // pending export downloads (they hold every tag)
+            'wp_dynamic_tags_data_restored',
+            'wp_dynamic_tags_deactivated'
         );
 
         foreach ($transients as $transient_prefix) {
             // Delete transients that match the prefix
+            // esc_like(): the underscores in these names are LIKE wildcards and would also match other plugins' rows (S8).
             $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$wpdb->options}
                     WHERE option_name LIKE %s
                     OR option_name LIKE %s",
-                    '_transient_' . $transient_prefix . '%',
-                    '_transient_timeout_' . $transient_prefix . '%'
+                    $wpdb->esc_like('_transient_' . $transient_prefix) . '%',
+                    $wpdb->esc_like('_transient_timeout_' . $transient_prefix) . '%'
                 )
             );
         }
 
-        // 6. Delete user meta
-        $wpdb->query(
-            "DELETE FROM {$wpdb->usermeta}
-            WHERE meta_key LIKE '_dt_%'
-            OR meta_key LIKE 'dt_%'"
-        );
+        // 6. Delete user meta: the exact key(s) this plugin writes. Pattern deletes (LIKE 'dt_%') removed other plugins'
+        // user meta for every user on the site (S8).
+        delete_metadata('user', 0, 'dt_menu_consolidation_dismissed', '', true);
 
         // 7. Clear any cached data
         wp_cache_flush();
@@ -345,7 +392,7 @@ function wp_dynamic_tags_uninstall() {
             )
         );
 
-        $final_table_exists = ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name);
+        $final_table_exists = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name);
 
         // 9. Log uninstall completion with summary
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -371,10 +418,14 @@ function wp_dynamic_tags_uninstall() {
 }
 
 /**
- * Create backup before deletion
+ * Create backup before deletion: an option (kept until the file exists) and a private file in the uploads folder.
+ *
+ * @return bool Whether the file was written.
  */
 function wp_dynamic_tags_create_backup_before_deletion() {
     global $wpdb;
+
+    $file_saved = false;
 
     if (defined('WP_DEBUG') && WP_DEBUG) {
         error_log('WP Dynamic Tags: Creating backup before deletion...');
@@ -408,8 +459,10 @@ function wp_dynamic_tags_create_backup_before_deletion() {
 
         // Backup custom table
         $table_name = $wpdb->prefix . 'dynamic_tags';
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
-            $table_data = $wpdb->get_results("SELECT * FROM {$table_name}", ARRAY_A);
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
+            $table_data = $wpdb->get_results("SELECT * FROM `{$table_name}`", ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             if (!empty($table_data)) {
                 $backup_data['data']['table'] = $table_data;
             }
@@ -435,15 +488,33 @@ function wp_dynamic_tags_create_backup_before_deletion() {
         // Store backup as an option (will be auto-deleted when options are deleted)
         update_option('wp_dynamic_tags_deletion_backup', $backup_data);
 
-        // Also try to write to uploads directory
+        // Also try to write to uploads, into the private, web-denied directory with an unguessable name
+        // (tag content can hold personal data such as names and e-mail addresses, so a predictable
+        // public file name is not acceptable).
         $upload_dir = wp_upload_dir();
-        if (!empty($upload_dir['basedir'])) {
-            $backup_file = $upload_dir['basedir'] . '/wp-dynamic-tags-backup-' . date('Y-m-d-His') . '.json';
+        if (empty($upload_dir['error']) && !empty($upload_dir['basedir'])) {
+            $private_dir = trailingslashit($upload_dir['basedir']) . 'wp-dynamic-tags-private';
+            $result      = false;
+            $backup_file = '';
 
-            // Use error suppression and check return value to prevent uninstall failure
-            $result = @file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
+            if (wp_mkdir_p($private_dir)) {
+                if (!is_file($private_dir . '/index.php')) {
+                    file_put_contents($private_dir . '/index.php', "<?php\n// Silence is golden.\n");
+                }
+                if (!is_file($private_dir . '/.htaccess')) {
+                    file_put_contents($private_dir . '/.htaccess', "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n");
+                }
+                $backup_file = $private_dir . '/uninstall-backup-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(16)) . '.json';
+
+                // Use error suppression and check return value to prevent uninstall failure
+                $result = @file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
+                if ($result !== false) {
+                    @chmod($backup_file, 0600); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- owner-only permissions for a private backup
+                }
+            }
 
             if ($result !== false) {
+                $file_saved = true;
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log('WP Dynamic Tags: Backup saved to: ' . $backup_file);
                 }
@@ -459,7 +530,18 @@ function wp_dynamic_tags_create_backup_before_deletion() {
             error_log('WP Dynamic Tags: Backup creation failed: ' . $e->getMessage());
         }
     }
+
+    return $file_saved;
 }
 
-// Run the uninstall function
-wp_dynamic_tags_uninstall();
+// Run the uninstall function. WordPress runs uninstall.php once when a plugin is deleted, and on a network that is once for the
+// whole network: every site keeps its own table, options and choice (delete or keep), so each one is handled in turn.
+if (is_multisite()) {
+    foreach (get_sites(array('fields' => 'ids', 'number' => 0)) as $dt_blog_id) {
+        switch_to_blog((int) $dt_blog_id);
+        wp_dynamic_tags_uninstall();
+        restore_current_blog();
+    }
+} else {
+    wp_dynamic_tags_uninstall();
+}

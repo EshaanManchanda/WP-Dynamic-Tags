@@ -1,0 +1,9 @@
+includes:
+  - ../vendor/szepeviktor/phpstan-wordpress/extension.neon
+  - ../vendor/johnbillion/wp-compat/extension.neon
+parameters:
+  level: 0
+  paths:
+    - compat-neg.php
+  WPCompat:
+    requiresAtLeast: '6.0.0'

@@ -35,12 +35,17 @@ it yourself with ACF/WooCommerce installed.
 
 ## 0. Setup
 
-**How a Dynamic Tag becomes a shortcode:** create a post under **Dynamic
+**How a Dynamic Tag becomes a shortcode (3.1):** create a tag under **Dynamic
 Tags → Add New**, put the test content (given in each case below) in the
-post body, and publish it. The post *title* becomes the shortcode name:
-lowercase, non-alphanumeric characters replaced with `_`. E.g. a tag titled
-`Test Array Join` becomes `[test_array_join]`. Use a distinct, descriptive
-title per test case so you can find/reuse it.
+Content field, and save. The **Shortcode** field is the name you use; when you
+leave it empty it is made from the Name: lowercase, non-alphanumeric characters
+replaced with `_`. E.g. a tag named `Test Array Join` becomes
+`[test_array_join]`. Use a distinct, descriptive name per test case so you can
+find/reuse it. The **Preview** button under the editor renders the content the
+way a page would, and the **Value** column of **All Tags** shows what each saved
+tag renders to. Conditions that contain `<` or `>` are safest in the editor's
+**Code** tab (the Visual tab rewrites them). (Earlier versions used a post for
+each tag; the steps below that say "post" mean this form now.)
 
 **Where to render a shortcode to check output:** paste `[your_shortcode]`
 into any post/page content (classic editor, Gutenberg shortcode block, or a
@@ -64,10 +69,17 @@ Check `wp-content/debug.log` if something doesn't resolve as expected.
   enabled, a category, and a tag.
 - Everything else needs only WordPress core + this plugin.
 
-**Cache note:** this plugin caches shortcode registration. If a newly
-created/edited Dynamic Tag's shortcode doesn't show updated output, save
-the post again, or use **Dynamic Tags → Tools → Force Refresh** if present,
-or just wait — saves auto-clear the relevant cache.
+**Plan (Free or Paid):** since 3.1.0 a site on the Free plan renders nothing for `{wc:}`, `{user_meta:}`,
+`{term_meta:}`, `{query:}`, `{api:}`, `{func:}`, ACF repeaters/groups/galleries/relationships, `[dt_loop]`,
+`[dt_template]` and field conditions. Sections 2, 3 and 4 test exactly those, so **run them on the Paid plan**:
+activate a key under **Dynamic Tags → Settings → License**, or, on a throwaway site only, put
+`add_filter('pre_option_dt_plan', fn() => 'paid');` in a must-use plugin (it answers the plan without writing
+anything). Section 7 tests the Free plan itself. A site's plan is also visible on **All Tags** ("Free plan: N of 15
+…" appears only on Free).
+
+**Cache note:** tags are loaded once per request and nothing is cached between
+requests by the plugin, so a saved change shows on the next page load. If it does
+not, a page cache or a builder cache is serving the old page.
 
 ---
 
@@ -382,3 +394,47 @@ Run these once at the end, they exercise the shared engine all the features abov
 - [ ] **A separator with meaningful whitespace survives**: `{wc:categories|join:, }` (comma-space) must actually join with `", "`, not `","` — a real bug (formatter args getting over-trimmed) was found and fixed here.
 - [ ] **Creating, then deleting, a Dynamic Tag post doesn't break the plugin's own system shortcodes for the rest of that page load**: create a throwaway Dynamic Tag, delete it again, then immediately test `[dt_loop]`, `[dt_if]`, `[dt_group]`, etc. on the same page load — all should still work. (A real bug here caused these to silently stop working after any Dynamic Tag save/delete, in a narrow timing window.)
 - [ ] **A Dynamic Tag used as a `[dt_template]` immediately after being created/edited reflects the new content**, not stale/empty data (another real caching bug, now fixed).
+
+---
+
+## 7. Free and Paid plans
+
+Use a throwaway site. Start on the Free plan (no key stored; the License box on **Settings** shows "Free").
+
+- [ ] **The counter.** **All Tags** and **Add New** say "Free plan: N of 15 tags you create yourself are used. Tags that other plugins create are not counted." (a warning once N is 15 or more, with an "Activate a Paid key" link).
+- [ ] **The limit stops creating, never touching.** With 15 tags you created: **Add New** is refused with a message that says every tag you already have keeps working and the form keeps what you typed; **Duplicate** is refused with the same message; an **Import** file adds nothing past 15 and reports each refused row. Editing, deactivating, deleting and viewing existing tags all still work, and deleting one makes room for another.
+- [ ] **Other plugins are not blocked.** With the limit reached, code such as `WP_Dynamic_Tags_Table_Manager::get_instance()->create_tag(['tag_name' => 'x', 'content' => 'y'])` (what Certificate Generator and the chatbot do) still creates the tag, and the counter does not move.
+- [ ] **A person cannot claim to be a plugin.** Import a JSON file whose tags carry `"meta_data": {"dt_origin": "api"}` (also nested one level down, and written as text inside another value): the tags still count toward the 15.
+- [ ] **A Paid feature renders nothing, silently.** Put `{func:anything??Fallback}`, `{user_meta:nickname}`, `{query:post_type=page}` and `[dt_loop source="query:post_type=page" empty="none"]{item:title}[/dt_loop]` in a tag and view it on a page: the visitor sees `Fallback`, nothing, nothing and `none`; no upgrade text, no error. `{post_title}`, `{meta:key}`, `{if:user_logged_in}` and `[dt_if condition="user_logged_in"]` still work; `{if:meta:key=value}` and `[dt_if condition="meta:key=value"]` show the "else" branch.
+- [ ] **The admin says so.** That tag has a **Paid feature** label in the list, its form shows "This tag uses Paid features that render nothing on the Free plan: …" and **Preview** adds the same note under the preview.
+- [ ] **Paid.** Activate a key (the license server must accept it): the License box shows "Paid" with the key masked, every item above renders, the counter and labels disappear and the limit is gone. Deactivate the key: back to Free, nothing deleted.
+- [ ] **No outbound request without a key.** On a Free site with no key, the plugin makes no request to a license server (check the server log or a request logger); activating a key sends only the key and the home URL.
+- [ ] **A big site is warned.** With more than 5,000 active tags (10,000 behind a page cache) **All Tags** and **Add New** show a warning that links to **Settings → Tags and your server**; below that line nothing is shown.
+
+---
+
+## 6. Automated test suites (what runs without a browser)
+
+The manual script above checks the rendering features by eye. Everything below is automated and is what a
+change must keep green. Paths are relative to the plugin folder; the WordPress suites need an extracted
+WordPress core and a throwaway database (never a site you use), see `tools/integration/`.
+
+| Suite | Command | What it covers |
+|---|---|---|
+| Unit (no WordPress) | `vendor/bin/phpunit` | the condition parser, token parsers, formatters, meta decoding, CSV transport (property tests), migration planner |
+| WordPress, front | `tools/integration/run.ps1 -Core 7.1.4` (and `-Core 7.0`) | rendering, the facade, the Tag Service, token safety, usage counting, uninstall |
+| WordPress, admin | `tools/integration/run.ps1 -Core 7.1.4 -Suite admin` | the admin screens, every AJAX endpoint (generated from `tests/wp-admin/support/actions.php`), groups, import and export |
+| As a network | set `WP_MULTISITE=1`, then run the two commands above | the same suites on a multisite install |
+| Golden master | `tests/golden-master/run.ps1 -Label current -Paths unified`, then `php diff.php baseline post current unified <context> --all --allow=allowed-differences.json` (and `table`) | 396 renders against the recorded 3.0.0 output; every deliberate difference is an entry in `allowed-differences.json`; unlisted and stale entries fail |
+| Sibling plugins | `tests/golden-master/siblings.php` | the facade called with the real payloads of Certificate Generator, certificate-generator-gema and chatbot-by-eshaan |
+| Live migration | `tests/live/migration-scenarios.php` with `WP_DB_NAME=local_mgtest` | 80 checks of dry run, locking, batches, verification, conflicts, cleanup, backup tampering and restore. **Destructive: disposable clone only.** |
+| Performance | `tests/perf/run.ps1 -Label after -Count 5000 -Seed` | queries and writes per boot and per render on a 5,000-tag clone (no writes while rendering) |
+| Scale | `tests/perf/scale.ps1 -Count 50000 -Out <file>` | list, search, bulk, export and import timings and memory at 5,000 / 10,000 / 50,000 rows on `local_perf` (writes to the clone only) |
+| Exposure matrix | `tests/wp/ExposureMatrixTest.php`, `tests/wp-admin/ActionSecurityTest.php` | role x path: what a visitor, subscriber, contributor, author, editor and administrator can read through tokens, shortcodes and REST, and every AJAX action per role |
+| Free and Paid | `tests/Unit/PlanHelpersTest.php` (root suite), `tests/wp/LicenseGatingTest.php`, `TagLimitTest.php`, `LicenseManagerTest.php`, `tests/wp-admin/PlanLimitAdminTest.php`, `CapacityNoticeTest.php`, the License box tests in `SettingsPageTest.php` | the limit of 15 and its origin mark (including a person hiding the mark), every Paid gate on Free and on Paid, activation and the license server with a mocked HTTP layer, the admin counter, labels and notices. The WordPress and unit suites run as the Paid plan by default (`pre_option_dt_plan` in `tests/wp/bootstrap.php`, a `get_option()` stub in `tests/bootstrap.php`); these tests set Free themselves |
+| Mutation (by hand) | `php tools/mutation/mutants.php` | 73 deliberate defects (parsers, time window, meta decoding, the origin mark, the Paid-feature helpers, the plan gate, the array formatters) that the unit tests must catch; it works on a temporary copy and never modifies the plugin folder |
+| Fuzzing | `php tools/fuzz/vendor/bin/php-fuzzer fuzz tools/fuzz/targets/<target>.php <corpus> --max-runs 500000` (run from a scratch folder; see `tools/README.md`) | the conditional parser, the token parsers and the Free/Paid helpers; a failed check must throw `Error` (php-fuzzer ignores an `Exception`) |
+| Real HTTP, all roles (release evidence; the scripts are not in this repository) | a throwaway `php -S` server on a disposable clone of the database, driven role by role (administrator, editor, author, contributor, subscriber, visitor); results are in `docs/BUG-REGISTER.md` | admin screens and AJAX per role, front end and REST, the old URLs, the plan (Add New and Duplicate over the limit, the loop and a Paid token on Free and on Paid) and every other plugin's admin pages |
+| Static analysis | `vendor/bin/phpstan analyse` (baseline may only shrink), `vendor/bin/phpcs --standard=WordPress --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.DB.PreparedSQL,WordPress.WP.I18n admin includes wp-dynamic-tags.php uninstall.php` (0 findings), `tools/static` for PHP 8.2-8.5 compatibility and the WordPress 7.0 floor | |
+
+Every bug fixed in 3.1 has a test that failed before the fix; `docs/BUG-REGISTER.md` names the test.

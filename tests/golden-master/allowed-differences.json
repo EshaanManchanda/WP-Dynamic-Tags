@@ -1,0 +1,3338 @@
+{
+ "_comment": "Reviewed, deliberate golden-master differences. Every entry pins the exact new output. diff.php --allow fails on unlisted and on stale entries. Entries with path 'unified' compare the table-only runtime against the pre-refactor baselines (from = post | table); the classes are explained under 'classes' and were approved by the user.",
+ "differences": [
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "The table renderer now understands {else} (shared conditional parser). Logged out: the false branch OUT is shown instead of nothing; logged in: IN without the raw {else}OUT text that used to leak."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "NOTADMIN",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. user_role: conditions are still unknown to the table renderer, so the else branch shows for everyone (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "SMALL",
+   "bug": "L1",
+   "why": "{else} is honored in the table renderer. Field conditions (meta:key>10) are still unknown to the table renderer, so the else branch shows (before: nothing). Resolved when the renderers are unified (Phase 3)."
+  },
+  {
+   "path": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown processing=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown processing=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "B7/S3",
+   "why": "An empty meta key ({meta:}) rendered the word Array, because get_post_meta() with no key returns every meta value. It now renders nothing; protected and credential-like keys are refused as well."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_acf format=\"uppercase\"]",
+   "expected": "{ACF:GM_SUB}|{ACF:GM_SUB??NONE}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field processing=\"false\"]",
+   "expected": "{if:meta:gm_price>10}BIG{else}SMALL{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in processing=\"false\"]",
+   "expected": "{if:user_logged_in}IN{else}OUT{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_noelse processing=\"false\"]",
+   "expected": "A{if:user_logged_in}IN{/if}B",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role processing=\"false\"]",
+   "expected": "{if:user_role:administrator}ADMIN{else}NOTADMIN{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if cache=\"false\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if default=\"DEF\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if format=\"uppercase\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if_field cache=\"false\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if_field default=\"DEF\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if_field format=\"uppercase\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_if_field]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_escape format=\"uppercase\"]",
+   "expected": "<SCRIPT>ALERT(1)</SCRIPT> GM CONTEXT POST",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_escape processing=\"false\"]",
+   "expected": "<script>alert(1)</script> {post_title}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback processing=\"false\"]",
+   "expected": "{meta:gm_missing??Default Text}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|GM CONTEXT POST|GEMA ECOSYSTEM",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt processing=\"false\"]",
+   "expected": "{post_title|upper}|{post_title|lower}|{site_name|upper}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_grouped format=\"uppercase\"]",
+   "expected": "IN GROUP",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_html format=\"uppercase\"]",
+   "expected": "<P CLASS=\"X\">HI &AMP; <B>BYE</B></P>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_loop cache=\"false\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_loop default=\"DEF\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_loop format=\"uppercase\"]",
+   "expected": "HELLO WORLD!|GM CONTEXT POST",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_loop]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_meta processing=\"false\"]",
+   "expected": "{meta:gm_price}|{meta:gm_price|currency}|{meta:gm_missing??N/A}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_nested cache=\"false\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_nested default=\"DEF\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_nested format=\"uppercase\"]",
+   "expected": "BEFORE HELLO WORLD AFTER",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_nested]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_plain format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_post format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|<CTXID>|HTTP://GEMA-ECOSYSTEM.LOCAL/GM-CONTEXT-POST/|ADMIN",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_post processing=\"false\"]",
+   "expected": "{post_title}|{post_id}|{post_url}|{post_author}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_site format=\"uppercase\"]",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_site processing=\"false\"]",
+   "expected": "{site_name}|{site_url}|{admin_email}|{current_year}|{current_date}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_table_only cache=\"false\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_table_only default=\"DEF\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_table_only format=\"uppercase\"]",
+   "expected": "GM TABLE_ONLY|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_table_only]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tplrow format=\"uppercase\"]",
+   "expected": "<I>GM CONTEXT POST</I>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_tplrow processing=\"false\"]",
+   "expected": "<i>{post_title}</i>",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown processing=\"false\"]",
+   "expected": "{not_a_token}|{meta:}|{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_user processing=\"false\"]",
+   "expected": "{user_name}|{user_email}|{user_id}|{user_role}",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_user]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_singular",
+   "invocation": "[gm_wc format=\"uppercase\"]",
+   "expected": "{WC:PRICE}|{WC:SKU}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_acf format=\"uppercase\"]",
+   "expected": "{ACF:GM_SUB}|{ACF:GM_SUB??NONE}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field processing=\"false\"]",
+   "expected": "{if:meta:gm_price>10}BIG{else}SMALL{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in processing=\"false\"]",
+   "expected": "{if:user_logged_in}IN{else}OUT{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_noelse processing=\"false\"]",
+   "expected": "A{if:user_logged_in}IN{/if}B",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role processing=\"false\"]",
+   "expected": "{if:user_role:administrator}ADMIN{else}NOTADMIN{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if cache=\"false\"]",
+   "expected": "YES",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if default=\"DEF\"]",
+   "expected": "YES",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if format=\"uppercase\"]",
+   "expected": "YES",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if]",
+   "expected": "YES",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if_field cache=\"false\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if_field default=\"DEF\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if_field format=\"uppercase\"]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_if_field]",
+   "expected": "BIG",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_escape format=\"uppercase\"]",
+   "expected": "<SCRIPT>ALERT(1)</SCRIPT> GM CONTEXT POST",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_escape processing=\"false\"]",
+   "expected": "<script>alert(1)</script> {post_title}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback processing=\"false\"]",
+   "expected": "{meta:gm_missing??Default Text}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|GM CONTEXT POST|GEMA ECOSYSTEM",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt processing=\"false\"]",
+   "expected": "{post_title|upper}|{post_title|lower}|{site_name|upper}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_grouped format=\"uppercase\"]",
+   "expected": "IN GROUP",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_html format=\"uppercase\"]",
+   "expected": "<P CLASS=\"X\">HI &AMP; <B>BYE</B></P>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_loop cache=\"false\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_loop default=\"DEF\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_loop format=\"uppercase\"]",
+   "expected": "HELLO WORLD!|GM CONTEXT POST",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_loop]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_meta processing=\"false\"]",
+   "expected": "{meta:gm_price}|{meta:gm_price|currency}|{meta:gm_missing??N/A}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_nested cache=\"false\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_nested default=\"DEF\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_nested format=\"uppercase\"]",
+   "expected": "BEFORE HELLO WORLD AFTER",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_nested]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_plain format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_post format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|<CTXID>|HTTP://GEMA-ECOSYSTEM.LOCAL/GM-CONTEXT-POST/|ADMIN",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_post processing=\"false\"]",
+   "expected": "{post_title}|{post_id}|{post_url}|{post_author}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_site format=\"uppercase\"]",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_site processing=\"false\"]",
+   "expected": "{site_name}|{site_url}|{admin_email}|{current_year}|{current_date}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_table_only cache=\"false\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_table_only default=\"DEF\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_table_only format=\"uppercase\"]",
+   "expected": "GM TABLE_ONLY|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_table_only]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tplrow format=\"uppercase\"]",
+   "expected": "<I>GM CONTEXT POST</I>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_tplrow processing=\"false\"]",
+   "expected": "<i>{post_title}</i>",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown processing=\"false\"]",
+   "expected": "{not_a_token}|{meta:}|{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "C5",
+   "why": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "ADMIN|<EMAIL>|1|ADMINISTRATOR, TUTOR_INSTRUCTOR",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_user processing=\"false\"]",
+   "expected": "{user_name}|{user_email}|{user_id}|{user_role}",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_user]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "in_singular",
+   "invocation": "[gm_wc format=\"uppercase\"]",
+   "expected": "{WC:PRICE}|{WC:SKU}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_acf format=\"uppercase\"]",
+   "expected": "{ACF:GM_SUB}|{ACF:GM_SUB??NONE}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field processing=\"false\"]",
+   "expected": "{if:meta:gm_price>10}BIG{else}SMALL{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in processing=\"false\"]",
+   "expected": "{if:user_logged_in}IN{else}OUT{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_noelse processing=\"false\"]",
+   "expected": "A{if:user_logged_in}IN{/if}B",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role processing=\"false\"]",
+   "expected": "{if:user_role:administrator}ADMIN{else}NOTADMIN{/if}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if cache=\"false\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if default=\"DEF\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if format=\"uppercase\"]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if]",
+   "expected": "NO",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if_field cache=\"false\"]",
+   "expected": "SMALL",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if_field default=\"DEF\"]",
+   "expected": "SMALL",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if_field format=\"uppercase\"]",
+   "expected": "SMALL",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_if_field]",
+   "expected": "SMALL",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape cache=\"false\"]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape default=\"DEF\"]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape format=\"uppercase\"]",
+   "expected": "<SCRIPT>ALERT(1)</SCRIPT> GM CONTEXT POST",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape processing=\"false\"]",
+   "expected": "<script>alert(1)</script> {post_title}",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback processing=\"false\"]",
+   "expected": "{meta:gm_missing??Default Text}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_fmt processing=\"false\"]",
+   "expected": "{post_title|upper}|{post_title|lower}|{site_name|upper}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_grouped format=\"uppercase\"]",
+   "expected": "IN GROUP",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_html format=\"uppercase\"]",
+   "expected": "<P CLASS=\"X\">HI &AMP; <B>BYE</B></P>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_loop cache=\"false\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_loop default=\"DEF\"]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_loop format=\"uppercase\"]",
+   "expected": "HELLO WORLD!|GM CONTEXT POST",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_loop]",
+   "expected": "Hello world!|GM Context Post",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_meta processing=\"false\"]",
+   "expected": "{meta:gm_price}|{meta:gm_price|currency}|{meta:gm_missing??N/A}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_nested cache=\"false\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_nested default=\"DEF\"]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_nested format=\"uppercase\"]",
+   "expected": "BEFORE HELLO WORLD AFTER",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_nested]",
+   "expected": "before Hello World after",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_plain format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_post processing=\"false\"]",
+   "expected": "{post_title}|{post_id}|{post_url}|{post_author}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_site format=\"uppercase\"]",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_site processing=\"false\"]",
+   "expected": "{site_name}|{site_url}|{admin_email}|{current_year}|{current_date}",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_table_only cache=\"false\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_table_only default=\"DEF\"]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_table_only format=\"uppercase\"]",
+   "expected": "GM TABLE_ONLY|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_table_only]",
+   "expected": "GM table_only|<ID:table_only>|0",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C4",
+   "why": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow cache=\"false\"]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow default=\"DEF\"]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow format=\"uppercase\"]",
+   "expected": "<I>GM CONTEXT POST</I>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow processing=\"false\"]",
+   "expected": "<i>{post_title}</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown processing=\"false\"]",
+   "expected": "{not_a_token}|{meta:}|{",
+   "bug": "C2",
+   "why": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_user processing=\"false\"]",
+   "expected": "{user_name}|{user_email}|{user_id}|{user_role}",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_user]",
+   "expected": "||0|",
+   "bug": "C3",
+   "why": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts."
+  },
+  {
+   "path": "unified",
+   "from": "post",
+   "ctx": "out_archive",
+   "invocation": "[gm_wc format=\"uppercase\"]",
+   "expected": "{WC:PRICE}|{WC:SKU}",
+   "bug": "C1",
+   "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[dt key=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[dt tag=\"gm_plain\" default=\"D\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[dt tag=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[dt_group group=\"GM Group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[dt_group group=\"gm-group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_field]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_in]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_cond_role]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback cache=\"false\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback default=\"DEF\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fallback]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt cache=\"false\"]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt default=\"DEF\"]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|GM CONTEXT POST|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_fmt]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_meta cache=\"false\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_meta default=\"DEF\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_meta format=\"uppercase\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_meta]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_singular",
+   "invocation": "[gm_user]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[dt key=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[dt tag=\"gm_plain\" default=\"D\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[dt tag=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[dt_group group=\"GM Group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[dt_group group=\"gm-group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_field]",
+   "expected": "BIG",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_in]",
+   "expected": "IN",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "ADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "ADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "ADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_cond_role]",
+   "expected": "ADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback cache=\"false\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback default=\"DEF\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fallback]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt cache=\"false\"]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt default=\"DEF\"]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt format=\"uppercase\"]",
+   "expected": "GM CONTEXT POST|GM CONTEXT POST|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_fmt]",
+   "expected": "GM CONTEXT POST|gm context post|GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_meta cache=\"false\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_meta default=\"DEF\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_meta format=\"uppercase\"]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_meta]",
+   "expected": "29.99|$29.99|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "ADMIN|<EMAIL>|1|ADMINISTRATOR, TUTOR_INSTRUCTOR",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "in_singular",
+   "invocation": "[gm_user]",
+   "expected": "admin|<EMAIL>|1|administrator, tutor_instructor",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[dt key=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[dt tag=\"gm_plain\" default=\"D\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[dt tag=\"gm_plain\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[dt_group group=\"GM Group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[dt_group group=\"gm-group\"]",
+   "expected": "In group",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field cache=\"false\"]",
+   "expected": "SMALL",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field default=\"DEF\"]",
+   "expected": "SMALL",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field format=\"uppercase\"]",
+   "expected": "SMALL",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_field]",
+   "expected": "SMALL",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in cache=\"false\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in default=\"DEF\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in format=\"uppercase\"]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_in]",
+   "expected": "OUT",
+   "bug": "L1",
+   "why": "{else} blocks in table-native tags (already approved for the table path)."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role cache=\"false\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role default=\"DEF\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role format=\"uppercase\"]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_cond_role]",
+   "expected": "NOTADMIN",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested cache=\"false\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested default=\"DEF\"]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested format=\"uppercase\"]",
+   "expected": "HELLO WORLD",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_dt_nested]",
+   "expected": "Hello World",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape cache=\"false\"]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape default=\"DEF\"]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape format=\"uppercase\"]",
+   "expected": "<SCRIPT>ALERT(1)</SCRIPT> GM CONTEXT POST",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_escape]",
+   "expected": "<script>alert(1)</script> GM Context Post",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback cache=\"false\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback default=\"DEF\"]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback format=\"uppercase\"]",
+   "expected": "DEFAULT TEXT",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fallback]",
+   "expected": "Default Text",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fmt cache=\"false\"]",
+   "expected": "||GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fmt default=\"DEF\"]",
+   "expected": "||GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fmt format=\"uppercase\"]",
+   "expected": "||GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_fmt]",
+   "expected": "||GEMA ECOSYSTEM",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_meta cache=\"false\"]",
+   "expected": "|$0.00|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_meta default=\"DEF\"]",
+   "expected": "|$0.00|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_meta format=\"uppercase\"]",
+   "expected": "|$0.00|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_meta]",
+   "expected": "|$0.00|N/A",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_post cache=\"false\"]",
+   "expected": "|||",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_post default=\"DEF\"]",
+   "expected": "|||",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_post format=\"uppercase\"]",
+   "expected": "|||",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_post]",
+   "expected": "|||",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl cache=\"false\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl default=\"DEF\"]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl format=\"uppercase\"]",
+   "expected": "<I>HELLO WORLD!</I>|<I>GM CONTEXT POST</I>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tpl]",
+   "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
+   "bug": "C9",
+   "why": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow cache=\"false\"]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow default=\"DEF\"]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow format=\"uppercase\"]",
+   "expected": "<I>GM CONTEXT POST</I>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_tplrow]",
+   "expected": "<i>GM Context Post</i>",
+   "bug": "C10",
+   "why": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown cache=\"false\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown default=\"DEF\"]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown format=\"uppercase\"]",
+   "expected": "{NOT_A_TOKEN}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_unknown]",
+   "expected": "{not_a_token}||{",
+   "bug": "C6",
+   "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_user cache=\"false\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_user default=\"DEF\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_user format=\"uppercase\"]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  },
+  {
+   "path": "unified",
+   "from": "table",
+   "ctx": "out_archive",
+   "invocation": "[gm_user]",
+   "expected": "||0|",
+   "bug": "C7",
+   "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
+  }
+ ],
+ "classes": {
+  "C1": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it).",
+  "C2": "processing=\"false\" is now honoured for tags that came from dynamic_tag posts (the post path ignored it).",
+  "C3": "Tokens only a table row can answer ({tag_name}, {tag_id}, {usage_count}, {user_id}) now expand for tags that came from posts.",
+  "C4": "Nested shortcodes now expand in tags that came from posts (the post path never ran do_shortcode on the content).",
+  "C5": "{meta:} with an empty key renders nothing instead of the word Array (B7, already approved on the post path).",
+  "C6": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw.",
+  "C7": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post.",
+  "C8": "format= applied to text the engine now resolves (a date is no longer the ISO form the harness normalizes).",
+  "C9": "The core shortcodes ([dt], [dt_group], [dt_template]) read the table, so a tag that exists only as a row is found; the baseline rendered nothing for it.",
+  "C10": "Archive context: after a [dt_template] loop WordPress restores the main query's post (wp_reset_postdata), so later {post_title} tokens resolve to it instead of staying empty or raw.",
+  "L1": "{else} blocks in table-native tags (already approved for the table path)."
+ }
+}
