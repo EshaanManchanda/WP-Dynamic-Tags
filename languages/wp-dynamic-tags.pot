@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T11:58:47+00:00\n"
+"POT-Creation-Date: 2026-11-12T17:05:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-dynamic-tags\n"
@@ -90,7 +90,7 @@ msgstr ""
 
 #: admin/class-admin.php:74
 #: admin/class-admin.php:271
-#: admin/class-admin.php:582
+#: admin/class-admin.php:592
 msgid "That tag no longer exists."
 msgstr ""
 
@@ -106,13 +106,13 @@ msgstr ""
 #: admin/class-admin.php:127
 #: admin/class-admin.php:266
 #: admin/class-admin.php:314
-#: admin/class-admin.php:705
-#: admin/class-admin.php:850
+#: admin/class-admin.php:715
+#: admin/class-admin.php:860
 msgid "You do not have permission to manage dynamic tags."
 msgstr ""
 
 #: admin/class-admin.php:149
-#: admin/class-admin.php:535
+#: admin/class-admin.php:545
 #: wp-dynamic-tags.php:143
 #: wp-dynamic-tags.php:145
 msgid "Dynamic Tags"
@@ -124,23 +124,23 @@ msgid "All Tags"
 msgstr ""
 
 #: admin/class-admin.php:151
-#: admin/class-admin.php:580
+#: admin/class-admin.php:590
 #: wp-dynamic-tags.php:146
 msgid "Add New Tag"
 msgstr ""
 
 #: admin/class-admin.php:151
-#: admin/class-admin.php:536
+#: admin/class-admin.php:546
 msgid "Add New"
 msgstr ""
 
 #: admin/class-admin.php:152
-#: admin/class-admin.php:722
+#: admin/class-admin.php:732
 msgid "Import / Export"
 msgstr ""
 
 #: admin/class-admin.php:153
-#: admin/class-admin.php:781
+#: admin/class-admin.php:791
 msgid "Tools and Diagnostics"
 msgstr ""
 
@@ -248,388 +248,391 @@ msgstr ""
 msgid "This site has %1$s active tags, more than the recommended maximum of %2$s for this server. Every active tag is loaded on every page, so pages can get slower."
 msgstr ""
 
-#: admin/class-admin.php:429
+#: admin/class-admin.php:426
 msgid "See Tags and your server"
 msgstr ""
 
+#: admin/class-admin.php:450
+msgid "Activate a Paid key"
+msgstr ""
+
+#: admin/class-admin.php:452
+msgid "Ask an administrator to activate a Paid key."
+msgstr ""
+
 #. translators: 1: tags used, 2: the limit of the Free plan
-#: admin/class-admin.php:453
+#: admin/class-admin.php:469
 #, php-format
 msgid "Free plan: %1$d of %2$d tags you create yourself are used. Tags that other plugins create are not counted."
 msgstr ""
 
-#: admin/class-admin.php:455
+#: admin/class-admin.php:471
 msgid "No more tags can be added until you activate a Paid key; the tags you have keep working."
 msgstr ""
 
-#: admin/class-admin.php:462
-#: admin/class-admin.php:504
-msgid "Activate a Paid key"
-msgstr ""
-
 #. translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop]
-#: admin/class-admin.php:487
+#: admin/class-admin.php:502
 #, php-format
 msgid "Renders nothing on the Free plan: %s"
 msgstr ""
 
-#: admin/class-admin.php:488
+#: admin/class-admin.php:503
 msgid "Paid feature"
 msgstr ""
 
 #. translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop]
-#: admin/class-admin.php:499
+#: admin/class-admin.php:514
 #, php-format
 msgid "This tag uses Paid features that render nothing on the Free plan: %s."
 msgstr ""
 
 #. translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop]
-#: admin/class-admin.php:513
+#: admin/class-admin.php:523
 #, php-format
 msgid "On the Free plan these Paid features render nothing, here and on your site: %s."
 msgstr ""
 
-#: admin/class-admin.php:542
+#: admin/class-admin.php:552
 #: wp-dynamic-tags.php:152
 msgid "Search Tags"
 msgstr ""
 
-#: admin/class-admin.php:580
+#: admin/class-admin.php:590
 msgid "Edit Tag"
 msgstr ""
 
-#: admin/class-admin.php:583
+#: admin/class-admin.php:593
 msgid "Back to all tags"
 msgstr ""
 
-#: admin/class-admin.php:604
+#: admin/class-admin.php:614
 #: admin/class-tags-list-table.php:27
 msgid "Name"
 msgstr ""
 
-#: admin/class-admin.php:606
+#: admin/class-admin.php:616
 msgid "Letters, numbers, spaces, hyphens and underscores."
 msgstr ""
 
-#: admin/class-admin.php:608
+#: admin/class-admin.php:618
 #: admin/class-tags-list-table.php:28
 #: includes/class-tag-groups.php:984
 msgid "Shortcode"
 msgstr ""
 
-#: admin/class-admin.php:610
+#: admin/class-admin.php:620
 msgid "Leave empty to create it from the name. Changing it breaks pages that use the old one."
 msgstr ""
 
-#: admin/class-admin.php:612
-#: admin/class-tags-list-table.php:189
+#: admin/class-admin.php:622
+#: admin/class-tags-list-table.php:196
 msgid "Copy"
 msgstr ""
 
-#: admin/class-admin.php:616
-#: admin/class-admin.php:727
+#: admin/class-admin.php:626
+#: admin/class-admin.php:737
 #: admin/class-tags-list-table.php:30
 msgid "Group"
 msgstr ""
 
-#: admin/class-admin.php:616
+#: admin/class-admin.php:626
 msgid "No group"
 msgstr ""
 
-#: admin/class-admin.php:623
-#: admin/class-admin.php:726
-#: admin/class-admin.php:784
+#: admin/class-admin.php:633
+#: admin/class-admin.php:736
+#: admin/class-admin.php:794
 #: admin/class-tags-list-table.php:31
 #: admin/settings-page.php:346
 #: includes/class-migration-admin.php:214
 msgid "Status"
 msgstr ""
 
-#: admin/class-admin.php:624
+#: admin/class-admin.php:634
 #: admin/class-tags-list-table.php:75
-#: admin/class-tags-list-table.php:215
+#: admin/class-tags-list-table.php:222
 msgid "Active"
 msgstr ""
 
-#: admin/class-admin.php:625
+#: admin/class-admin.php:635
 #: admin/class-tags-list-table.php:75
-#: admin/class-tags-list-table.php:216
+#: admin/class-tags-list-table.php:223
 msgid "Inactive"
 msgstr ""
 
-#: admin/class-admin.php:628
+#: admin/class-admin.php:638
 #: admin/class-tags-list-table.php:32
 msgid "Priority"
 msgstr ""
 
-#: admin/class-admin.php:630
+#: admin/class-admin.php:640
 #: includes/class-tag-groups.php:159
 msgid "Description"
 msgstr ""
 
-#: admin/class-admin.php:632
+#: admin/class-admin.php:642
 msgid "Content"
 msgstr ""
 
-#: admin/class-admin.php:645
+#: admin/class-admin.php:655
 msgid "Use the Code tab for conditions that contain < or >: the Visual tab rewrites them."
 msgstr ""
 
-#: admin/class-admin.php:648
+#: admin/class-admin.php:658
 msgid "Placeholders you can use (click to insert)"
 msgstr ""
 
-#: admin/class-admin.php:654
+#: admin/class-admin.php:664
 msgid "Preview"
 msgstr ""
 
-#: admin/class-admin.php:654
+#: admin/class-admin.php:664
 msgid "Rendered here with the current page context of this screen; scripts are not run."
 msgstr ""
 
-#: admin/class-admin.php:658
+#: admin/class-admin.php:668
 msgid "Save Tag"
 msgstr ""
 
-#: admin/class-admin.php:658
+#: admin/class-admin.php:668
 msgid "Create Tag"
 msgstr ""
 
-#: admin/class-admin.php:724
-#: admin/class-admin.php:732
+#: admin/class-admin.php:734
+#: admin/class-admin.php:742
 msgid "Export"
 msgstr ""
 
-#: admin/class-admin.php:725
+#: admin/class-admin.php:735
 msgid "Format"
 msgstr ""
 
-#: admin/class-admin.php:726
+#: admin/class-admin.php:736
 #: admin/class-tags-list-table.php:75
 msgid "All"
 msgstr ""
 
-#: admin/class-admin.php:726
+#: admin/class-admin.php:736
 msgid "Active only"
 msgstr ""
 
-#: admin/class-admin.php:726
+#: admin/class-admin.php:736
 msgid "Inactive only"
 msgstr ""
 
-#: admin/class-admin.php:727
+#: admin/class-admin.php:737
 #: admin/class-tags-list-table.php:128
 msgid "All groups"
 msgstr ""
 
-#: admin/class-admin.php:733
+#: admin/class-admin.php:743
 msgid "Exports contain the full content of the tags, including any personal data they hold. Keep the file private."
 msgstr ""
 
-#: admin/class-admin.php:735
-#: admin/class-admin.php:739
+#: admin/class-admin.php:745
+#: admin/class-admin.php:749
 msgid "Import"
 msgstr ""
 
-#: admin/class-admin.php:736
+#: admin/class-admin.php:746
 msgid "File"
 msgstr ""
 
-#: admin/class-admin.php:737
+#: admin/class-admin.php:747
 msgid "JSON, CSV or XML, up to 5 MB."
 msgstr ""
 
-#: admin/class-admin.php:737
+#: admin/class-admin.php:747
 msgid "Sample CSV"
 msgstr ""
 
-#: admin/class-admin.php:738
+#: admin/class-admin.php:748
 msgid "Options"
 msgstr ""
 
-#: admin/class-admin.php:738
+#: admin/class-admin.php:748
 msgid "Update existing tags (same shortcode)"
 msgstr ""
 
-#: admin/class-admin.php:738
+#: admin/class-admin.php:748
 msgid "Skip duplicates"
 msgstr ""
 
-#: admin/class-admin.php:739
+#: admin/class-admin.php:749
 msgid "Check the file"
 msgstr ""
 
-#: admin/class-admin.php:786
+#: admin/class-admin.php:796
 #: admin/settings-page.php:338
 msgid "Tags"
 msgstr ""
 
 #. translators: 1: total, 2: active
-#: admin/class-admin.php:786
+#: admin/class-admin.php:796
 #, php-format
 msgid "%1$d (%2$d active)"
 msgstr ""
 
 #. translators: 1: total, 2: active
-#: admin/class-admin.php:787
+#: admin/class-admin.php:797
 #: admin/settings-page.php:340
 msgid "Shortcodes registered in this request"
 msgstr ""
 
-#: admin/class-admin.php:788
+#: admin/class-admin.php:798
 msgid "Usage counting"
 msgstr ""
 
-#: admin/class-admin.php:788
-#: admin/class-admin.php:813
+#: admin/class-admin.php:798
+#: admin/class-admin.php:823
 msgid "On"
 msgstr ""
 
-#: admin/class-admin.php:788
+#: admin/class-admin.php:798
 msgid "Off (Settings)"
 msgstr ""
 
-#: admin/class-admin.php:789
+#: admin/class-admin.php:799
 msgid "Database table"
 msgstr ""
 
-#: admin/class-admin.php:789
+#: admin/class-admin.php:799
 msgid "exists"
 msgstr ""
 
-#: admin/class-admin.php:789
+#: admin/class-admin.php:799
 msgid "MISSING"
 msgstr ""
 
-#: admin/class-admin.php:790
+#: admin/class-admin.php:800
 msgid "Versions"
 msgstr ""
 
-#: admin/class-admin.php:794
+#: admin/class-admin.php:804
 msgid "Shortcode names"
 msgstr ""
 
 #. translators: %s: plugin folder
-#: admin/class-admin.php:797
+#: admin/class-admin.php:807
 #, php-format
 msgid "Not registered: the name belongs to %s."
 msgstr ""
 
 #. translators: %s: plugin folder
-#: admin/class-admin.php:801
+#: admin/class-admin.php:811
 #, php-format
 msgid "Replaced by %s after this plugin registered it: that plugin's shortcode is shown on pages."
 msgstr ""
 
-#: admin/class-admin.php:807
+#: admin/class-admin.php:817
 msgid "No conflicts found."
 msgstr ""
 
-#: admin/class-admin.php:810
+#: admin/class-admin.php:820
 msgid "Rendering and debug log"
 msgstr ""
 
-#: admin/class-admin.php:812
+#: admin/class-admin.php:822
 msgid "Times the render guard cut off a tag in this request"
 msgstr ""
 
-#: admin/class-admin.php:813
+#: admin/class-admin.php:823
 msgid "Debug mode"
 msgstr ""
 
-#: admin/class-admin.php:813
+#: admin/class-admin.php:823
 msgid "Off: define DT_DEBUG_MODE as true in wp-config.php, or use the dt_debug_mode filter"
 msgstr ""
 
-#: admin/class-admin.php:817
+#: admin/class-admin.php:827
 msgid "Time (UTC)"
 msgstr ""
 
-#: admin/class-admin.php:817
+#: admin/class-admin.php:827
 msgid "Event"
 msgstr ""
 
-#: admin/class-admin.php:817
+#: admin/class-admin.php:827
 msgid "Tag"
 msgstr ""
 
-#: admin/class-admin.php:817
+#: admin/class-admin.php:827
 msgid "Type"
 msgstr ""
 
-#: admin/class-admin.php:817
+#: admin/class-admin.php:827
 msgid "Context"
 msgstr ""
 
-#: admin/class-admin.php:823
+#: admin/class-admin.php:833
 msgid "Clear the log"
 msgstr ""
 
-#: admin/class-admin.php:827
+#: admin/class-admin.php:837
 msgid "Older tag posts"
 msgstr ""
 
-#: admin/class-admin.php:831
+#: admin/class-admin.php:841
 msgid "Tag posts of earlier versions"
 msgstr ""
 
-#: admin/class-admin.php:832
+#: admin/class-admin.php:842
 msgid "Writes to them carried into the table"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:832
+#: admin/class-admin.php:842
 #, php-format
 msgid "%1$d, the last on %2$s"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:832
+#: admin/class-admin.php:842
 msgid "none"
 msgstr ""
 
 #. translators: 1: count, 2: time
-#: admin/class-admin.php:833
+#: admin/class-admin.php:843
 msgid "Tags that point at a post that no longer exists"
 msgstr ""
 
-#: admin/class-admin.php:834
+#: admin/class-admin.php:844
 msgid "Inactive tags"
 msgstr ""
 
-#: admin/class-admin.php:837
+#: admin/class-admin.php:847
 msgid "Moving older tag posts into the table"
 msgstr ""
 
-#: admin/class-admin.php:840
+#: admin/class-admin.php:850
 msgid "Database"
 msgstr ""
 
-#: admin/class-admin.php:841
+#: admin/class-admin.php:851
 msgid "Check the table"
 msgstr ""
 
-#: admin/class-admin.php:841
+#: admin/class-admin.php:851
 msgid "Create the table if it is missing"
 msgstr ""
 
-#: admin/class-admin.php:871
+#: admin/class-admin.php:881
 msgid "The table already exists."
 msgstr ""
 
-#: admin/class-admin.php:878
+#: admin/class-admin.php:888
 msgid "The table was created."
 msgstr ""
 
-#: admin/class-admin.php:900
+#: admin/class-admin.php:910
 msgid "The table is healthy."
 msgstr ""
 
-#: admin/class-admin.php:900
+#: admin/class-admin.php:910
 msgid "The table exists but has problems."
 msgstr ""
 
-#: admin/class-admin.php:903
+#: admin/class-admin.php:913
 msgid "The table does not exist."
 msgstr ""
 
@@ -646,24 +649,24 @@ msgid "Modified"
 msgstr ""
 
 #: admin/class-tags-list-table.php:51
-#: admin/class-tags-list-table.php:169
+#: admin/class-tags-list-table.php:176
 #: admin/settings-page.php:448
 msgid "Activate"
 msgstr ""
 
 #: admin/class-tags-list-table.php:52
-#: admin/class-tags-list-table.php:169
+#: admin/class-tags-list-table.php:176
 #: admin/settings-page.php:451
 msgid "Deactivate"
 msgstr ""
 
 #: admin/class-tags-list-table.php:53
-#: admin/class-tags-list-table.php:168
+#: admin/class-tags-list-table.php:175
 msgid "Duplicate"
 msgstr ""
 
 #: admin/class-tags-list-table.php:54
-#: admin/class-tags-list-table.php:174
+#: admin/class-tags-list-table.php:181
 msgid "Delete"
 msgstr ""
 
@@ -679,22 +682,28 @@ msgstr ""
 msgid "Filter"
 msgstr ""
 
-#: admin/class-tags-list-table.php:167
+#. translators: %s: tag name
+#: admin/class-tags-list-table.php:162
+#, php-format
+msgid "Select %s"
+msgstr ""
+
+#: admin/class-tags-list-table.php:174
 #: includes/class-tag-groups.php:994
 msgid "Edit"
 msgstr ""
 
-#: admin/class-tags-list-table.php:173
+#: admin/class-tags-list-table.php:180
 msgid "Delete this tag? Pages that use its shortcode will show nothing."
 msgstr ""
 
 #. translators: %s: shortcode
-#: admin/class-tags-list-table.php:188
+#: admin/class-tags-list-table.php:195
 #, php-format
 msgid "Copy %s"
 msgstr ""
 
-#: admin/class-tags-list-table.php:228
+#: admin/class-tags-list-table.php:235
 msgid "Usage counting is off"
 msgstr ""
 
@@ -2523,7 +2532,7 @@ msgid "The shortcode name [%s] is already used by WordPress or another plugin."
 msgstr ""
 
 #. translators: %s: shortcode name
-#: includes/class-tag-service.php:160
+#: includes/class-tag-service.php:188
 #, php-format
 msgid "The tag [%s] would render itself: its content refers back to it, directly or through other tags."
 msgstr ""
