@@ -149,7 +149,7 @@ class WP_Dynamic_Tags_Migration_Admin
         header('Content-Disposition: attachment; filename="' . $file . '"');
         header('Content-Length: ' . filesize($path));
         header('X-Content-Type-Options: nosniff');
-        readfile($path);
+        readfile($path); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streams a backup of any size without loading it into memory; WP_Filesystem cannot stream
         exit;
     }
 

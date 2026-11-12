@@ -328,7 +328,7 @@ function wp_dynamic_tags_uninstall() {
         $migration_upload_dir = wp_upload_dir();
         if (empty($migration_upload_dir['error']) && !empty($migration_upload_dir['basedir'])) {
             foreach ((array) glob(trailingslashit($migration_upload_dir['basedir']) . 'wp-dynamic-tags-private/backup-*.json*') as $migration_backup) {
-                @unlink($migration_backup);
+                wp_delete_file($migration_backup);
             }
         }
 
@@ -507,7 +507,7 @@ function wp_dynamic_tags_create_backup_before_deletion() {
                 // Use error suppression and check return value to prevent uninstall failure
                 $result = @file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
                 if ($result !== false) {
-                    @chmod($backup_file, 0600);
+                    @chmod($backup_file, 0600); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- owner-only permissions for a private backup
                 }
             }
 

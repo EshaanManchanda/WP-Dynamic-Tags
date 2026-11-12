@@ -137,6 +137,9 @@ Other decisions:
 * **Markup in tag output (S10).** The output of a per-tag shortcode is not run through `wp_kses_post`: the
   author's markup is preserved, as before. `[dt]`, `[dt_group]` and `[dt_template]` keep their own
   filtering. Filter `dt_kses_tag_output` turns filtering on for every tag.
+* **`format="no_html"` uses `wp_strip_all_tags()`** (WordPress's own function, which Plugin Check asks for): it also removes
+  what is inside `<script>` and `<style>` elements, which PHP's `strip_tags()` left behind as text (`alert(1)`), and trims the
+  result. The golden master has no case for it, so no allow-list entry changed.
 * **`{api:}` is hardened.** Only public hosts (WordPress refuses loopback and private addresses; the plugin
   also checks them itself), a 1 MB response cap, a JSON (or plain text) content type, at most 5 fetches per
   request, an optional host allow-list (`dt_api_allowed_hosts`), and nothing larger than 256 KB is cached.

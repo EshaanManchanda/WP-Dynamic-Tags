@@ -218,6 +218,8 @@ class WP_Dynamic_Tags_Table_Import_Export {
      * @param array<int,array<int,scalar|null>> $rows
      */
     public static function write_csv(array $rows) {
+        // php://temp is an in-memory stream (fputcsv needs a stream), not a file on disk: WP_Filesystem does not apply.
+        // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         $stream = fopen('php://temp', 'r+');
         fwrite($stream, "\xEF\xBB\xBF");
         foreach ($rows as $fields) {
@@ -226,6 +228,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
         rewind($stream);
         $text = (string) stream_get_contents($stream);
         fclose($stream);
+        // phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         return $text;
     }
 
@@ -236,6 +239,8 @@ class WP_Dynamic_Tags_Table_Import_Export {
      * @return array<int,array<int,string>>
      */
     public static function read_csv($text) {
+        // An in-memory stream again (fgetcsv needs one); see write_csv().
+        // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         $stream = fopen('php://temp', 'r+');
         fwrite($stream, (string) preg_replace('/^\xEF\xBB\xBF/', '', (string) $text));
         rewind($stream);
@@ -247,6 +252,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
             $rows[] = array_map('strval', $fields);
         }
         fclose($stream);
+        // phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         return $rows;
     }
 

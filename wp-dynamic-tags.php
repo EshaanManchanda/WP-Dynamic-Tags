@@ -861,7 +861,7 @@ class WP_Dynamic_Tags_Plugin
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="dynamic-tags-sample.csv"');
         header('Content-Length: ' . filesize($file_path));
-        readfile($file_path);
+        readfile($file_path); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- sends the plugin's own sample file
         exit;
     }
 
@@ -883,7 +883,7 @@ class WP_Dynamic_Tags_Plugin
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="dynamic-tags-sample-full.csv"');
         header('Content-Length: ' . filesize($file_path));
-        readfile($file_path);
+        readfile($file_path); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- sends the plugin's own sample file
         exit;
     }
 

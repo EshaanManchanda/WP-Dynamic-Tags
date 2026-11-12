@@ -455,7 +455,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
                 return wp_trim_words($content, 55, '...');
 
             case 'no_html':
-                return strip_tags($content);
+                return wp_strip_all_tags($content); // also drops what is inside <script> and <style>, which strip_tags() leaves behind as text
 
             case 'html_entities':
                 return htmlentities($content);

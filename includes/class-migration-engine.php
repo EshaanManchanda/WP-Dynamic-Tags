@@ -1113,9 +1113,11 @@ class WP_Dynamic_Tags_Migration_Engine
         if (file_put_contents($tmp, $json, LOCK_EX) === false) {
             return new WP_Error('backup_write_failed', __('Could not write the backup file.', 'wp-dynamic-tags'));
         }
-        @chmod($tmp, 0600); // phpcs:ignore WordPress.PHP.NoSilencedErrors
-        if (!rename($tmp, $path)) {
-            @unlink($tmp); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+        // Owner-only permissions for a private backup, then an atomic replace of the temporary file: neither is something
+        // WP_Filesystem offers for a plain local file (it needs credentials and has no atomic move).
+        @chmod($tmp, 0600); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+        if (!rename($tmp, $path)) { // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
+            wp_delete_file($tmp);
             return new WP_Error('backup_write_failed', __('Could not finalize the backup file.', 'wp-dynamic-tags'));
         }
         $sha = (string) hash_file('sha256', $path);
@@ -1133,8 +1135,8 @@ class WP_Dynamic_Tags_Migration_Engine
 
         $check = $this->validate_backup($meta);
         if (!$check['exists'] || !$check['sha_ok'] || !$check['counts_ok']) {
-            @unlink($path); // phpcs:ignore WordPress.PHP.NoSilencedErrors
-            @unlink($path . '.sha256'); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+            wp_delete_file($path);
+            wp_delete_file($path . '.sha256');
             return new WP_Error('backup_invalid', __('The backup failed validation after writing and was discarded.', 'wp-dynamic-tags'));
         }
 

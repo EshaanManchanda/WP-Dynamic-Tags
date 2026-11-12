@@ -38,6 +38,15 @@ class DT_Unified_Render_Test extends WP_UnitTestCase
         $this->assertSame(strtoupper(get_bloginfo('name')), do_shortcode('[u_fmt cache="false"]'));
     }
 
+    public function test_format_no_html_removes_the_tags_and_the_content_of_scripts_and_styles(): void
+    {
+        // Plugin Check: strip_tags() is discouraged for wp_strip_all_tags(), which also drops what is inside <script> and <style>
+        // (strip_tags leaves "alert(1)" behind as text) and trims the result.
+        $this->seed('u_nohtml', '  <b>Hello</b> <script>alert(1)</script><style>p{color:red}</style>world  ');
+
+        $this->assertSame('Hello world', do_shortcode('[u_nohtml format="no_html" cache="false"]'));
+    }
+
     public function test_a_table_native_tag_can_read_post_meta(): void
     {
         $post = self::factory()->post->create(array('post_title' => 'Meta host'));
