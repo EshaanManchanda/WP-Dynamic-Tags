@@ -96,6 +96,40 @@ class DT_Groups_Test extends WP_Ajax_UnitTestCase
         $this->assertMatchesRegularExpression('#data-group-id="' . $b . '".*?dt-group-count">1<#s', $html);
     }
 
+    /** WCAG 2 relative luminance of #rrggbb or #rgb. */
+    private static function luminance(string $hex): float
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        $channels = array_map(static function (string $pair): float {
+            $c = hexdec($pair) / 255;
+            return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        }, str_split($hex, 2));
+        return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+    }
+
+    public function test_text_on_a_coloured_background_on_the_page_meets_wcag_aa_contrast(): void
+    {
+        // Lighthouse (axe color-contrast) flagged the group count: #666 on #ddd is 4.22:1, AA needs 4.5:1 for small text.
+        $html = $this->page();
+        $this->assertSame(1, preg_match('#<style[^>]*>(.*?)</style>#s', $html, $style), 'the page carries its own styles');
+
+        $checked = 0;
+        preg_match_all('#([^{}]+)\{([^}]*)\}#', $style[1], $rules, PREG_SET_ORDER);
+        foreach ($rules as $rule) {
+            if (preg_match('#(?<![-\w])background(?:-color)?:\s*(\#[0-9a-fA-F]{3,6})\b#', $rule[2], $bg) && preg_match('#(?<![-\w])color:\s*(\#[0-9a-fA-F]{3,6})\b#', $rule[2], $fg)) {
+                $a = self::luminance($bg[1]);
+                $b = self::luminance($fg[1]);
+                $ratio = (max($a, $b) + 0.05) / (min($a, $b) + 0.05);
+                $this->assertGreaterThanOrEqual(4.5, $ratio, trim($rule[1]) . ': ' . $fg[1] . ' on ' . $bg[1] . ' is ' . round($ratio, 2) . ':1');
+                $checked++;
+            }
+        }
+        $this->assertGreaterThan(0, $checked, 'the check looked at least one rule');
+    }
+
     public function test_a_tag_whose_group_no_longer_exists_counts_as_ungrouped(): void
     {
         $a = $this->group('Real');

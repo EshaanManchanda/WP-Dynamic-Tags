@@ -510,7 +510,7 @@ class WP_Dynamic_Tags_Groups {
 
         .dt-group-count {
             background: #ddd;
-            color: #666;
+            color: #50575e; /* WordPress's admin grey: 5.4:1 on #ddd (#666 was 4.2:1, below the 4.5:1 AA needs) */
             padding: 2px 6px;
             border-radius: 10px;
             font-size: 11px;
