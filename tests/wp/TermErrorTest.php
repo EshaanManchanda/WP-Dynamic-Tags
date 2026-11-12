@@ -11,7 +11,6 @@ class DT_Term_Error_Test extends WP_UnitTestCase
     {
         if (!taxonomy_exists('tag_groups')) {
             $prop = new ReflectionProperty(WP_Dynamic_Tags_Plugin::class, 'tag_groups');
-            $prop->setAccessible(true);
             $prop->getValue(WP_Dynamic_Tags_Plugin::get_instance())->register_taxonomy(); // later tests need the taxonomy
         }
         parent::tear_down();

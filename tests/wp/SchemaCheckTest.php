@@ -30,7 +30,6 @@ class DT_Schema_Check_Test extends WP_UnitTestCase
             return; // the code under test does not remember an answer (yet)
         }
         $prop = new ReflectionProperty($this->db, 'table_found');
-        $prop->setAccessible(true);
         $prop->setValue($this->db, null);
     }
 

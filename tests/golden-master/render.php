@@ -138,7 +138,6 @@ if ($term_id) {
 
 $reflect_clear = function ($obj) {
     $m = new ReflectionMethod($obj, 'clear_cache');
-    $m->setAccessible(true);
     $m->invoke($obj);
 };
 $ids = [];   // fixture key => post id | row id

@@ -111,9 +111,7 @@ class DT_Legacy_Compat_Test extends WP_UnitTestCase
         $id = $this->tag_post('Cleanup Probe');
         $engine = WP_Dynamic_Tags_Migration_Engine::get_instance();
         $suspend = new ReflectionMethod($engine, 'suspend_legacy_hooks');
-        $suspend->setAccessible(true);
         $restore = new ReflectionMethod($engine, 'restore_hooks');
-        $restore->setAccessible(true);
 
         $removed = $suspend->invoke($engine);
         wp_delete_post($id, true);

@@ -19,7 +19,6 @@ class DT_Api_Hardening_Test extends WP_UnitTestCase
         // The per-request fetch counter is static; every test starts a fresh "request".
         if (property_exists('WP_Dynamic_Tags_Placeholders', 'api_fetches')) {
             $prop = new ReflectionProperty('WP_Dynamic_Tags_Placeholders', 'api_fetches');
-            $prop->setAccessible(true);
             $prop->setValue(null, 0);
         }
     }
