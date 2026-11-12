@@ -102,10 +102,13 @@ final class WP_Dynamic_Tags_Tag_Service
     /**
      * A tag's meta_data as it will be stored, with the origin mark handled in this one place for create and update.
      *
-     * The mark (dt_origin = api) is what keeps a tag out of the Free limit, so a caller can never choose it: any mark in the
-     * data is removed and then set again only when the tag is (or stays) one that another plugin created. A meta_data string
-     * that is not an array but mentions the mark cannot carry a real one and is dropped, so that it cannot fake one either.
-     * The rest of the meta data is kept as it was sent.
+     * The mark (dt_origin = api) is what keeps a tag out of the Free limit, so a caller can never choose it. The limit finds a
+     * plugin's tag by searching the STORED text of meta_data for the mark, which means the words themselves must be kept out of a
+     * person's meta data wherever they could be hiding: as a key at any depth, in any case (the database compares text without
+     * regard to case), and written out inside a value. So for a person every mention is removed (a key) or defused (a value:
+     * "dt_origin" becomes "dt-origin", the rest of the text is kept). For a plugin tag the mark is set last, at the top level;
+     * the plugin's own data is its own and is kept as sent. A meta_data string that is not an array but mentions the mark cannot
+     * carry a real one and is dropped.
      *
      * @param mixed $raw An array, a JSON or serialized string, or empty.
      * @param bool  $api Whether the tag is created by another plugin (or already was).
@@ -115,19 +118,44 @@ final class WP_Dynamic_Tags_Tag_Service
     {
         $meta = WP_Dynamic_Tags_Database_Manager::decode_meta($raw);
         if (is_array($meta)) {
-            unset($meta[self::ORIGIN_KEY]);
-            if ($api) {
-                $meta[self::ORIGIN_KEY] = self::ORIGIN_API;
+            if (!$api) {
+                return self::without_origin_text($meta);
             }
+            unset($meta[self::ORIGIN_KEY]);
+            $meta[self::ORIGIN_KEY] = self::ORIGIN_API;
             return $meta;
         }
         if ($raw === null || $raw === '') {
             return $api ? array(self::ORIGIN_KEY => self::ORIGIN_API) : '';
         }
-        if (is_string($raw) && strpos($raw, self::ORIGIN_KEY) !== false) {
+        if (is_string($raw) && stripos($raw, self::ORIGIN_KEY) !== false) {
             return '';
         }
         return $raw;
+    }
+
+    /**
+     * A person's meta data without any mention of the origin mark: a key that contains it is dropped, a string value that
+     * contains it has the word changed, at every depth.
+     *
+     * @param array<mixed> $meta
+     * @return array<mixed>
+     */
+    private static function without_origin_text(array $meta): array
+    {
+        $clean = array();
+        foreach ($meta as $key => $value) {
+            if (is_string($key) && stripos($key, self::ORIGIN_KEY) !== false) {
+                continue;
+            }
+            if (is_array($value)) {
+                $value = self::without_origin_text($value);
+            } elseif (is_string($value) && stripos($value, self::ORIGIN_KEY) !== false) {
+                $value = str_ireplace(self::ORIGIN_KEY, 'dt-origin', $value);
+            }
+            $clean[$key] = $value;
+        }
+        return $clean;
     }
 
     /**

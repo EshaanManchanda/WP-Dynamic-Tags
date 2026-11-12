@@ -158,8 +158,8 @@ class DT_License_Manager
                 $conditions[] = $hit[1] !== '' ? $hit[1] : ($hit[2] ?? '');
             }
         }
-        if ($conditions && class_exists('WP_Dynamic_Tags_Placeholders')) {
-            $placeholders = WP_Dynamic_Tags_Placeholders::get_instance();
+        $placeholders = $conditions && class_exists('WP_Dynamic_Tags_Placeholders') ? WP_Dynamic_Tags_Placeholders::get_instance() : null;
+        if ($placeholders) { // the registry exists once the plugin has started; without it a condition cannot be told from a site's own
             foreach ($conditions as $condition) {
                 if ($placeholders->is_field_condition(html_entity_decode($condition))) {
                     $found['field conditions'] = true;

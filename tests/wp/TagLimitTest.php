@@ -144,6 +144,10 @@ class DT_Tag_Limit_Test extends WP_UnitTestCase
             'json'       => '{"dt_origin":"api","keep":"1"}',
             'serialized' => 'a:2:{s:9:"dt_origin";s:3:"api";s:4:"keep";s:1:"1";}',
             'plain text' => 'x"dt_origin";s:3:"api";',
+            // The limit looks for the mark in the STORED text, so hiding it deeper or writing it out inside a value must not work either.
+            'nested'     => array('keep' => '1', 'x' => array('dt_origin' => 'api')),
+            'in a value' => array('keep' => '1', 'note' => '"dt_origin";s:3:"api"'),
+            'upper case' => array('keep' => '1', 'DT_ORIGIN' => 'API'),
         );
         $n = 0;
         foreach ($claims as $name => $meta) {
@@ -155,7 +159,7 @@ class DT_Tag_Limit_Test extends WP_UnitTestCase
                 $this->assertSame('1', $stored['keep'] ?? null, "$name: the rest of the meta data is kept");
             }
         }
-        $this->assertSame(4, DT_License_Manager::count_capped_tags(), 'all four count');
+        $this->assertSame(count($claims), DT_License_Manager::count_capped_tags(), 'every one of them counts toward the limit');
     }
 
     public function test_an_update_cannot_add_or_remove_the_mark(): void
