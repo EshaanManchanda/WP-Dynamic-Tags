@@ -193,8 +193,8 @@ class WP_Dynamic_Tags_Settings_Page {
         // Security check
         if (!current_user_can('manage_options')) {
             wp_die(
-                __('You do not have sufficient permissions to access this page.', 'wp-dynamic-tags'),
-                __('Permission Denied', 'wp-dynamic-tags'),
+                esc_html__('You do not have sufficient permissions to access this page.', 'wp-dynamic-tags'),
+                esc_html__('Permission Denied', 'wp-dynamic-tags'),
                 array('response' => 403)
             );
         }
@@ -214,7 +214,9 @@ class WP_Dynamic_Tags_Settings_Page {
 
         $table_tags_count = 0;
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $table_tags_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         }
 
         ?>
@@ -238,7 +240,7 @@ class WP_Dynamic_Tags_Settings_Page {
                         <?php echo esc_html($plan_label); ?>
                     </span>
                     <?php if ($is_paid && $expiry) : ?>
-                        <span class="description"><?php echo esc_html(sprintf(__('(expires %s)', 'wp-dynamic-tags'), $expiry)); ?></span>
+                        <span class="description"><?php /* translators: %s: the date the license expires */ echo esc_html(sprintf(__('(expires %s)', 'wp-dynamic-tags'), $expiry)); ?></span>
                     <?php endif; ?>
                 </p>
 

@@ -57,11 +57,11 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
     /** The filters of the current request, already sanitized. @return array{status:string,category:?int,search:string} */
     public static function filters_from_request(): array
     {
-        $status = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
+        $status = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
         return array(
             'status'   => in_array($status, array('active', 'inactive'), true) ? $status : '',
-            'category' => isset($_GET['category']) && $_GET['category'] !== '' ? absint($_GET['category']) : null,
-            'search'   => isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '',
+            'category' => isset($_GET['category']) && $_GET['category'] !== '' ? absint($_GET['category']) : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+            'search'   => isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
         );
     }
 
@@ -90,10 +90,10 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
         $db = WP_Dynamic_Tags_Database_Manager::get_instance();
         $filters = self::filters_from_request();
         $per_page = max(1, (int) apply_filters('dt_list_per_page', 20));
-        $page = max(1, isset($_GET['paged']) ? absint($_GET['paged']) : 1);
+        $page = max(1, isset($_GET['paged']) ? absint($_GET['paged']) : 1); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
 
-        $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified_date';
-        $order = isset($_GET['order']) && strtolower(sanitize_key(wp_unslash($_GET['order']))) === 'asc' ? 'ASC' : 'DESC';
+        $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified_date'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+        $order = isset($_GET['order']) && strtolower(sanitize_key(wp_unslash($_GET['order']))) === 'asc' ? 'ASC' : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
         if (!isset($this->get_sortable_columns()[$orderby])) {
             $orderby = 'modified_date';
         }

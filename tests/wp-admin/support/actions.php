@@ -26,7 +26,6 @@ return [
     'dt_create_group'          => ['nonce' => 'dt_group_operation', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_edit_group'            => ['nonce' => 'dt_group_operation', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_delete_group'          => ['nonce' => 'dt_group_operation', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_assign_groups'         => ['nonce' => 'dt_assign_groups', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_get_group_details'     => ['nonce' => 'dt_get_group_details', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_get_group_edit_data'   => ['nonce' => 'dt_get_group_edit_data', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
 

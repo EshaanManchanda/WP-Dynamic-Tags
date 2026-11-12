@@ -181,15 +181,17 @@ final class WP_Dynamic_Tags_Admin
 
         $query = array();
         foreach (array('post_type', 'page') as $key) {
-            if (isset($_GET[$key])) {
-                $query[$key] = sanitize_key(wp_unslash($_GET[$key]));
+            if (isset($_GET[$key])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+                $query[$key] = sanitize_key(wp_unslash($_GET[$key])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
             }
         }
 
         // post.php?post=ID: a tag post goes to the form of the row that carries it, or to the list
-        if ($pagenow === 'post.php' && isset($_GET['post']) && get_post_type(absint($_GET['post'])) === 'dynamic_tag') {
+        if ($pagenow === 'post.php' && isset($_GET['post']) && get_post_type(absint($_GET['post'])) === 'dynamic_tag') { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
             global $wpdb;
-            $row_id = (int) $wpdb->get_var($wpdb->prepare('SELECT id FROM ' . WP_Dynamic_Tags_Database_Manager::get_instance()->get_table_name() . ' WHERE post_id = %d', absint($_GET['post'])));
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
+            $row_id = (int) $wpdb->get_var($wpdb->prepare('SELECT id FROM ' . WP_Dynamic_Tags_Database_Manager::get_instance()->get_table_name() . ' WHERE post_id = %d', absint($_GET['post']))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
             wp_safe_redirect($row_id ? self::edit_url($row_id) : admin_url('admin.php?page=' . self::MENU));
             exit;
         }
@@ -365,21 +367,21 @@ final class WP_Dynamic_Tags_Admin
 
         // the search and filter form is a GET form: tidy the address bar
         if (!empty($_GET['_wp_http_referer'])) {
-            wp_safe_redirect(remove_query_arg(array('_wp_http_referer', '_wpnonce'), wp_unslash($_SERVER['REQUEST_URI'] ?? '')));
+            wp_safe_redirect(remove_query_arg(array('_wp_http_referer', '_wpnonce'), esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'] ?? '')))); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- tag content is code, not text: it is shown only through the renderer here and filtered by the Tag Service when it is saved
             exit;
         }
     }
 
     private function notices(): void
     {
-        if (isset($_GET['dt_notice'])) {
-            $notice = self::notice_text(sanitize_key(wp_unslash($_GET['dt_notice'])));
+        if (isset($_GET['dt_notice'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+            $notice = self::notice_text(sanitize_key(wp_unslash($_GET['dt_notice']))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
             if ($notice) {
                 printf('<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr($notice[0]), esc_html($notice[1]));
             }
         }
-        if (isset($_GET['dt_error'])) {
-            printf('<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html(self::error_text(sanitize_key(wp_unslash($_GET['dt_error'])))));
+        if (isset($_GET['dt_error'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
+            printf('<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html(self::error_text(sanitize_key(wp_unslash($_GET['dt_error']))))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
         }
     }
 
@@ -403,7 +405,7 @@ final class WP_Dynamic_Tags_Admin
 
     private function edit_id(): int
     {
-        return isset($_REQUEST['tag']) ? absint($_REQUEST['tag']) : 0;
+        return isset($_REQUEST['tag']) ? absint($_REQUEST['tag']) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
     }
 
     public function load_edit(): void
@@ -504,7 +506,7 @@ final class WP_Dynamic_Tags_Admin
             wp_send_json_error(__('You do not have permission to manage dynamic tags.', 'wp-dynamic-tags'), 403);
         }
 
-        $content = isset($_POST['content']) ? (string) wp_unslash($_POST['content']) : '';
+        $content = isset($_POST['content']) ? (string) wp_unslash($_POST['content']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- tag content is code, not text: it is shown only through the renderer here and filtered by the Tag Service when it is saved
         $row = (object) array(
             'id' => -999999999, 'tag_name' => 'preview', 'shortcode' => '__preview__', 'content' => WP_Dynamic_Tags_Tag_Service::prepare_content($content),
             'description' => '', 'category_id' => 0, 'priority' => 0, 'usage_count' => 0, 'status' => 'active', 'meta_data' => '', 'post_id' => 0,
@@ -556,7 +558,7 @@ final class WP_Dynamic_Tags_Admin
     {
         echo '<table class="widefat striped dt-facts" role="presentation"><tbody>';
         foreach ($rows as [$label, $value]) {
-            echo '<tr><th scope="row">' . esc_html($label) . '</th><td>' . $value . '</td></tr>'; // values are escaped by the caller
+            echo '<tr><th scope="row">' . esc_html($label) . '</th><td>' . $value . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every caller passes a value that is already escaped
         }
         echo '</tbody></table>';
     }
@@ -572,7 +574,9 @@ final class WP_Dynamic_Tags_Admin
 
         $total = (int) $db->get_tags_count(array('status' => ''));
         $active = (int) $db->get_tags_count(array('status' => 'active'));
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
         $orphans = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} t LEFT JOIN {$wpdb->posts} p ON p.ID = t.post_id WHERE t.post_id > 0 AND p.ID IS NULL");
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $legacy_posts = $engine->count_legacy_posts();
 
         echo '<div class="wrap dt-wrap"><h1>' . esc_html__('Tools and Diagnostics', 'wp-dynamic-tags') . '</h1>';
@@ -684,10 +688,14 @@ final class WP_Dynamic_Tags_Admin
         $report = array('table_exists' => $db->table_exists(true));
 
         if ($report['table_exists']) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $columns = $wpdb->get_results("DESCRIBE {$table}");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $existing = is_array($columns) ? array_column($columns, 'Field') : array();
             $report['missing_columns'] = array_values(array_diff(array('id', 'tag_name', 'shortcode', 'content', 'status', 'created_date'), $existing));
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $report['record_count'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $report['read_access'] = $wpdb->last_error === '';
             $report['status'] = $report['missing_columns'] === array() && $report['read_access'] ? 'healthy' : 'warning';
             $report['message'] = $report['status'] === 'healthy' ? __('The table is healthy.', 'wp-dynamic-tags') : __('The table exists but has problems.', 'wp-dynamic-tags');

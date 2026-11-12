@@ -26,7 +26,11 @@ class DT_Import_Export_Test extends WP_Ajax_UnitTestCase
         parent::set_up();
         $this->io = WP_Dynamic_Tags_Table_Import_Export::get_instance();
         $this->tags = WP_Dynamic_Tags_Table_Manager::get_instance();
-        wp_set_current_user(self::factory()->user->create(['role' => 'administrator']));
+        $admin = self::factory()->user->create(['role' => 'administrator']);
+        if (is_multisite()) {
+            grant_super_admin($admin); // a network's site administrator may not post unfiltered HTML, which these round trips rely on
+        }
+        wp_set_current_user($admin);
     }
 
     public function tear_down(): void

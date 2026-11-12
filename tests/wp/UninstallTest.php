@@ -64,8 +64,38 @@ class DT_Uninstall_Test extends WP_UnitTestCase
 
         update_option('wp_dynamic_tags_delete_on_uninstall', true);
         update_option('wp_dynamic_tags_table_version', '1.0.0');
+        WP_Dynamic_Tags_Table_Manager::get_instance()->create_tag(['tag_name' => 'Backup probe', 'shortcode' => 'backup_probe', 'content' => 'student data']);
+
+        // On a network WordPress runs uninstall.php once, for every site: a second site that chose to delete its data is cleaned too.
+        $second = 0;
+        if (is_multisite()) {
+            $second = self::factory()->blog->create();
+            switch_to_blog($second);
+            update_option('wp_dynamic_tags_delete_on_uninstall', true);
+            update_option('wp_dynamic_tags_debug_log', array('x'));
+            restore_current_blog();
+        }
+        $private = wp_upload_dir()['basedir'] . '/wp-dynamic-tags-private';
+        $backups_before = (array) glob($private . '/uninstall-backup-*.json');
         define('WP_UNINSTALL_PLUGIN', true);
         require dirname(__DIR__, 2) . '/uninstall.php';
+
+        // A copy of every tag (certificate tags hold student data) must not stay in wp_options after the data was deleted: the
+        // backup is the private file, written first, and the option copy it was made from is removed once the file exists.
+        $backups = array_values(array_diff((array) glob($private . '/uninstall-backup-*.json'), $backups_before));
+        $this->assertCount(1, $backups, 'the uninstall writes its backup to the private folder');
+        $this->assertStringContainsString('backup_probe', (string) file_get_contents($backups[0]), 'and it holds the tags');
+        @unlink($backups[0]);
+        $this->assertFalse(get_option('wp_dynamic_tags_deletion_backup'), 'no copy of the tags stays in the options table');
+
+        if ($second) {
+            switch_to_blog($second);
+            $this->assertFalse(get_option('wp_dynamic_tags_debug_log'), 'every site of the network is cleaned, not only the one the command ran on');
+            foreach ((array) glob(wp_upload_dir()['basedir'] . '/wp-dynamic-tags-private/uninstall-backup-*.json') as $file) {
+                @unlink($file);
+            }
+            restore_current_blog();
+        }
 
         foreach ($ours as $option) {
             $this->assertFalse(get_option($option), $option . ' must not outlive an uninstall that deletes the data');

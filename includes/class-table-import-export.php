@@ -939,7 +939,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
         }
 
         $format = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : '';
-        $filters = isset($_POST['filters']) ? wp_unslash($_POST['filters']) : array();
+        $filters = isset($_POST['filters']) ? wp_unslash($_POST['filters']) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized and whitelisted by get_filtered_data(), sanitize_import_options() and read_upload(); the nonce is verified by the calling handler
 
         $result = $this->export_data($format, $filters);
 
@@ -975,7 +975,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
      * @return array{content: string, format: string}|WP_Error
      */
     private function read_upload() {
-        $file = isset($_FILES['import_file']) ? $_FILES['import_file'] : null;
+        $file = isset($_FILES['import_file']) ? $_FILES['import_file'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized and whitelisted by get_filtered_data(), sanitize_import_options() and read_upload(); the nonce is verified by the calling handler; the nonce is verified by the calling handler before this runs
         if (!is_array($file) || !isset($file['tmp_name'], $file['error']) || is_array($file['error'])) {
             return new WP_Error('no_file', __('No file uploaded', 'wp-dynamic-tags'));
         }
@@ -1000,7 +1000,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
             return new WP_Error('unsupported_type', sprintf(__('Unsupported file type. Use %s.', 'wp-dynamic-tags'), implode(', ', $this->import_formats)));
         }
 
-        $requested = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : '';
+        $requested = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified by the calling handler before this runs
         $format = in_array($requested, $this->import_formats, true) ? $requested : $extension;
 
         $content = file_get_contents($file['tmp_name']);
@@ -1043,7 +1043,7 @@ class WP_Dynamic_Tags_Table_Import_Export {
             wp_send_json_error($upload->get_error_message());
         }
 
-        $options = $this->sanitize_import_options(isset($_POST['options']) ? wp_unslash($_POST['options']) : array());
+        $options = $this->sanitize_import_options(isset($_POST['options']) ? wp_unslash($_POST['options']) : array()); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized and whitelisted by get_filtered_data(), sanitize_import_options() and read_upload(); the nonce is verified by the calling handler
 
         $result = $this->import_data($upload['content'], $upload['format'], $options);
 

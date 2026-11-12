@@ -220,10 +220,12 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         }
 
         global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table names are $wpdb's and the plugin's own; every value goes through prepare()
         $posts = $wpdb->get_results($wpdb->prepare(
             "SELECT p.ID, p.post_title, p.post_content FROM {$wpdb->posts} p LEFT JOIN {$this->db_manager->get_table_name()} t ON t.post_id = p.ID WHERE p.post_type = %s AND p.post_status = 'publish' AND t.id IS NULL ORDER BY p.ID ASC",
             WP_Dynamic_Tags_Migration_Engine::POST_TYPE
         ));
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         $reserved = array('dt', 'dt_group', 'dt_random', 'dt_count', 'dt_list', 'dt_loop', 'dt_if', 'dt_else', 'dt_template');
         foreach ((array) $posts as $post) {
@@ -796,12 +798,14 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
         try {
             $now = current_time('mysql');
             foreach ($counts as $tag_id => $n) {
+                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table names are $wpdb's and the plugin's own; every value goes through prepare()
                 $wpdb->query($wpdb->prepare(
                     "UPDATE {$table} SET usage_count = usage_count + %d, last_used_date = %s, modified_date = modified_date WHERE id = %d",
                     $n,
                     $now,
                     (int) $tag_id
                 ));
+                // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             }
         } catch (Throwable $e) {
             // swallowed on purpose

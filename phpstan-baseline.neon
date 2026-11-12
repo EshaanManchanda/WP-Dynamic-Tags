@@ -21,33 +21,13 @@ parameters:
 			path: includes/class-tag-groups.php
 
 		-
-			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int given\\.$#"
-			count: 2
-			path: includes/class-tag-groups.php
-
-		-
-			message: "#^Property WP_Dynamic_Tags_Groups\\:\\:\\$cache_version is never read, only written\\.$#"
-			count: 1
-			path: includes/class-tag-groups.php
-
-		-
-			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
-			count: 3
-			path: includes/class-tag-groups.php
-
-		-
 			message: "#^Property WP_Term\\:\\:\\$term_id \\(int\\) in isset\\(\\) is not nullable\\.$#"
-			count: 4
+			count: 1
 			path: includes/class-tag-groups.php
 
 		-
 			message: "#^Result of && is always true\\.$#"
 			count: 1
-			path: includes/class-tag-groups.php
-
-		-
-			message: "#^Result of \\|\\| is always false\\.$#"
-			count: 6
 			path: includes/class-tag-groups.php
 
 		-
@@ -58,11 +38,6 @@ parameters:
 		-
 			message: "#^Unreachable statement \\- code above always terminates\\.$#"
 			count: 5
-			path: includes/class-tag-groups.php
-
-		-
-			message: "#^Variable \\$group_badges in empty\\(\\) always exists and is not falsy\\.$#"
-			count: 1
 			path: includes/class-tag-groups.php
 
 		-

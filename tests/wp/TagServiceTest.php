@@ -116,7 +116,11 @@ class DT_Tag_Service_Test extends WP_UnitTestCase
 
     public function test_content_from_an_administrator_or_from_code_without_a_user_is_kept(): void
     {
-        wp_set_current_user(self::factory()->user->create(array('role' => 'administrator')));
+        $admin_user = self::factory()->user->create(array('role' => 'administrator'));
+        if (is_multisite()) {
+            grant_super_admin($admin_user); // on a network a site administrator does not have unfiltered_html; a super administrator does
+        }
+        wp_set_current_user($admin_user);
         $admin = $this->create('svc_kses_admin', '<b>ok</b><script>alert(1)</script>');
         $this->assertSame('<b>ok</b><script>alert(1)</script>', WP_Dynamic_Tags_Table_Manager::get_instance()->get_tag($admin)->content);
 

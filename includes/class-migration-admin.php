@@ -116,8 +116,8 @@ class WP_Dynamic_Tags_Migration_Admin
     public function ajax_resolve(): void
     {
         $this->guard();
-        $post_id = isset($_POST['post_id']) ? absint(wp_unslash($_POST['post_id'])) : 0;
-        $action  = isset($_POST['resolution']) ? sanitize_key(wp_unslash($_POST['resolution'])) : '';
+        $post_id = isset($_POST['post_id']) ? absint(wp_unslash($_POST['post_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified by the calling handler before this runs
+        $action  = isset($_POST['resolution']) ? sanitize_key(wp_unslash($_POST['resolution'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified by the calling handler before this runs
         $result  = $this->engine()->resolve_conflict($post_id, $action);
         $this->reply(is_wp_error($result) ? $result : $this->engine()->status());
     }
@@ -125,7 +125,7 @@ class WP_Dynamic_Tags_Migration_Admin
     public function ajax_restore(): void
     {
         $this->guard();
-        $file = isset($_POST['file']) ? sanitize_text_field(wp_unslash($_POST['file'])) : '';
+        $file = isset($_POST['file']) ? sanitize_text_field(wp_unslash($_POST['file'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified by the calling handler before this runs
         $this->reply($this->engine()->restore($file));
     }
 
@@ -212,14 +212,17 @@ class WP_Dynamic_Tags_Migration_Admin
 
         echo '<table class="widefat striped" style="max-width:760px"><tbody>';
         $this->row(__('Status', 'wp-dynamic-tags'), esc_html($this->phase_label($s['phase'])));
+        /* translators: %d: number of legacy posts not migrated yet */
         $this->row(__('Legacy posts', 'wp-dynamic-tags'), esc_html((string) $s['legacy_posts']) . ' ' . esc_html(sprintf(__('(%d not yet migrated)', 'wp-dynamic-tags'), $s['unlinked'])));
         $c = $s['counters'];
         $this->row(__('This run', 'wp-dynamic-tags'), esc_html(sprintf(
+            /* translators: 1: rows inserted, 2: rows updated, 3: rows linked, 4: posts skipped, 5: open conflicts */
             __('%1$d inserted, %2$d updated, %3$d linked, %4$d skipped, %5$d conflicts', 'wp-dynamic-tags'),
             $c['inserted'], $c['updated'], $c['linked'], $c['skipped'], $s['open_conflicts']
         )));
         if (is_array($s['backup'])) {
             $this->row(__('Backup', 'wp-dynamic-tags'), '<a href="' . esc_url($this->backup_url((string) $s['backup']['file'])) . '">' . esc_html((string) $s['backup']['file']) . '</a> '
+                /* translators: 1: posts in the backup, 2: rows in the backup, 3: file size */
                 . esc_html(sprintf(__('(%1$d posts, %2$d rows, %3$s)', 'wp-dynamic-tags'), $s['backup']['posts'], $s['backup']['rows'], size_format((int) $s['backup']['bytes']))));
         }
         if (is_array($s['verification'])) {
@@ -316,6 +319,7 @@ class WP_Dynamic_Tags_Migration_Admin
                 'working'      => __('Working…', 'wp-dynamic-tags'),
                 'confirmClean' => __('Permanently delete the old tag posts? A backup of exactly what will be deleted is written first.', 'wp-dynamic-tags'),
                 'confirmDry'   => '',
+                /* translators: 1: posts done, 2: posts in total */
                 'progress'     => __('Migrating… %1$d of %2$d done.', 'wp-dynamic-tags'),
                 'done'         => __('Done.', 'wp-dynamic-tags'),
             ),

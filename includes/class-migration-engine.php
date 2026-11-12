@@ -154,7 +154,9 @@ class WP_Dynamic_Tags_Migration_Engine
     {
         global $wpdb;
         $table  = $this->db->get_table_name();
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $row_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE post_id = %d", $post_id));
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         if (!$row_id) {
             return;
         }
@@ -315,13 +317,17 @@ class WP_Dynamic_Tags_Migration_Engine
     public function count_legacy_posts(): int
     {
         global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} p WHERE " . $this->legacy_where());
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
     }
 
     private function count_after_cursor(int $cursor): int
     {
         global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} p WHERE " . $this->legacy_where() . ' AND p.ID > %d', $cursor));
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /** @param int[] $exclude post IDs that need no row (conflicts the admin accepted) */
@@ -333,7 +339,9 @@ class WP_Dynamic_Tags_Migration_Engine
         if ($exclude) {
             $sql .= ' AND p.ID NOT IN (' . implode(',', array_map('intval', $exclude)) . ')';
         }
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         return (int) $wpdb->get_var($sql);
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
     }
 
     public function needs_migration(): bool
@@ -499,6 +507,7 @@ class WP_Dynamic_Tags_Migration_Engine
         global $wpdb;
 
         $rows = $wpdb->get_results(
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
             $wpdb->prepare(
                 "SELECT p.ID, p.post_title, p.post_content, p.post_excerpt, p.post_status, p.post_date, p.post_modified FROM {$wpdb->posts} p WHERE " . $this->legacy_where() . ' AND p.ID > %d ORDER BY p.ID ASC LIMIT %d',
                 $after_id,
@@ -506,6 +515,7 @@ class WP_Dynamic_Tags_Migration_Engine
             ),
             ARRAY_A
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         if (!is_array($rows) || !$rows) {
             return [];
         }
@@ -526,16 +536,20 @@ class WP_Dynamic_Tags_Migration_Engine
             ];
         }
 
-        $ids = implode(',', array_keys($posts));
+        $ids = implode(',', array_map('intval', array_keys($posts)));
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $meta = $wpdb->get_results("SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE post_id IN ({$ids}) ORDER BY meta_id ASC", ARRAY_A);
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         foreach ((array) $meta as $m) {
             $posts[(int) $m['post_id']]['meta'][(string) $m['meta_key']] = (string) $m['meta_value'];
         }
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $terms = $wpdb->get_results($wpdb->prepare(
             "SELECT tr.object_id, tt.term_id FROM {$wpdb->term_relationships} tr INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id WHERE tt.taxonomy = %s AND tr.object_id IN ({$ids}) ORDER BY tt.term_id ASC",
             self::TAXONOMY
         ), ARRAY_A);
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         foreach ((array) $terms as $t) {
             $posts[(int) $t['object_id']]['group_ids'][] = (int) $t['term_id'];
         }
@@ -548,7 +562,9 @@ class WP_Dynamic_Tags_Migration_Engine
     {
         global $wpdb;
         $table = $this->db->get_table_name();
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $rows  = $wpdb->get_results("SELECT id, shortcode, tag_name, post_id, status, modified_date, category_id, MD5(content) AS content_md5 FROM {$table}", ARRAY_A);
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return WP_Dynamic_Tags_Migration_Planner::build_index(is_array($rows) ? $rows : []);
     }
 
@@ -730,7 +746,9 @@ class WP_Dynamic_Tags_Migration_Engine
         $already_completed = $state['status'] === 'completed';
 
         // Rows pointing at posts that no longer exist are table-native now.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $fixed = $wpdb->query("UPDATE {$table} t LEFT JOIN {$wpdb->posts} p ON p.ID = t.post_id SET t.post_id = 0, t.modified_date = t.modified_date WHERE t.post_id > 0 AND (p.ID IS NULL OR p.post_type <> '" . self::POST_TYPE . "')");
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
         if (is_int($fixed) && $fixed > 0) {
             $state['counters']['orphans_fixed'] += $fixed;
             $this->log(sprintf('%d rows no longer pointed at a post and were detached.', $fixed));
@@ -799,7 +817,7 @@ class WP_Dynamic_Tags_Migration_Engine
                 $data['meta_data'] = $this->merged_meta((int) $plan['row_id'], $post, $plan['aliases']);
                 $result = $wpdb->update($table, $data, ['id' => (int) $plan['row_id']]);
                 if ($result === false) {
-                    throw new RuntimeException('Could not update row ' . (int) $plan['row_id'] . ': ' . $wpdb->last_error);
+                    throw new RuntimeException('Could not update row ' . (int) $plan['row_id'] . ': ' . $wpdb->last_error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- recorded in the migration log, never printed as HTML
                 }
                 $state['counters'][$plan['action'] === WP_Dynamic_Tags_Migration_Planner::ACTION_UPDATE ? 'updated' : 'linked']++;
                 $this->forget_conflict($state, $id);
@@ -840,7 +858,9 @@ class WP_Dynamic_Tags_Migration_Engine
     private function merged_meta(int $row_id, array $post, array $aliases): string
     {
         global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $raw  = $wpdb->get_var($wpdb->prepare("SELECT meta_data FROM {$this->db->get_table_name()} WHERE id = %d", $row_id));
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $meta = is_string($raw) && $raw !== '' ? WP_Dynamic_Tags_Database_Manager::decode_meta($raw) : [];
         $meta = is_array($meta) ? $meta : [];
         $meta['legacy'] = WP_Dynamic_Tags_Migration_Planner::legacy_record($post, $aliases);
@@ -856,7 +876,9 @@ class WP_Dynamic_Tags_Migration_Engine
     {
         global $wpdb;
         $table = $this->db->get_table_name();
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $raw   = $wpdb->get_var($wpdb->prepare("SELECT meta_data FROM {$table} WHERE id = %d", $row_id));
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $meta  = is_string($raw) && $raw !== '' ? WP_Dynamic_Tags_Database_Manager::decode_meta($raw) : [];
         $meta  = is_array($meta) ? $meta : [];
         if (isset($meta['legacy']['aliases']) && $meta['legacy']['aliases'] === $plan['aliases']) {
@@ -1022,10 +1044,12 @@ class WP_Dynamic_Tags_Migration_Engine
         }
         $table = $this->db->get_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $posts = $wpdb->get_results(
             "SELECT ID, post_title, post_name, post_content, post_excerpt, post_status, post_date, post_modified, post_author, menu_order FROM {$wpdb->posts} WHERE post_type = '" . self::POST_TYPE . "' AND post_status <> 'auto-draft' ORDER BY ID ASC",
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         $posts = is_array($posts) ? $posts : [];
         $by_id = [];
         foreach ($posts as $i => $p) {
@@ -1035,17 +1059,23 @@ class WP_Dynamic_Tags_Migration_Engine
         }
         foreach (array_chunk(array_keys($by_id), 500) as $chunk) {
             $in   = implode(',', array_map('intval', $chunk));
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
             $meta = $wpdb->get_results("SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE post_id IN ({$in}) ORDER BY meta_id ASC", ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             foreach ((array) $meta as $m) {
                 $posts[$by_id[(int) $m['post_id']]]['meta'][] = ['key' => $m['meta_key'], 'value' => $m['meta_value']];
             }
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
             $terms = $wpdb->get_results("SELECT tr.object_id, tt.taxonomy, tt.term_id FROM {$wpdb->term_relationships} tr INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id WHERE tr.object_id IN ({$in})", ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             foreach ((array) $terms as $t) {
                 $posts[$by_id[(int) $t['object_id']]]['terms'][] = ['taxonomy' => $t['taxonomy'], 'term_id' => (int) $t['term_id']];
             }
         }
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $rows   = $wpdb->get_results("SELECT * FROM {$table} ORDER BY id ASC", ARRAY_A);
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $rows   = is_array($rows) ? $rows : [];
         $groups = [];
         $terms  = get_terms(['taxonomy' => self::TAXONOMY, 'hide_empty' => false]);
@@ -1213,21 +1243,25 @@ class WP_Dynamic_Tags_Migration_Engine
         $examples   = [];
         $after      = 0;
         while (true) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
             $pairs = $wpdb->get_results($wpdb->prepare(
                 "SELECT p.ID, p.post_content, p.post_status, p.post_modified, t.status AS row_status, t.modified_date, t.category_id, MD5(t.content) AS content_md5
                  FROM {$wpdb->posts} p INNER JOIN {$table} t ON t.post_id = p.ID
                  WHERE " . $this->legacy_where() . ' AND p.ID > %d ORDER BY p.ID ASC LIMIT 200',
                 $after
             ), ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
             if (!$pairs) {
                 break;
             }
             $ids    = array_map(static fn($r) => (int) $r['ID'], $pairs);
             $groups = [];
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
             $terms  = $wpdb->get_results($wpdb->prepare(
                 "SELECT tr.object_id, tt.term_id FROM {$wpdb->term_relationships} tr INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id WHERE tt.taxonomy = %s AND tr.object_id IN (" . implode(',', $ids) . ')',
                 self::TAXONOMY
             ), ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
             foreach ((array) $terms as $t) {
                 $groups[(int) $t['object_id']][] = (int) $t['term_id'];
             }
@@ -1297,7 +1331,9 @@ class WP_Dynamic_Tags_Migration_Engine
         }
 
         $table = $this->db->get_table_name();
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
         $rows  = $wpdb->get_col("SELECT shortcode FROM {$table} WHERE post_id > 0 AND status = 'active'");
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $bad   = [];
         foreach ((array) $rows as $shortcode) {
             $callback = $shortcode_tags[$shortcode] ?? null;
@@ -1382,7 +1418,9 @@ class WP_Dynamic_Tags_Migration_Engine
                 }
 
                 // Re-check this very post and its row now, not at verification time.
+                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
                 $row = $wpdb->get_row($wpdb->prepare("SELECT id, status, modified_date, category_id, MD5(content) AS content_md5 FROM {$table} WHERE post_id = %d", $id), ARRAY_A);
+                // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 if (!is_array($row)) {
                     $state['cleanup']['kept']++;
                     $this->log(sprintf('Kept post %d: it has no row.', $id), 'warning');
@@ -1403,7 +1441,9 @@ class WP_Dynamic_Tags_Migration_Engine
                     $this->log(sprintf('Kept post %d: WordPress could not delete it.', $id), 'error');
                     continue;
                 }
+                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb or the plugin's own prefix; the other fragments are the constant legacy_where() and integer lists (intval); values go through prepare()
                 $wpdb->query($wpdb->prepare("UPDATE {$table} SET post_id = 0, modified_date = modified_date WHERE id = %d", (int) $row['id']));
+                // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 $state['cleanup']['deleted']++;
             }
         } finally {

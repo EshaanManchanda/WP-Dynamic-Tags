@@ -51,8 +51,8 @@ function wp_dynamic_tags_uninstall() {
     }
 
     try {
-        // Create a final backup before deletion
-        wp_dynamic_tags_create_backup_before_deletion();
+        // Create a final backup before deletion (true when it was written to the private folder)
+        $backup_in_file = wp_dynamic_tags_create_backup_before_deletion();
         // 1. Delete all dynamic tag posts (including trash)
         $post_type = 'dynamic_tag';
 
@@ -278,9 +278,13 @@ function wp_dynamic_tags_uninstall() {
 
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
             // Count records before deletion
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $table_record_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$table_name}`");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $wpdb->query("DROP TABLE IF EXISTS `{$table_name}`");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log("WP Dynamic Tags: Dropped custom table with {$table_record_count} records");
@@ -288,6 +292,12 @@ function wp_dynamic_tags_uninstall() {
         }
 
         // 4. Delete all plugin options
+        // The option copy of the backup holds every tag (certificate tags carry student data). Once the private file exists it is
+        // not needed: it used to stay in wp_options for good, although a comment said it went with the other options. If the file
+        // could not be written the option stays, because then it is the only backup there is.
+        if (!empty($backup_in_file)) {
+            delete_option('wp_dynamic_tags_deletion_backup');
+        }
         delete_option('wp_dynamic_tags_version');
         delete_option('wp_dynamic_tags_db_version');
         delete_option('wp_dynamic_tags_table_version'); // the schema version vouches for the table, which was just dropped
@@ -406,10 +416,14 @@ function wp_dynamic_tags_uninstall() {
 }
 
 /**
- * Create backup before deletion
+ * Create backup before deletion: an option (kept until the file exists) and a private file in the uploads folder.
+ *
+ * @return bool Whether the file was written.
  */
 function wp_dynamic_tags_create_backup_before_deletion() {
     global $wpdb;
+
+    $file_saved = false;
 
     if (defined('WP_DEBUG') && WP_DEBUG) {
         error_log('WP Dynamic Tags: Creating backup before deletion...');
@@ -444,7 +458,9 @@ function wp_dynamic_tags_create_backup_before_deletion() {
         // Backup custom table
         $table_name = $wpdb->prefix . 'dynamic_tags';
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $table_data = $wpdb->get_results("SELECT * FROM `{$table_name}`", ARRAY_A);
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             if (!empty($table_data)) {
                 $backup_data['data']['table'] = $table_data;
             }
@@ -496,6 +512,7 @@ function wp_dynamic_tags_create_backup_before_deletion() {
             }
 
             if ($result !== false) {
+                $file_saved = true;
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log('WP Dynamic Tags: Backup saved to: ' . $backup_file);
                 }
@@ -511,7 +528,18 @@ function wp_dynamic_tags_create_backup_before_deletion() {
             error_log('WP Dynamic Tags: Backup creation failed: ' . $e->getMessage());
         }
     }
+
+    return $file_saved;
 }
 
-// Run the uninstall function
-wp_dynamic_tags_uninstall();
+// Run the uninstall function. WordPress runs uninstall.php once when a plugin is deleted, and on a network that is once for the
+// whole network: every site keeps its own table, options and choice (delete or keep), so each one is handled in turn.
+if (is_multisite()) {
+    foreach (get_sites(array('fields' => 'ids', 'number' => 0)) as $dt_blog_id) {
+        switch_to_blog((int) $dt_blog_id);
+        wp_dynamic_tags_uninstall();
+        restore_current_blog();
+    }
+} else {
+    wp_dynamic_tags_uninstall();
+}

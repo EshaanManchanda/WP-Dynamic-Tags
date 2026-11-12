@@ -205,7 +205,7 @@ class DT_Action_Security_Test extends WP_Ajax_UnitTestCase
     public static function parameterless_probe_actions(): array
     {
         $names = [
-            'dt_create_group', 'dt_edit_group', 'dt_delete_group', 'dt_assign_groups', 'dt_get_group_details',
+            'dt_create_group', 'dt_edit_group', 'dt_delete_group', 'dt_get_group_details',
             'dt_get_group_edit_data', 'dt_table_export', 'dt_table_import', 'dt_table_validate_import',
             'dt_preview_tag',
         ];

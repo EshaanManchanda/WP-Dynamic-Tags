@@ -1305,33 +1305,33 @@ class WP_Dynamic_Tags_Placeholders {
     // Request data is attacker-controlled, so these are escaped for safe HTML output
     // (unlike author-controlled fields above, which the rest of this class doesn't escape).
     private function get_url_current() {
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_url(home_url($request_uri));
     }
 
     private function get_url_path() {
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         $path = wp_parse_url($request_uri, PHP_URL_PATH);
         return esc_html($path ? $path : '');
     }
 
     private function get_url_query_string() {
-        $query = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : '';
+        $query = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($query);
     }
 
     private function get_url_host() {
-        $host = isset($_SERVER['HTTP_HOST']) ? wp_unslash($_SERVER['HTTP_HOST']) : '';
+        $host = isset($_SERVER['HTTP_HOST']) ? wp_unslash($_SERVER['HTTP_HOST']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($host);
     }
 
     private function get_url_referrer() {
-        $referrer = isset($_SERVER['HTTP_REFERER']) ? wp_unslash($_SERVER['HTTP_REFERER']) : '';
+        $referrer = isset($_SERVER['HTTP_REFERER']) ? wp_unslash($_SERVER['HTTP_REFERER']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_url($referrer);
     }
 
     private function get_url_user_agent() {
-        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? wp_unslash($_SERVER['HTTP_USER_AGENT']) : '';
+        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? wp_unslash($_SERVER['HTTP_USER_AGENT']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- request data is escaped for HTML output (esc_html or esc_url) before it leaves this method
         return esc_html($agent);
     }
 

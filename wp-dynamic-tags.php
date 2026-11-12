@@ -400,6 +400,7 @@ class WP_Dynamic_Tags_Plugin
         } elseif ($count === 1) {
             return __('1 tag', 'wp-dynamic-tags');
         } else {
+            /* translators: %d: number of tags */
             return sprintf(__('%d tags', 'wp-dynamic-tags'), $count);
         }
     }
@@ -754,8 +755,9 @@ class WP_Dynamic_Tags_Plugin
                     <li>
                         <?php
                         printf(
-                            esc_html(_n('%d tag post', '%d tag posts', $restored_data['post_tags_count'], 'wp-dynamic-tags')),
-                            $restored_data['post_tags_count']
+                            /* translators: %d: number of tag posts */
+                            esc_html(_n('%d tag post', '%d tag posts', (int) $restored_data['post_tags_count'], 'wp-dynamic-tags')),
+                            (int) $restored_data['post_tags_count']
                         );
                         ?>
                     </li>
@@ -764,8 +766,9 @@ class WP_Dynamic_Tags_Plugin
                     <li>
                         <?php
                         printf(
-                            esc_html(_n('%d database tag', '%d database tags', $restored_data['table_tags_count'], 'wp-dynamic-tags')),
-                            $restored_data['table_tags_count']
+                            /* translators: %d: number of database tags */
+                            esc_html(_n('%d database tag', '%d database tags', (int) $restored_data['table_tags_count'], 'wp-dynamic-tags')),
+                            (int) $restored_data['table_tags_count']
                         );
                         ?>
                     </li>
@@ -774,8 +777,9 @@ class WP_Dynamic_Tags_Plugin
                     <li>
                         <?php
                         printf(
-                            esc_html(_n('%d tag group', '%d tag groups', $restored_data['groups_count'], 'wp-dynamic-tags')),
-                            $restored_data['groups_count']
+                            /* translators: %d: number of tag groups */
+                            esc_html(_n('%d tag group', '%d tag groups', (int) $restored_data['groups_count'], 'wp-dynamic-tags')),
+                            (int) $restored_data['groups_count']
                         );
                         ?>
                     </li>
@@ -837,13 +841,13 @@ class WP_Dynamic_Tags_Plugin
     public function download_sample_csv()
     {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
+            wp_die(esc_html__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
         }
 
         $file_path = WP_DYNAMIC_TAGS_PLUGIN_DIR . 'assets/sample.csv';
 
         if (!file_exists($file_path)) {
-            wp_die(__('Sample file not found.', 'wp-dynamic-tags'));
+            wp_die(esc_html__('Sample file not found.', 'wp-dynamic-tags'));
         }
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -859,13 +863,13 @@ class WP_Dynamic_Tags_Plugin
     public function download_sample_full_csv()
     {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
+            wp_die(esc_html__('You do not have permission to download sample files.', 'wp-dynamic-tags'));
         }
 
         $file_path = WP_DYNAMIC_TAGS_PLUGIN_DIR . 'assets/sample-full.csv';
 
         if (!file_exists($file_path)) {
-            wp_die(__('Sample file not found.', 'wp-dynamic-tags'));
+            wp_die(esc_html__('Sample file not found.', 'wp-dynamic-tags'));
         }
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -992,7 +996,9 @@ class WP_Dynamic_Tags_Plugin
         // Check for existing custom table data
         $table_name = $wpdb->prefix . 'dynamic_tags';
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
             $table_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name} WHERE status = 'active'");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $existing_data['table_tags_count'] = intval($table_count);
         }
 

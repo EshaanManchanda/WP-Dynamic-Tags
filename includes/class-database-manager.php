@@ -187,7 +187,9 @@ class WP_Dynamic_Tags_Database_Manager {
      */
     public function drop_table() {
         global $wpdb;
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         delete_option('wp_dynamic_tags_table_version');
         $this->table_found = null;
     }
@@ -320,8 +322,10 @@ class WP_Dynamic_Tags_Database_Manager {
         }
 
         $tag = $wpdb->get_row(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare("SELECT * FROM {$this->table_name} WHERE id = %d", $id)
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         if ($tag && !empty($tag->meta_data)) {
             $tag->meta_data = self::decode_meta($tag->meta_data);
@@ -374,8 +378,10 @@ class WP_Dynamic_Tags_Database_Manager {
         global $wpdb;
 
         $tag = $wpdb->get_row(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare("SELECT * FROM {$this->table_name} WHERE tag_name = %s", $tag_name)
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         if ($tag && !empty($tag->meta_data)) {
             $tag->meta_data = self::decode_meta($tag->meta_data);
@@ -391,8 +397,10 @@ class WP_Dynamic_Tags_Database_Manager {
         global $wpdb;
 
         $tag = $wpdb->get_row(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare("SELECT * FROM {$this->table_name} WHERE shortcode = %s", $shortcode)
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         if ($tag && !empty($tag->meta_data)) {
             $tag->meta_data = self::decode_meta($tag->meta_data);
@@ -470,9 +478,13 @@ class WP_Dynamic_Tags_Database_Manager {
         $sql = "SELECT * FROM {$this->table_name} {$where_sql} {$order_sql} {$limit_sql}";
 
         if (!empty($where_values)) {
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $tags = $wpdb->get_results($wpdb->prepare($sql, $where_values));
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         } else {
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $tags = $wpdb->get_results($sql);
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         }
 
         // Unserialize meta_data for each tag
@@ -537,9 +549,13 @@ class WP_Dynamic_Tags_Database_Manager {
         $sql = "SELECT COUNT(*) FROM {$this->table_name} {$where_sql}";
 
         if (!empty($where_values)) {
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             return $wpdb->get_var($wpdb->prepare($sql, $where_values));
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         } else {
+            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             return $wpdb->get_var($sql);
+            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         }
     }
 
@@ -557,7 +573,9 @@ class WP_Dynamic_Tags_Database_Manager {
             $values[] = $exclude_id;
         }
 
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         return $wpdb->get_var($wpdb->prepare($sql, $values)) ? true : false;
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -574,7 +592,9 @@ class WP_Dynamic_Tags_Database_Manager {
             $values[] = $exclude_id;
         }
 
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         return $wpdb->get_var($wpdb->prepare($sql, $values)) ? true : false;
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -589,11 +609,13 @@ class WP_Dynamic_Tags_Database_Manager {
         }
 
         return $wpdb->query(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare(
                 "UPDATE {$this->table_name} SET usage_count = usage_count + 1, last_used_date = NOW() WHERE id = %d",
                 $id
             )
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
     /**
@@ -605,28 +627,38 @@ class WP_Dynamic_Tags_Database_Manager {
         $stats = array();
 
         // Total tags
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         $stats['total_tags'] = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table_name}");
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         // Active tags
         $stats['active_tags'] = $wpdb->get_var(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare("SELECT COUNT(*) FROM {$this->table_name} WHERE status = %s", 'active')
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         // Inactive tags
         $stats['inactive_tags'] = $wpdb->get_var(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->prepare("SELECT COUNT(*) FROM {$this->table_name} WHERE status = %s", 'inactive')
         );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         // Most used tag
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         $most_used = $wpdb->get_row(
             "SELECT tag_name, usage_count FROM {$this->table_name} ORDER BY usage_count DESC LIMIT 1"
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $stats['most_used_tag'] = $most_used;
 
         // Tags by category
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         $stats['tags_by_category'] = $wpdb->get_results(
             "SELECT category_id, COUNT(*) as count FROM {$this->table_name} GROUP BY category_id"
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         return $stats;
     }
@@ -637,7 +669,9 @@ class WP_Dynamic_Tags_Database_Manager {
     public function backup_table() {
         global $wpdb;
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
         $tags = $wpdb->get_results("SELECT * FROM {$this->table_name}", ARRAY_A);
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         if ($tags) {
             $backup_data = array(
@@ -668,7 +702,9 @@ class WP_Dynamic_Tags_Database_Manager {
         try {
             // Clear existing data. DELETE, not TRUNCATE: TRUNCATE is DDL and commits implicitly in MySQL,
             // which would leave an empty or half-restored table behind if an insert below failed.
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own; the other fragments are fixed text, a whitelisted ORDER BY column, ASC or DESC and integer limits; every value is a placeholder
             $wpdb->query("DELETE FROM {$this->table_name}");
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
             // Restore data
             foreach ($backup_data['tags'] as $tag) {
