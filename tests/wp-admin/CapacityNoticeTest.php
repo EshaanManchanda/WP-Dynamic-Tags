@@ -99,6 +99,19 @@ class DT_Capacity_Notice_Test extends WP_UnitTestCase
         $this->assertStringNotContainsString('dt-capacity-notice', $this->page('page_list'));
     }
 
+    public function test_a_delegate_gets_the_warning_without_a_link_to_a_screen_they_cannot_open(): void
+    {
+        add_filter('dt_manage_capability', static fn() => 'edit_pages');
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
+        $this->seed_rows(5001);
+
+        $html = $this->page('page_list');
+        remove_all_filters('dt_manage_capability');
+
+        $this->assertStringContainsString('dt-capacity-notice', $html);
+        $this->assertStringNotContainsString('page=dt-settings', $html);
+    }
+
     public function test_the_settings_section_the_notice_links_to_exists(): void
     {
         ob_start();

@@ -421,12 +421,15 @@ final class WP_Dynamic_Tags_Admin
             /* translators: 1: the number of active tags, 2: the recommended maximum */
             $text = sprintf(__('This site has %1$s active tags, more than the recommended maximum of %2$s for this server. Every active tag is loaded on every page, so pages can get slower.', 'wp-dynamic-tags'), number_format_i18n($active), number_format_i18n($assessment['safe_max']));
         }
+        // The explanation lives on Settings (administrators only): a delegate gets the warning without a link they cannot follow.
+        $link = current_user_can('manage_options')
+            ? sprintf('<a href="%s">%s</a>', esc_url(self::settings_url() . '#dt-capacity'), esc_html__('See Tags and your server', 'wp-dynamic-tags'))
+            : '';
         return sprintf(
-            '<div class="notice notice-%s dt-capacity-notice"><p>%s <a href="%s">%s</a></p></div>',
+            '<div class="notice notice-%s dt-capacity-notice"><p>%s %s</p></div>',
             $assessment['level'] === 'high' ? 'error' : 'warning',
             esc_html($text),
-            esc_url(self::settings_url() . '#dt-capacity'),
-            esc_html__('See Tags and your server', 'wp-dynamic-tags')
+            $link
         );
     }
 
@@ -434,6 +437,19 @@ final class WP_Dynamic_Tags_Admin
     private static function settings_url(): string
     {
         return admin_url('admin.php?page=dt-settings');
+    }
+
+    /**
+     * What to say about a Paid key. All Tags can be handed to a lower capability (filter dt_manage_capability) but Settings, where the
+     * key goes, always needs manage_options: an administrator gets the link, anyone else is told who to ask instead of being sent to
+     * a screen that would refuse them. Escaped HTML.
+     */
+    private static function key_prompt(): string
+    {
+        if (current_user_can('manage_options')) {
+            return sprintf('<a href="%s">%s</a>', esc_url(self::settings_url()), esc_html__('Activate a Paid key', 'wp-dynamic-tags'));
+        }
+        return esc_html__('Ask an administrator to activate a Paid key.', 'wp-dynamic-tags');
     }
 
     /**
@@ -455,11 +471,10 @@ final class WP_Dynamic_Tags_Admin
             $text .= ' ' . __('No more tags can be added until you activate a Paid key; the tags you have keep working.', 'wp-dynamic-tags');
         }
         return sprintf(
-            '<div class="notice notice-%s inline dt-plan-note"><p>%s <a href="%s">%s</a></p></div>',
+            '<div class="notice notice-%s inline dt-plan-note"><p>%s %s</p></div>',
             $full ? 'warning' : 'info',
             esc_html($text),
-            esc_url(self::settings_url()),
-            esc_html__('Activate a Paid key', 'wp-dynamic-tags')
+            self::key_prompt()
         );
     }
 
@@ -497,12 +512,7 @@ final class WP_Dynamic_Tags_Admin
         }
         /* translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop] */
         $text = sprintf(__('This tag uses Paid features that render nothing on the Free plan: %s.', 'wp-dynamic-tags'), implode(', ', $features));
-        return sprintf(
-            '<div class="notice notice-warning inline"><p>%s <a href="%s">%s</a></p></div>',
-            esc_html($text),
-            esc_url(self::settings_url()),
-            esc_html__('Activate a Paid key', 'wp-dynamic-tags')
-        );
+        return sprintf('<div class="notice notice-warning inline"><p>%s %s</p></div>', esc_html($text), self::key_prompt());
     }
 
     /** The note under the preview (plain text, shown with textContent; empty when nothing in the content is affected). */

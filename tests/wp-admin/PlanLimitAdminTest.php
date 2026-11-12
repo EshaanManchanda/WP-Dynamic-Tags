@@ -202,6 +202,9 @@ class DT_Plan_Limit_Admin_Test extends WP_Ajax_UnitTestCase
 
         $this->assertStringContainsString('3 of 15', $html);
         $this->assertStringContainsString('other plugins', $html, 'it says that tags other plugins create are not counted');
+        $this->assertStringContainsString('page=dt-settings', $html, 'an administrator is linked to the License box');
+        $this->assertStringContainsString('Activate a Paid key', $html);
+        $this->assertStringNotContainsString('Ask an administrator', $html, 'and is not told to ask themselves');
     }
 
     public function test_the_list_warns_when_the_limit_is_reached(): void
@@ -212,6 +215,26 @@ class DT_Plan_Limit_Admin_Test extends WP_Ajax_UnitTestCase
 
         $this->assertStringContainsString('15 of 15', $html);
         $this->assertStringContainsString('notice-warning', $html);
+    }
+
+    public function test_a_delegate_is_not_sent_to_a_page_they_cannot_open(): void
+    {
+        // All Tags can be handed to a lower capability (filter dt_manage_capability); Settings, where the key goes, cannot.
+        add_filter('dt_manage_capability', static fn() => 'edit_pages');
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
+        $id = $this->tags->create_tag(array('tag_name' => 'Delegate loop', 'shortcode' => 'delegate_loop', 'content' => '[dt_loop source="x"]a[/dt_loop]'));
+        $_GET['tag'] = (string) $id;
+        $_REQUEST['tag'] = (string) $id;
+
+        $list = $this->page('page_list');
+        $form = $this->page('page_edit');
+        remove_all_filters('dt_manage_capability');
+
+        $this->assertStringContainsString('Free plan:', $list, 'the delegate still sees the plan');
+        $this->assertStringNotContainsString('page=dt-settings', $list, 'but is not linked to a screen that would refuse them');
+        $this->assertStringContainsString('render nothing on the Free plan', $form);
+        $this->assertStringNotContainsString('page=dt-settings', $form);
+        $this->assertStringContainsString('Ask an administrator', $list, 'and is told who can activate a key');
     }
 
     public function test_paid_sees_no_plan_note(): void
