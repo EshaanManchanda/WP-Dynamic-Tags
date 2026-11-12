@@ -37,7 +37,7 @@ The plugin is complete and usable on the Free plan, with no trial and no time li
 * Migration of tags stored by older versions as posts, in batches, with a dry run, verification, backups and WP-CLI commands
 * Import from JSON, CSV and XML (with a per-row report) and export to JSON, CSV, XML and SQL
 
-See the plugin's `ROADMAP.md` and `TESTING.md` (in the plugin directory) for the complete feature list and a full manual test guide.
+The complete documentation, the roadmap and a manual test guide are in the plugin's repository: https://github.com/EshaanManchanda/WP-Dynamic-Tags. The public PHP API is described in `docs/API.md` inside the plugin.
 
 == Installation ==
 
