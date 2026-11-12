@@ -222,6 +222,15 @@ The full register, with a failing test for each item that could be tested, is `d
 
 ## Known limits
 
+* **WordPress Plugin Check** on the release ZIP installed on a clean WordPress 7.1.4: **0 errors, 307 warnings**. The warnings
+  are: direct queries on the plugin's own table (171; the table is the store, and nothing is cached across requests so that an
+  edit shows at once), 30 query parameters that are table names (an identifier cannot be escaped; every value is prepared),
+  `error_log()` calls (58: behind `WP_DEBUG` or the opt-in debug mode, except two that log a caught rendering exception),
+  38 hook names that start with `dt_` (they are the documented public API that other plugins use, so they are not renamed),
+  and a few single items (`set_time_limit()` for big imports, the schema changes of install and uninstall, one `meta_query`).
+  The plugin name and slug begin with "WP", a term the WordPress.org directory restricts: it does not matter for a release from
+  GitHub, and would have to change if the plugin were ever submitted there.
+
 * A tag belongs to one group; group *names* are not part of an export, so groups do not travel between
   sites (a group id that does not exist on the target is dropped on import).
 * Tags are per site on a network. The plugin never reads a tag from another site, and code that renders

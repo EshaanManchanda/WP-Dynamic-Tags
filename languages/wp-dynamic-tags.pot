@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Dynamic Tags 3.0.0\n"
+"Project-Id-Version: WP Dynamic Tags 3.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-dynamic-tags\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T17:05:22+00:00\n"
+"POT-Creation-Date: 2026-11-12T17:14:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-dynamic-tags\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: wp-dynamic-tags.php
-msgid "Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders."
+msgid "Create dynamic tags and use them as shortcodes in WordPress, Elementor and other page builders. Free for 15 tags you create yourself; Paid is unlimited."
 msgstr ""
 
 #. Author of the plugin
@@ -113,19 +113,19 @@ msgstr ""
 
 #: admin/class-admin.php:149
 #: admin/class-admin.php:545
-#: wp-dynamic-tags.php:143
-#: wp-dynamic-tags.php:145
+#: wp-dynamic-tags.php:142
+#: wp-dynamic-tags.php:144
 msgid "Dynamic Tags"
 msgstr ""
 
 #: admin/class-admin.php:150
-#: wp-dynamic-tags.php:151
+#: wp-dynamic-tags.php:150
 msgid "All Tags"
 msgstr ""
 
 #: admin/class-admin.php:151
 #: admin/class-admin.php:590
-#: wp-dynamic-tags.php:146
+#: wp-dynamic-tags.php:145
 msgid "Add New Tag"
 msgstr ""
 
@@ -293,7 +293,7 @@ msgid "On the Free plan these Paid features render nothing, here and on your sit
 msgstr ""
 
 #: admin/class-admin.php:552
-#: wp-dynamic-tags.php:152
+#: wp-dynamic-tags.php:151
 msgid "Search Tags"
 msgstr ""
 
@@ -1896,8 +1896,8 @@ msgstr ""
 #: includes/class-migration-engine.php:627
 #: includes/class-migration-engine.php:646
 #: includes/class-migration-engine.php:942
-#: includes/class-migration-engine.php:1197
-#: includes/class-migration-engine.php:1363
+#: includes/class-migration-engine.php:1199
+#: includes/class-migration-engine.php:1365
 msgid "Another migration step is already running."
 msgstr ""
 
@@ -1925,35 +1925,35 @@ msgstr ""
 msgid "Could not write the backup file."
 msgstr ""
 
-#: includes/class-migration-engine.php:1119
+#: includes/class-migration-engine.php:1121
 msgid "Could not finalize the backup file."
 msgstr ""
 
-#: includes/class-migration-engine.php:1138
+#: includes/class-migration-engine.php:1140
 msgid "The backup failed validation after writing and was discarded."
 msgstr ""
 
-#: includes/class-migration-engine.php:1179
+#: includes/class-migration-engine.php:1181
 msgid "That backup file was not found."
 msgstr ""
 
-#: includes/class-migration-engine.php:1182
+#: includes/class-migration-engine.php:1184
 msgid "The tags table is not InnoDB, so a restore could not be made atomic. Nothing was changed."
 msgstr ""
 
-#: includes/class-migration-engine.php:1188
+#: includes/class-migration-engine.php:1190
 msgid "The backup does not match its recorded checksum (missing or modified). Nothing was changed."
 msgstr ""
 
-#: includes/class-migration-engine.php:1192
+#: includes/class-migration-engine.php:1194
 msgid "That file is not a Dynamic Tags backup."
 msgstr ""
 
-#: includes/class-migration-engine.php:1383
+#: includes/class-migration-engine.php:1385
 msgid "Cleanup requires a passing verification of the current data. Run Verify first."
 msgstr ""
 
-#: includes/class-migration-engine.php:1386
+#: includes/class-migration-engine.php:1388
 msgid "Resolve or accept every conflict before cleaning up."
 msgstr ""
 
@@ -1970,188 +1970,188 @@ msgid "The tags could not be written as JSON."
 msgstr ""
 
 #. translators: %s: the formats a file can be imported from
-#: includes/class-table-import-export.php:431
+#: includes/class-table-import-export.php:437
 #, php-format
 msgid "This format cannot be imported. Use %s."
 msgstr ""
 
-#: includes/class-table-import-export.php:454
+#: includes/class-table-import-export.php:460
 msgid "The file contains no tags."
 msgstr ""
 
 #. translators: 1: rows in the file, 2: the limit
-#: includes/class-table-import-export.php:460
+#: includes/class-table-import-export.php:466
 #, php-format
 msgid "The file has %1$d rows and at most %2$d can be imported at once. Split the file, or raise the limit with the dt_import_max_rows filter."
 msgstr ""
 
-#: includes/class-table-import-export.php:483
+#: includes/class-table-import-export.php:489
 msgid "Import failed."
 msgstr ""
 
 #. translators: %s: the parser's message
-#: includes/class-table-import-export.php:505
+#: includes/class-table-import-export.php:511
 #, php-format
 msgid "Invalid JSON format: %s"
 msgstr ""
 
-#: includes/class-table-import-export.php:509
+#: includes/class-table-import-export.php:515
 msgid "The JSON file must hold a list of tags, or an object with a \"tags\" list."
 msgstr ""
 
-#: includes/class-table-import-export.php:514
+#: includes/class-table-import-export.php:520
 msgid "The \"tags\" entry of the JSON file must be a list."
 msgstr ""
 
-#: includes/class-table-import-export.php:536
+#: includes/class-table-import-export.php:542
 msgid "The first row must be the header the export writes, with at least the columns Tag Name and Shortcode."
 msgstr ""
 
 #. translators: 1: columns in the row, 2: columns in the header
-#: includes/class-table-import-export.php:543
+#: includes/class-table-import-export.php:549
 #, php-format
 msgid "The row has %1$d columns and the header has %2$d."
 msgstr ""
 
-#: includes/class-table-import-export.php:557
+#: includes/class-table-import-export.php:563
 msgid "The CSV file is empty."
 msgstr ""
 
-#: includes/class-table-import-export.php:572
+#: includes/class-table-import-export.php:578
 msgid "Only XML in UTF-8 is accepted."
 msgstr ""
 
-#: includes/class-table-import-export.php:577
+#: includes/class-table-import-export.php:583
 msgid "XML with a DOCTYPE or entity declaration is not accepted."
 msgstr ""
 
-#: includes/class-table-import-export.php:588
+#: includes/class-table-import-export.php:594
 msgid "Invalid XML format"
 msgstr ""
 
 #. translators: %s: the parser's message
-#: includes/class-table-import-export.php:590
+#: includes/class-table-import-export.php:596
 #, php-format
 msgid "XML parsing failed: %s"
 msgstr ""
 
-#: includes/class-table-import-export.php:667
+#: includes/class-table-import-export.php:673
 msgid "The row is not a tag."
 msgstr ""
 
 #. translators: %s: a field name
-#: includes/class-table-import-export.php:678
+#: includes/class-table-import-export.php:684
 #, php-format
 msgid "%s must be text or a number."
 msgstr ""
 
-#: includes/class-table-import-export.php:690
+#: includes/class-table-import-export.php:696
 msgid "Tag name is required."
 msgstr ""
 
-#: includes/class-table-import-export.php:692
+#: includes/class-table-import-export.php:698
 msgid "Tag name can only contain letters, numbers, spaces, hyphens and underscores."
 msgstr ""
 
-#: includes/class-table-import-export.php:696
+#: includes/class-table-import-export.php:702
 msgid "Shortcode is required."
 msgstr ""
 
-#: includes/class-table-import-export.php:698
+#: includes/class-table-import-export.php:704
 msgid "Shortcode can only contain letters, numbers, hyphens and underscores."
 msgstr ""
 
-#: includes/class-table-import-export.php:710
+#: includes/class-table-import-export.php:716
 msgid "Status must be \"active\" or \"inactive\"."
 msgstr ""
 
-#: includes/class-table-import-export.php:715
+#: includes/class-table-import-export.php:721
 msgid "Priority must be a number between 0 and 100."
 msgstr ""
 
-#: includes/class-table-import-export.php:720
+#: includes/class-table-import-export.php:726
 msgid "Usage count must be a number, zero or more."
 msgstr ""
 
-#: includes/class-table-import-export.php:725
+#: includes/class-table-import-export.php:731
 msgid "Group id must be a number."
 msgstr ""
 
 #. translators: 1: row number, 2: group id
-#: includes/class-table-import-export.php:728
+#: includes/class-table-import-export.php:734
 #, php-format
 msgid "Row %1$d: the group %2$d does not exist on this site, so the tag is imported without a group."
 msgstr ""
 
 #. translators: 1: row number, 2: shortcode, 3: the first row that has it
-#: includes/class-table-import-export.php:736
+#: includes/class-table-import-export.php:742
 #, php-format
 msgid "Row %1$d: the shortcode [%2$s] is also in row %3$d."
 msgstr ""
 
 #. translators: 1: row number, 2: shortcode
-#: includes/class-table-import-export.php:743
+#: includes/class-table-import-export.php:749
 #, php-format
 msgid "Row %1$d: the shortcode [%2$s] already exists (it is skipped or updated, as the options say)."
 msgstr ""
 
-#: includes/class-table-import-export.php:748
+#: includes/class-table-import-export.php:754
 msgid "Another tag already has this name."
 msgstr ""
 
-#: includes/class-table-import-export.php:750
+#: includes/class-table-import-export.php:756
 msgid "Another row of the file has this name."
 msgstr ""
 
-#: includes/class-table-import-export.php:809
+#: includes/class-table-import-export.php:815
 msgid "The row could not be imported."
 msgstr ""
 
 #. translators: %s: shortcode
-#: includes/class-table-import-export.php:866
+#: includes/class-table-import-export.php:872
 #, php-format
 msgid "The shortcode [%s] already exists."
 msgstr ""
 
-#: includes/class-table-import-export.php:889
+#: includes/class-table-import-export.php:895
 msgid "Invalid nonce"
 msgstr ""
 
-#: includes/class-table-import-export.php:896
+#: includes/class-table-import-export.php:902
 msgid "Export data not found or expired"
 msgstr ""
 
-#: includes/class-table-import-export.php:939
-#: includes/class-table-import-export.php:1039
-#: includes/class-table-import-export.php:1062
+#: includes/class-table-import-export.php:945
+#: includes/class-table-import-export.php:1045
+#: includes/class-table-import-export.php:1068
 #: includes/class-tag-groups.php:957
 #: includes/class-tag-groups.php:1021
 msgid "Unauthorized"
 msgstr ""
 
-#: includes/class-table-import-export.php:981
+#: includes/class-table-import-export.php:987
 msgid "No file uploaded"
 msgstr ""
 
 #. translators: %d: PHP's upload error code
-#: includes/class-table-import-export.php:985
+#: includes/class-table-import-export.php:991
 #, php-format
 msgid "The upload failed (error code %d)."
 msgstr ""
 
-#: includes/class-table-import-export.php:991
-#: includes/class-table-import-export.php:1009
+#: includes/class-table-import-export.php:997
+#: includes/class-table-import-export.php:1015
 msgid "Failed to read file"
 msgstr ""
 
 #. translators: %s: the size limit
-#: includes/class-table-import-export.php:995
+#: includes/class-table-import-export.php:1001
 #, php-format
 msgid "The file is larger than the %s limit."
 msgstr ""
 
 #. translators: %s: the file types that can be imported
-#: includes/class-table-import-export.php:1001
+#: includes/class-table-import-export.php:1007
 #, php-format
 msgid "Unsupported file type. Use %s."
 msgstr ""
@@ -2537,58 +2537,58 @@ msgstr ""
 msgid "The tag [%s] would render itself: its content refers back to it, directly or through other tags."
 msgstr ""
 
-#: wp-dynamic-tags.php:144
+#: wp-dynamic-tags.php:143
 msgid "Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:147
+#: wp-dynamic-tags.php:146
 msgid "Add New Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:148
+#: wp-dynamic-tags.php:147
 msgid "New Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:149
+#: wp-dynamic-tags.php:148
 msgid "Edit Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:150
+#: wp-dynamic-tags.php:149
 msgid "View Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:153
+#: wp-dynamic-tags.php:152
 msgid "No tags found"
 msgstr ""
 
-#: wp-dynamic-tags.php:154
+#: wp-dynamic-tags.php:153
 msgid "No tags found in trash"
 msgstr ""
 
-#: wp-dynamic-tags.php:399
+#: wp-dynamic-tags.php:398
 msgid "no tags"
 msgstr ""
 
-#: wp-dynamic-tags.php:401
+#: wp-dynamic-tags.php:400
 msgid "1 tag"
 msgstr ""
 
 #. translators: %d: number of tags
-#: wp-dynamic-tags.php:404
+#: wp-dynamic-tags.php:403
 #, php-format
 msgid "%d tags"
 msgstr ""
 
-#: wp-dynamic-tags.php:757
+#: wp-dynamic-tags.php:756
 msgid "🎉 Welcome Back to WP Dynamic Tags!"
 msgstr ""
 
-#: wp-dynamic-tags.php:759
+#: wp-dynamic-tags.php:758
 msgid "Your data has been automatically restored:"
 msgstr ""
 
 #. translators: %d: number of tag posts
-#: wp-dynamic-tags.php:767
+#: wp-dynamic-tags.php:766
 #, php-format
 msgid "%d tag post"
 msgid_plural "%d tag posts"
@@ -2596,7 +2596,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of database tags
-#: wp-dynamic-tags.php:778
+#: wp-dynamic-tags.php:777
 #, php-format
 msgid "%d database tag"
 msgid_plural "%d database tags"
@@ -2604,47 +2604,47 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tag groups
-#: wp-dynamic-tags.php:789
+#: wp-dynamic-tags.php:788
 #, php-format
 msgid "%d tag group"
 msgid_plural "%d tag groups"
 msgstr[0] ""
 msgstr[1] ""
 
-#: wp-dynamic-tags.php:797
+#: wp-dynamic-tags.php:796
 msgid "✅ All your shortcodes are working and ready to use!"
 msgstr ""
 
-#: wp-dynamic-tags.php:822
+#: wp-dynamic-tags.php:821
 msgid "WP Dynamic Tags Deactivated"
 msgstr ""
 
-#: wp-dynamic-tags.php:825
+#: wp-dynamic-tags.php:824
 msgid "✅ Your data is safe!"
 msgstr ""
 
-#: wp-dynamic-tags.php:826
+#: wp-dynamic-tags.php:825
 msgid "All your tags and groups have been preserved. If you reinstall the plugin, everything will work automatically."
 msgstr ""
 
-#: wp-dynamic-tags.php:830
+#: wp-dynamic-tags.php:829
 msgid "⚠️ Data deletion is enabled"
 msgstr ""
 
-#: wp-dynamic-tags.php:831
+#: wp-dynamic-tags.php:830
 msgid "If you uninstall the plugin, all data will be permanently deleted."
 msgstr ""
 
-#: wp-dynamic-tags.php:836
+#: wp-dynamic-tags.php:835
 msgid "Manage Data Retention Settings"
 msgstr ""
 
-#: wp-dynamic-tags.php:852
-#: wp-dynamic-tags.php:874
+#: wp-dynamic-tags.php:851
+#: wp-dynamic-tags.php:873
 msgid "You do not have permission to download sample files."
 msgstr ""
 
-#: wp-dynamic-tags.php:858
-#: wp-dynamic-tags.php:880
+#: wp-dynamic-tags.php:857
+#: wp-dynamic-tags.php:879
 msgid "Sample file not found."
 msgstr ""

@@ -2,7 +2,7 @@
 
 > Create and manage dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders. Free for up to 15 tags you create yourself; Paid is unlimited and adds the dynamic-data layer.
 
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
 [![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-brightgreen.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-purple.svg)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPL%20v2%2B-red.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -522,7 +522,7 @@ CREATE TABLE wp_dynamic_tags (
 
 ## 🔄 Changelog
 
-### Version 3.1.0 (next release)
+### Version 3.1.0
 **One tag store, no writes while rendering, one admin screen**
 
 - ✨ The custom table is the only place tags live; the Bridge, dual mode and the post editor for tags are gone

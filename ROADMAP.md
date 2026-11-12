@@ -1,6 +1,6 @@
 # WP Dynamic Tags — Product Roadmap
 
-Last updated: 2026-11-12 (the storage, admin and import/export parts of section 1 describe 3.1.0; the rest is the 3.0 plan)
+Last updated: 2026-11-12, released as 3.1.0 (the storage, admin and import/export parts of section 1 describe 3.1.0; the rest is the 3.0 plan)
 
 ## 1. Where the plugin stands today
 
@@ -159,8 +159,8 @@ edge worth fixing before adding new surface area:
   undocumented, placeholder-registration-only, and doesn't cover formatters
   or data sources, so it can't yet serve as the "real" developer API (see
   gap #10).
-- **Version constant mismatch** — `WP_DYNAMIC_TAGS_VERSION` is `2.0.0` while
-  the plugin header says `3.0.0`. Low-risk but confusing for support/debugging.
+- **Version constant mismatch** — `WP_DYNAMIC_TAGS_VERSION` was `2.0.0` while
+  the plugin header said `3.0.0`. Fixed: the constant and the header both say `3.1.0`.
 - **`README.md`'s documented DB schema is stale** — it doesn't list several
   real columns from `class-database-manager.php` (`shortcode`, `priority`,
   `meta_data`, `post_id`, etc.), so anyone reading the README to understand

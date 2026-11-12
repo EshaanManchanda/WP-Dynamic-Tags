@@ -3,7 +3,7 @@
   "slug": "wp-dynamic-tags",
   "tagline": "Dynamic content tags as shortcodes that work in any builder: Gutenberg, Elementor, Divi and more.",
   "description": "WP Dynamic Tags lets you create reusable, dynamic content snippets (\"tags\") and insert them anywhere as shortcodes: the block editor, Elementor, Divi, widgets, or any theme template that runs do_shortcode(). It includes a placeholder engine (post, taxonomy, author, site, URL, date, meta, ACF, WooCommerce), formatters, fallback syntax, inline and block-level conditionals, array loops, per-record templates, query and external API data sources, one optimized custom table as the only tag store with migration from older versions, shortcode-name and self-reference safety checks, and import/export in JSON, CSV, XML and SQL. The Free plan is complete on its own (15 tags you create yourself); Paid unlocks the dynamic-data layer.",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "author": "Eshaan Manchanda",
   "author_uri": "https://eshaanportfolio.vercel.app/",
   "plugin_uri": "https://github.com/EshaanManchanda/WP-Dynamic-Tags",
@@ -81,6 +81,19 @@
     }
   ],
   "changelog": [
+    {
+      "version": "3.1.0",
+      "changes": [
+        "The custom table is the only tag store; the post-to-table bridge, dual mode and the post editor for tags are gone",
+        "Nothing is written to the database while a page renders; usage counting is opt-in",
+        "New admin: one menu, a searchable list with a Value column, bulk actions, a form with live preview, Tools and diagnostics",
+        "Free and Paid plans enforced: 15 tags you create yourself on Free (tags other plugins create never count), Paid features render nothing on Free",
+        "Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved",
+        "Import and export rebuilt (lossless CSV, per-row reports, limits)",
+        "Settings explains how tags work and what many tags cost; All Tags warns above the recommended number for the server",
+        "The findings of a security and reliability audit of 3.0.0 are fixed (docs/BUG-REGISTER.md)"
+      ]
+    },
     {
       "version": "3.0.0",
       "changes": [
