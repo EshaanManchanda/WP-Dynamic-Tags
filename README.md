@@ -1,6 +1,6 @@
 # WP Dynamic Tags
 
-> Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders.
+> Create and manage dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders. Free for up to 15 tags you create yourself; Paid is unlimited and adds the dynamic-data layer.
 
 [![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
 [![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-brightgreen.svg)](https://wordpress.org/)
@@ -11,7 +11,7 @@
 
 ## 📋 Description
 
-**WP Dynamic Tags** is a powerful WordPress plugin that allows you to create unlimited dynamic content tags and use them as shortcodes throughout your website. Whether you're using the default WordPress editor, Elementor, or any other page builder, this plugin seamlessly integrates to provide dynamic, reusable content snippets.
+**WP Dynamic Tags** is a powerful WordPress plugin that allows you to create dynamic content tags and use them as shortcodes throughout your website. Whether you're using the default WordPress editor, Elementor, or any other page builder, this plugin seamlessly integrates to provide dynamic, reusable content snippets.
 
 Perfect for:
 - 🏢 **Agencies** managing multiple client sites with reusable content
@@ -25,7 +25,7 @@ Perfect for:
 ## ✨ Key Features
 
 ### 🎯 Core Functionality
-- **Unlimited Dynamic Tags** - Create as many tags as you need with custom content
+- **Free and Paid** - Free is complete on its own: 15 tags you create yourself (tags other plugins create never count, and existing tags always keep working). Paid is unlimited and adds `{wc:}`, `{user_meta:}`, `{term_meta:}`, `{query:}`, `{api:}`, `{func:}`, ACF repeaters and relationships, `[dt_loop]`, `[dt_template]` and field-based conditions. A Paid feature on a Free site renders nothing; the admin labels it. Details: [Free and Paid](docs/RELEASE-NOTES-3.1.0.md#free-and-paid) and `LICENSE-PLAN.md`
 - **Universal Shortcode Support** - Works with the block editor, Elementor and any builder or theme that runs shortcodes
 - **One tag store** - Tags live in a single optimized database table, and nothing is written to the database while a page renders
 - **Safe migration** - Tags from older versions (stored as posts) are migrated in batches, verified, and only removed when you confirm
@@ -530,6 +530,8 @@ CREATE TABLE wp_dynamic_tags (
 - ✨ A new admin: one menu, a searchable and sortable list with a **Value** column, bulk actions, a form with live preview, Tools and diagnostics
 - ✨ Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved
 - ✨ Import and export rebuilt: lossless CSV, per-row reports, limits, SQL is export only
+- ✨ **Free and Paid plans are enforced:** 15 tags you create yourself on Free (Add New, Duplicate, Import; tags other plugins create are never blocked or counted, existing tags keep working), Paid unlimited; Paid features render nothing on a Free site and are labelled in the admin; the license server is `https://tlvapi.techlovev.in` by default and a key is accepted only from it (https only)
+- ✨ All Tags and Add New warn when a site has more active tags than its server is advised to carry
 - ✨ **Settings > Tags and your server** explains how tags work and why a lot of tags slow a site down, shows this site's live numbers (tags, PHP memory limit, page cache, load time) with a Fine / Watch / Too many status, and recommends tag counts by kind of hosting
 - 🐛 The audit findings of 3.0.0 are fixed (see `docs/BUG-REGISTER.md`), including token safety, the missing recursion guard, export and import hardening and uninstall
 - 📖 Every deliberate difference in output is listed in `docs/RELEASE-NOTES-3.1.0.md`; the public API is in `docs/API.md`
@@ -624,7 +626,7 @@ cd wp-dynamic-tags
 This plugin is licensed under the GPL v2 or later.
 
 ```
-WP Dynamic Tags - Create and manage unlimited dynamic tags
+WP Dynamic Tags - Create and manage dynamic tags
 Copyright (C) 2025 Eshaan Manchanda
 
 This program is free software; you can redistribute it and/or modify

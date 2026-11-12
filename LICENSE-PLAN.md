@@ -1,6 +1,6 @@
 # WP Dynamic Tags — License Plan (Free / Paid)
 
-Last updated: 2026-09-20
+Last updated: 2026-11-12 (3.1.0 ships the enforcement; see §8 for what was decided and built)
 
 ## 1. Philosophy
 
@@ -21,8 +21,8 @@ storage, import/export) stays free forever — see §5.
 ### Free
 A complete, production-ready merge-tag plugin on its own — nothing here is
 a crippled trial.
-- **Up to 15 dynamic tags** (Paid: unlimited) — groups, both storage
-  backends (post type + custom table)
+- **Up to 15 dynamic tags that you create yourself** (Paid: unlimited) —
+  groups, the custom table (tags other plugins create do not count, §8)
 - All V1 Core placeholders (post, taxonomy, author, site, URL, date)
 - `{meta:key}` and scalar `{acf:field}`
 - All formatters (`|upper`, `|currency`, `|date`, etc. — including the
@@ -53,10 +53,10 @@ Everything in Free, plus the entire V2–V4 dynamic-data layer:
 
 | Feature | Free | Paid |
 |---|:---:|:---:|
-| Dynamic tags | Up to 15 | Unlimited |
+| Dynamic tags you create yourself | Up to 15 | Unlimited |
 | Groups / taxonomy organization | ✅ | ✅ |
-| Dual storage (post type + custom table) + migration | ✅ | ✅ |
-| Conflict detection between tag names/shortcodes | ✅ | ✅ |
+| Migration from 3.0.0 tag posts to the table | ✅ | ✅ |
+| Shortcode-name safety (reserved/foreign names, self-reference) | ✅ | ✅ |
 | Import/export (JSON, CSV, XML, SQL) | ✅ | ✅ |
 | Works in any builder (Elementor, Gutenberg, Divi, widgets) | ✅ | ✅ |
 | Post/taxonomy/author/site/URL/date placeholders | ✅ | ✅ |
@@ -71,7 +71,7 @@ Everything in Free, plus the entire V2–V4 dynamic-data layer:
 | `{user_meta:key}` / `{term_meta:key}` | ❌ | ✅ |
 | **`[dt_loop]`** — iterate any array-returning source | ❌ | ✅ |
 | **Field-based conditionals** (`{if:wc:price>50}`, `=`, `contains`, …) | ❌ | ✅ |
-| **`[dt_if]`/`[dt_else]`** — block-level visibility | ❌ | ✅ |
+| **`[dt_if]`/`[dt_else]`** — block-level visibility (built-in conditions free, field conditions Paid) | ◐ | ✅ |
 | **`[dt_template]`** — per-record rendering (product cards, team grids) | ❌ | ✅ |
 | **`{query:...}`** — query posts as a reusable data source | ❌ | ✅ |
 | **`{api:...}`** — external JSON data source | ❌ | ✅ |
@@ -154,3 +154,34 @@ Mirror `CG_License_Manager` almost exactly — same architecture, fewer plans:
   plus upgrade prompts wherever a Free user hits a gated placeholder (return
   a friendly "Upgrade to Paid" string instead of silently resolving empty,
   same pattern CG uses for over-limit states)
+
+## 8. What 3.1.0 ships (decisions of 2026-11-12)
+
+Enforcement is live in 3.1.0. The decisions that §1-§7 left open, and how they were built:
+
+- **License server.** `DT_License_Manager::DEFAULT_LICENSE_SERVER` is `https://tlvapi.techlovev.in` (the backend Certificate
+  Generator Pro uses). Order: constant `DT_LICENSE_SERVER`, option `dt_license_server_url`, `cg_license_server_url`, the default.
+  Only an `https://` address is accepted. A site sends the key and the site address, only when a key is activated and on the
+  twice-daily check while a key is stored; without a key it sends nothing.
+- **The `PAID-` offline shortcut is gone.** Keys were accepted when they began with `PAID-` and no server was configured;
+  with a default server that path is dead code and would have been a free upgrade. A key is valid only if the server says so.
+  An unreachable server never downgrades a Paid site (only an explicit invalid/expired/revoked answer does).
+- **The cap (15) counts tags that people create**: Add New, Duplicate, Import. Code that calls
+  `create_tag($data)` (Certificate Generator's per-student tags, the chatbot's event tags) is never blocked and never counted: such
+  a tag carries `dt_origin = api` in its `meta_data` (no schema change). A caller cannot choose that mark, an import file
+  cannot carry it, and an update cannot add or remove it. Tags that existed before 3.1.0 have no mark and count.
+  The cap stops new tags only: nothing existing is disabled, hidden or deleted, and rendering never looks at it.
+- **Seam.** The limit is one callback on `dt_can_create_tag` (`DT_License_Manager::enforce_tag_limit`, priority 10); the filter
+  receives `$allowed, $data, $origin`.
+- **Gates (one place each).** Parameterized placeholders `wc`, `user_meta`, `term_meta`, `query`, `api`, `func`: in
+  `WP_Dynamic_Tags_Placeholders::resolve_token()` (so `{token}`, `[dt_loop source=]` and conditions are covered together) and, before
+  formatters, in `replace_generic_token()`; ACF repeater/flexible/group/gallery/relationship values and `{acf:rows.name}` sub-fields:
+  `DT_License_Manager::acf_allowed()`; `[dt_loop]` and `[dt_template]`: top of the shortcode.
+- **`[dt_if]` scope.** The shortcode stays free with the built-in conditions (`user_logged_in`, `user_not_logged_in`, `is_admin`,
+  `is_mobile`, `is_front_page`, `is_home`, `is_single`, `is_page`, `user_role:`, `time_between()`) and with a condition a site adds
+  through `dt_evaluate_condition`. A condition that reads a token (`meta:key=value`, `wc:price>50`, `acf:featured`) is Paid: on Free it
+  is simply not met (a leading `!` still negates it).
+- **What a Free visitor sees for a Paid feature:** nothing. The token renders empty (an author-written `??fallback`, `empty=""`
+  or template text still shows), with no query, request or function call made. No upgrade text is ever put in a page. The admin sees
+  a "Paid feature" badge on the tag in All Tags, a notice on its edit form and a note under its preview.
+- **Upgrade link.** `dt_upgrade_url` (filter, empty by default); a refusal names it only when it is set.

@@ -26,6 +26,9 @@ been run.
   checks, diagnostics, debug log), plus **Groups** and **Settings**. The old addresses
   (`edit.php?post_type=dynamic_tag`, the old Table Manager and Conflict Manager pages) redirect to the
   new screens.
+* **Free and Paid plans are enforced.** Free is complete on its own and has no time limit; Paid adds the dynamic-data layer.
+  See [Free and Paid](#free-and-paid) below for exactly what each plan does, how the limit of 15 is counted, and what a
+  Free site renders for a Paid feature. Nothing that exists is disabled, hidden or deleted.
 * **Settings explains the cost of tags.** *Dynamic Tags > Settings > Tags and your server* says how tags
   work (one table row each, every active tag registered as a shortcode on every request, nothing written
   while rendering), why a lot of tags slow a site down (with the measured table), and shows this site's
@@ -62,6 +65,37 @@ been run.
 * **Debug log.** Off unless the filter `dt_debug_mode` (or the constant `DT_DEBUG_MODE`) is true; records only
   the tag id, shortcode, kind of problem, context and time (never content, meta values, credentials or
   URLs), 50 entries, shown and cleared on the Tools screen.
+
+## Free and Paid
+
+LICENSE-PLAN.md (§8) has the design; this is what a site sees.
+
+| | Free | Paid |
+|---|---|---|
+| Tags you create yourself (Add New, Duplicate, Import) | up to 15 | unlimited |
+| Tags other plugins create (`create_tag($data)`) | never blocked, not counted | never blocked, not counted |
+| Groups, import and export, migration, all formatters, `{token??fallback}`, `[dt]`, `[dt_group]`, `[dt_random]`, `[dt_count]`, `[dt_list]` | yes | yes |
+| Post, taxonomy, author, site, URL and date placeholders, `{meta:key}`, scalar `{acf:field}` | yes | yes |
+| `{if:}` and `[dt_if]` with a built-in condition (`user_logged_in`, `is_mobile`, `user_role:`, `time_between()`, page type) or a condition a site adds through `dt_evaluate_condition` | yes | yes |
+| `{wc:}`, `{user_meta:}`, `{term_meta:}`, `{query:}`, `{api:}`, `{func:}`, ACF repeater / group / gallery / relationship and `{acf:rows.field}`, `[dt_loop]`, `[dt_template]`, field conditions (`{if:meta:k=v}`, `[dt_if condition="wc:price>50"]`) | render nothing | yes |
+
+* **The limit counts people.** A tag created through the plugin's screens or an import carries no mark; a tag created by code that
+  calls `create_tag($data)` (Certificate Generator's per-student tags, the chatbot's event tags) is marked `dt_origin = api` in
+  its `meta_data`, so it is never blocked and is not counted. No schema change. A caller cannot choose the mark, an import file
+  cannot carry it, an update cannot add or remove it. **Tags that exist from before 3.1.0 have no mark and count**, including
+  ones another plugin made: a site that has more than 15 simply cannot add more by hand until a Paid key is activated or tags
+  are deleted. Every existing tag keeps rendering and can be edited.
+* **What a Free site renders for a Paid feature is nothing**: no query, request or function call is made, an author's
+  `{token??fallback}` or `empty="..."` text still shows, and no upgrade text is ever put in a page. A leading `!` still negates a
+  condition that is not met. In the admin: "N of 15" above All Tags and Add New, a **Paid feature** label on a tag that uses one, a
+  note on its form and under its preview.
+* **License checks.** The default license server is `https://tlvapi.techlovev.in` (constant `DT_LICENSE_SERVER`, the option on the
+  Settings screen, or Certificate Generator's server override it; https only). A key is valid only when the server says so: the old
+  offline shortcut that accepted any key starting with `PAID-` is removed. A server that cannot be reached never downgrades a Paid
+  site. The Settings page shows the key masked.
+* **For developers.** `create_tag($data, $origin = 'api')`; the filter `dt_can_create_tag` receives `($allowed, $data, $origin)`;
+  the filter `dt_upgrade_url` supplies the page where a key is bought (empty by default: nothing is linked until a site or a later
+  release names one). See `docs/API.md`.
 
 ## Upgrading from 3.0.0
 
@@ -158,19 +192,21 @@ The full register, with a failing test for each item that could be tested, is `d
   breaks and the importer could not read a spreadsheet's file (N2); SQL could be imported through a
   parser that cut content at the first comma (N1); a copy of every tag stayed in `wp_options` after an
   uninstall that was asked to delete the data, and on a network only one site was cleaned.
-* **Tests:** the root suite (159 tests, no WordPress), the WordPress suites (front 169, admin 248, on 7.0 and
+* **Tests:** the root suite (159 tests, no WordPress), the WordPress suites (front 217, admin 274, on 7.0 and
   7.1.4 and as a network), an exposure matrix (six roles across query and meta tokens, `[dt_template]`, `[dt_loop]`, REST-rendered
   content and password-protected posts; every AJAX action for subscriber, contributor, author, editor and a
-  visitor), a golden master of 396 renders compared with the recorded 3.0.0 output, 80 live
-  migration checks, a performance probe, and hand-written negative controls (deliberate defects that
-  the tests must catch; all are caught).
+  visitor), the Free and Paid plans (every Paid gate on Free and on Paid, the limit and its mark, activation and
+  the license server with a mocked HTTP layer, the admin notices), a golden master of 396 renders compared with the
+  recorded 3.0.0 output (run as the Paid plan, which 3.0.0 effectively was), 80 live migration checks, a real-HTTP
+  end-to-end pass over six roles (334 checks) and over the plan (27 checks), a performance probe, and hand-written
+  negative controls (deliberate defects in a copy of the plugin that the tests must catch; all 59 of the plan's are caught).
 
 ## Privacy
 
-* The plugin has no telemetry and sends nothing to its author. It makes an outbound request only when a tag
-  uses `{api:URL}` (the tag author chose the URL; see the limits above), and, if a licence key **and** a
-  licence server are both configured (the server is empty by default), a periodic licence check that sends
-  the key and the site address to that server.
+* The plugin has no telemetry. It makes an outbound request only when a Paid tag uses `{api:URL}` (the tag author chose the URL;
+  see the limits above) and when a licence key is stored: activating or deactivating a key, and a check twice a day, send the
+  key and the site address (the home URL) to the licence server (`https://tlvapi.techlovev.in` by default) and nothing else.
+  With no key stored, nothing is sent. This is listed under *External services* in `readme.txt`.
 * What it stores: the tags table, a few options (settings, migration state and log, the debug log when
   enabled), and a private backup folder in the uploads directory (`wp-dynamic-tags-private`, blocked from the
   web, unguessable names) for migration and uninstall backups. Tag content can hold personal data (the
@@ -186,9 +222,9 @@ The full register, with a failing test for each item that could be tested, is `d
   with `switch_to_blog()` uses the table of the first site.
 * A very large export is held in one transient for ten minutes (one `wp_options` row): size it against
   `max_allowed_packet`.
-* The licence and plan settings in the code are not used to limit anything in 3.1.0.
-* **How many tags.** There is no cap, and the cost of a tag is paid on every request, because every active tag
-  is registered as a shortcode. Measured on a development PC without a page cache, per uncached page: 1,000
+* **How many tags.** The Free plan allows 15 tags that you create yourself (Paid: unlimited; see
+  [Free and Paid](#free-and-paid)). Whatever the plan, the cost of a tag is paid on every request, because every active tag
+  is registered as a shortcode; above the recommended number for the server, All Tags shows a notice. Measured on a development PC without a page cache, per uncached page: 1,000
   tags about +2 MB and +10 ms, 5,000 about +10 MB and +55 ms, 10,000 about +20 MB and +110 ms, 20,000 about
   +40 MB and +210 ms, 50,000 about +106 MB and +550 ms (2.05 KB and about 8 microseconds per tag, plus the
   time WordPress's own `do_shortcode()` spends comparing every registered name on each call). Advice: up to

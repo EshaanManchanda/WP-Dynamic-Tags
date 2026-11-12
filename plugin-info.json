@@ -2,7 +2,7 @@
   "name": "WP Dynamic Tags",
   "slug": "wp-dynamic-tags",
   "tagline": "Dynamic content tags as shortcodes that work in any builder: Gutenberg, Elementor, Divi and more.",
-  "description": "WP Dynamic Tags lets you create reusable, dynamic content snippets (\"tags\") and insert them anywhere as shortcodes: the block editor, Elementor, Divi, widgets, or any theme template that runs do_shortcode(). It includes a placeholder engine (post, taxonomy, author, site, URL, date, meta, ACF, WooCommerce), formatters, fallback syntax, inline and block-level conditionals, array loops, per-record templates, query and external API data sources, dual storage (post type or custom table) with migration, conflict detection, and import/export in JSON, CSV, XML and SQL.",
+  "description": "WP Dynamic Tags lets you create reusable, dynamic content snippets (\"tags\") and insert them anywhere as shortcodes: the block editor, Elementor, Divi, widgets, or any theme template that runs do_shortcode(). It includes a placeholder engine (post, taxonomy, author, site, URL, date, meta, ACF, WooCommerce), formatters, fallback syntax, inline and block-level conditionals, array loops, per-record templates, query and external API data sources, one optimized custom table as the only tag store with migration from older versions, shortcode-name and self-reference safety checks, and import/export in JSON, CSV, XML and SQL. The Free plan is complete on its own (15 tags you create yourself); Paid unlocks the dynamic-data layer.",
   "version": "3.0.0",
   "author": "Eshaan Manchanda",
   "author_uri": "https://eshaanportfolio.vercel.app/",
@@ -28,10 +28,10 @@
         "sites": 1
       },
       "features": [
-        "Up to 15 dynamic tags",
+        "Up to 15 dynamic tags that you create yourself (tags other plugins create do not count; existing tags always keep working)",
         "Groups / taxonomy organization",
-        "Dual storage (post type + custom table) with migration",
-        "Conflict detection between tag names/shortcodes",
+        "Migration of tags stored by older versions as posts",
+        "Shortcode-name safety: reserved and foreign names and self-references are refused",
         "Import/export (JSON, CSV, XML, SQL)",
         "Works in any builder (Elementor, Gutenberg, Divi, widgets)",
         "Post, taxonomy, author, site, URL and date placeholders",
@@ -39,7 +39,7 @@
         "{acf:field} scalar ACF fields",
         "All formatters (|upper, |currency, |date, |round, |join, |count, ...)",
         "Fallback syntax {token??default}",
-        "Built-in conditionals (user_logged_in, is_mobile, user_role:, ...)",
+        "Built-in conditionals (user_logged_in, is_mobile, user_role:, time_between, ...) in {if:} and [dt_if]",
         "[dt_group], [dt_random], [dt_count], [dt_list], [dt] shortcodes"
       ],
       "support": "Community (GitHub issues)"
@@ -67,8 +67,7 @@
         "ACF repeater/gallery/relationship support {acf:field.subfield}",
         "{user_meta:key} and {term_meta:key}",
         "[dt_loop] to iterate any array-returning source",
-        "Field-based conditionals ({if:wc:price>50}, =, contains, ...)",
-        "[dt_if]/[dt_else] block-level visibility",
+        "Field-based conditions ({if:wc:price>50}, {if:meta:k=v}, [dt_if condition=\"wc:price>50\"], =, contains, ...)",
         "[dt_template] per-record rendering (product cards, team grids)",
         "{query:...} posts as a reusable data source",
         "{api:...} external JSON data source",

@@ -43,13 +43,21 @@ Returned by `get_tag*()` and as items of `get_tags()` (`stdClass`). Database col
 
 ## Methods
 
-### `create_tag( array $data ): int|WP_Error`
+### `create_tag( array $data, string $origin = 'api' ): int|WP_Error`
 
 Returns the new tag ID. Input keys: `tag_name` (required), `shortcode` (optional: generated from
 `tag_name` and made unique when omitted), `content`, `description`, `category_id`, `priority`, `status`,
 `meta_data` (array). The legacy keys `title` (= `tag_name`) and `group_id` (= `category_id`) are accepted as
 aliases; the real field wins when both are given; keys that are not columns (such as `id`) are dropped.
 Fires `wp_dynamic_tags_tag_created( $id, $data )` and registers the shortcode for the rest of the request.
+
+**`$origin`** says who is creating the tag, for the Free plan's limit of 15 tags (see "The Free limit" below).
+`'api'` (the default, so every existing caller is unchanged) is code creating tags on its own account, such as a
+sync from another plugin: the tag is marked `dt_origin = api` in its `meta_data` and is never blocked by, or
+counted toward, the Free limit. The plugin's own screens (Add New, Duplicate, Import) pass `'user'`; any value
+other than `'api'` counts as a person. The mark is stored by this method only: a `dt_origin` in `$data['meta_data']`
+is removed (and set again only for `'api'`), a `meta_data` string that mentions it without being an array is
+dropped, and `update_tag()` keeps whatever the stored row has.
 
 Rules applied by the **Tag Service** (also to the screens and to import):
 
@@ -62,6 +70,14 @@ Rules applied by the **Tag Service** (also to the screens and to import):
   code that runs without a user (cron, WP-CLI, another plugin's setup) is trusted;
 * filter `dt_can_create_tag` is the single place a limit on the number of tags is decided.
 
+#### The Free limit
+
+A Free site can create 15 tags itself (`DT_License_Manager::FREE_TAG_LIMIT`); Paid is unlimited. It is one callback on
+`dt_can_create_tag` (`DT_License_Manager::enforce_tag_limit`, priority 10) that refuses with `dt_tag_limit` when the origin is
+not `'api'`, the plan is Free and `DT_License_Manager::count_capped_tags()` (tags without the `api` mark) is 15 or more.
+It never touches an existing tag: updating, deactivating, deleting and rendering do not look at it. A refusal from a
+filter that ran earlier is passed through unchanged. Tags created before 3.1.0 have no mark and count.
+
 Errors: `table_not_available`, `validation_failed` (the message lists every problem: missing name, bad
 characters, duplicate name, duplicate shortcode, priority range, status value), `duplicate_tag_name` /
 `duplicate_shortcode` / `insert_failed` (repository level), `dt_reserved_shortcode`,
@@ -73,7 +89,8 @@ Partial update: only the keys supplied are validated and changed. The Tag Servic
 (a new shortcode name, new content), so saving a description never fails because of a name or a reference
 that was already there. Fires `wp_dynamic_tags_tag_updated( $id, $data, $old_tag )`.
 Errors: `table_not_available`, `invalid_id`, `tag_not_found`, `validation_failed`, `duplicate_tag_name`,
-`duplicate_shortcode`, `update_failed`, and the Tag Service codes above.
+`duplicate_shortcode`, `update_failed`, and the Tag Service codes above. A `meta_data` in the update is stored
+without any `dt_origin` of its own: the mark of the stored row (set by `create_tag`) is kept, or absent.
 
 ### `delete_tag( int $id ): true|WP_Error`
 
@@ -117,7 +134,8 @@ requests. Fires `wp_dynamic_tags_tag_used( $tag_id )` (in memory on every render
 | Filter | Arguments | Default | Meaning |
 |---|---|---|---|
 | `dt_manage_capability` | `$cap` | `manage_options` | capability for every admin screen and endpoint of the plugin |
-| `dt_can_create_tag` | `$allowed`, `$data` | `true` | return `false`, or a `WP_Error`, to refuse a new tag (`dt_tag_limit`) |
+| `dt_can_create_tag` | `$allowed`, `$data`, `$origin` | `true` | return `false`, or a `WP_Error`, to refuse a new tag (`dt_tag_limit`); `$origin` is `'api'` (code calling `create_tag($data)`) or `'user'` (Add New, Duplicate, Import); the Free limit is a callback on this filter |
+| `dt_upgrade_url` | `$url` | `''` | the page where a Paid key is bought; the admin and the limit message link to it only when it is set (http or https) |
 | `dt_allow_shortcode_override` | `$allow`, `$shortcode` | `false` | let a tag use a name another plugin owns |
 | `dt_process_value` | `$content` | | renders placeholders, formatters and conditionals; used by chatbot-by-eshaan |
 | `dt_kses_tag_output` | `$filter`, `$tag` | `false` | run the output of every per-tag shortcode through `wp_kses_post` |
