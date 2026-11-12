@@ -555,10 +555,10 @@ class WP_Dynamic_Tags_Settings_Page {
                             <strong><?php esc_html_e('What is preserved:', 'wp-dynamic-tags'); ?></strong>
                         </p>
                         <ul style="margin-left: 20px; list-style: disc;">
-                            <li><?php esc_html_e('All dynamic tag posts', 'wp-dynamic-tags'); ?></li>
-                            <li><?php esc_html_e('Custom database table (wp_dynamic_tags)', 'wp-dynamic-tags'); ?></li>
-                            <li><?php esc_html_e('Tag groups taxonomy', 'wp-dynamic-tags'); ?></li>
-                            <li><?php esc_html_e('Usage statistics', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('Your tags, with their usage counts (the database table wp_dynamic_tags)', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('Tag groups', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('Your settings and your license', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('Tag posts from version 3.0.0 that you have not cleaned up yet (Dynamic Tags > Tools)', 'wp-dynamic-tags'); ?></li>
                         </ul>
                     </div>
                 </div>
@@ -571,12 +571,15 @@ class WP_Dynamic_Tags_Settings_Page {
                             <?php esc_html_e('If you enable "Delete Data on Uninstall", the following will be permanently deleted:', 'wp-dynamic-tags'); ?>
                         </p>
                         <ul style="margin-left: 20px; list-style: disc;">
-                            <li><?php esc_html_e('All dynamic tag posts', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('All your tags (the database table wp_dynamic_tags is dropped)', 'wp-dynamic-tags'); ?></li>
                             <li><?php esc_html_e('All tag groups', 'wp-dynamic-tags'); ?></li>
-                            <li><?php esc_html_e('Custom database table', 'wp-dynamic-tags'); ?></li>
-                            <li><?php esc_html_e('All plugin options and settings', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('Any tag posts from version 3.0.0 that are still there', 'wp-dynamic-tags'); ?></li>
+                            <li><?php esc_html_e('All plugin options and settings, including the license key', 'wp-dynamic-tags'); ?></li>
                             <li><?php esc_html_e('All transients and cached data', 'wp-dynamic-tags'); ?></li>
                         </ul>
+                        <p>
+                            <?php esc_html_e('Before it deletes anything the plugin writes a backup of your tags to a private folder in your uploads directory (wp-dynamic-tags-private) and keeps it there. Deactivate your license in the License box first, so that the key can be used on another site.', 'wp-dynamic-tags'); ?>
+                        </p>
                         <p style="color: #d63638;">
                             <strong><?php esc_html_e('⚠️ Warning: This action cannot be undone!', 'wp-dynamic-tags'); ?></strong>
                         </p>

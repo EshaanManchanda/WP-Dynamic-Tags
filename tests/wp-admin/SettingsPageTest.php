@@ -196,6 +196,16 @@ class DT_Settings_Page_Test extends WP_UnitTestCase
         $this->assertContains('dt_license_server_url', $codes);
     }
 
+    public function test_the_uninstall_boxes_describe_the_table_and_what_uninstall_really_does(): void
+    {
+        $html = $this->render();
+
+        $this->assertStringNotContainsString('All dynamic tag posts', $html, 'tags are table rows, not posts');
+        foreach (array('the database table wp_dynamic_tags', 'Your settings and your license', 'not cleaned up yet', 'is dropped', 'including the license key', 'wp-dynamic-tags-private', 'Deactivate your license') as $phrase) {
+            $this->assertStringContainsString($phrase, $html);
+        }
+    }
+
     public function test_the_mask_hides_the_middle_of_a_key(): void
     {
         $this->assertSame('', DT_License_Manager::mask_key(''));
