@@ -167,10 +167,13 @@ Render an existing Dynamic Tag once per post in a query:
 - **Bulk Resolution** - Resolve multiple conflicts at once
 
 ### 📤 Import/Export Capabilities
-- **Multiple Formats**: JSON, CSV, XML, SQL
-- **Selective Export** - Export all tags or by group
-- **Conflict Handling** - Choose how to handle duplicates on import
-- **Sample Files Included** - Get started quickly with examples
+- **Formats**: export to JSON, CSV, XML or SQL; import from JSON, CSV or XML (SQL is export only)
+- **Selective Export** - Export all tags, only the active or inactive ones, or one group
+- **Check first** - *Validate* lists every problem by row number and changes nothing
+- **Good rows are imported, bad rows are reported** - each by its number in the file, with the reason
+- **Duplicates** - skip tags whose shortcode already exists, or update them
+- **Spreadsheet safe** - CSV cells a spreadsheet would run as a formula (they start with `=`, `+`, `-`, `@`, a tab or a carriage return) get a leading apostrophe on export; the import removes it again, so an export read back is identical
+- **Sample files** - a minimal and a full CSV in the exact export layout
 
 ### ⚡ Performance Optimizations
 - **Multi-level Caching** - WordPress transients, object cache, and static caching
@@ -272,24 +275,29 @@ Output: © 2025 My Website. All rights reserved.
 
 #### Exporting Tags
 
-1. Go to **Dynamic Tags > Import/Export**
-2. Choose export format (JSON, CSV, XML, SQL)
-3. Select tags to export:
-   - All tags
-   - By specific group
-   - Selected tags
-4. Click **Export** - file downloads automatically
+1. Go to **Dynamic Tags > Import / Export**
+2. Choose the format (JSON, CSV, XML, SQL)
+3. Optionally filter by status and group
+4. Click **Export**. The file downloads once, only for the person who exported, and the link works for ten minutes.
 
 #### Importing Tags
 
-1. Go to **Dynamic Tags > Import/Export**
-2. Select import format
-3. Upload your file
-4. Choose conflict handling:
-   - **Skip**: Skip duplicate tags
-   - **Update**: Update existing tags
-   - **Create New**: Create with modified names
-5. Click **Import**
+1. Go to **Dynamic Tags > Import / Export**
+2. Choose a `.json`, `.csv` or `.xml` file (SQL files are refused). Up to 5 MB and 5,000 rows by default.
+3. Click **Validate** to see every problem by row number. Nothing is changed.
+4. Tick the options you want:
+   - **Skip duplicates** (on by default): a row whose shortcode already exists is left alone
+   - **Update existing tags**: such a row replaces the content, description, priority and status of the existing tag. If both are ticked, update wins.
+5. Click **Import**. Valid rows are imported; the rest are listed with their row numbers.
+
+What to know about a file:
+
+- **CSV** needs the header row the export writes (at least `Tag Name` and `Shortcode`); a spreadsheet's byte order mark, CRLF line endings, quoted values that span lines and unknown extra columns are fine. The sample files are in `assets/`.
+- **XML** must be UTF-8 and must not contain a DOCTYPE or entity declaration.
+- **Names and shortcodes** follow the same rules as the editor (letters, numbers, spaces, hyphens and underscores; the plugin's own shortcodes such as `dt_group` and names owned by WordPress or other plugins are refused; a tag may not refer back to itself).
+- **Groups**: a group id that does not exist on this site is dropped (the tag is imported without a group), because ids differ between sites. An update never removes a tag from its group, and never replaces this site's usage counter or meta data with the file's.
+- **Content** is filtered like everything saved in the editor: users without the `unfiltered_html` capability get post-style filtering.
+- **Limits** can be changed with the filters `dt_import_max_bytes` (default 5 MB) and `dt_import_max_rows` (default 5,000).
 
 ### Database Migration
 
@@ -463,9 +471,11 @@ $result = $table_manager->create_tag(array(
 - ✅ Use unique tag names
 
 **Import Fails**
-- ✅ Check file format matches selected import type
-- ✅ Ensure file encoding is UTF-8
-- ✅ Verify file structure against sample files
+- ✅ Use a `.json`, `.csv` or `.xml` file (SQL cannot be imported)
+- ✅ Ensure file encoding is UTF-8 (XML must be UTF-8)
+- ✅ Click **Validate**: every problem is listed by row number
+- ✅ Compare the file with the sample files in `assets/`
+- ✅ Too many rows? Split the file or raise the `dt_import_max_rows` filter
 - ✅ Check PHP upload limits (upload_max_filesize, post_max_size)
 
 **Performance Issues**

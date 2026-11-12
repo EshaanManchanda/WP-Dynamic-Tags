@@ -29,6 +29,10 @@ final class WP_Dynamic_Tags_Tag_Service
     /** Reserved prefix of the table-based helper shortcodes. */
     private const RESERVED_PREFIX = 'dt_table_';
 
+    /** What a tag name and a shortcode may consist of (the facade's field validation and the importer's dry run share them). */
+    public const NAME_PATTERN = '/^[a-zA-Z0-9_\-\s]+$/';
+    public const SHORTCODE_PATTERN = '/^[a-zA-Z0-9_\-]+$/';
+
     public static function is_reserved($shortcode): bool
     {
         $name = strtolower((string) $shortcode);
@@ -95,14 +99,18 @@ final class WP_Dynamic_Tags_Tag_Service
      */
     public static function check_cycle($shortcode, $content, array $rows)
     {
-        $graph = array();
-        foreach ($rows as $row) {
-            $graph[strtolower((string) $row->shortcode)] = self::references((string) $row->content);
-        }
-        $me = strtolower((string) $shortcode);
-        $graph[$me] = self::references((string) $content);
+        return self::check_cycle_in_graph((string) $shortcode, (string) $content, self::graph_of($rows), null);
+    }
 
-        $stack = $graph[$me];
+    /**
+     * @param array<string,string[]> $graph  Stored tags: shortcode => the tags its content refers to.
+     * @param string|null            $ignore The stored tag that is being replaced by $content (its old content no longer counts).
+     * @return true|WP_Error
+     */
+    private static function check_cycle_in_graph(string $shortcode, string $content, array $graph, $ignore)
+    {
+        $me = strtolower($shortcode);
+        $stack = self::references($content);
         $seen = array();
         while ($stack) {
             $next = array_pop($stack);
@@ -110,7 +118,7 @@ final class WP_Dynamic_Tags_Tag_Service
                 /* translators: %s: shortcode name */
                 return new WP_Error('dt_circular_reference', sprintf(__('The tag [%s] would render itself: its content refers back to it, directly or through other tags.', 'wp-dynamic-tags'), $shortcode));
             }
-            if (isset($seen[$next])) {
+            if (isset($seen[$next]) || $next === $ignore) {
                 continue;
             }
             $seen[$next] = true;
@@ -119,6 +127,91 @@ final class WP_Dynamic_Tags_Tag_Service
             }
         }
         return true;
+    }
+
+    /**
+     * @param object[] $rows
+     * @return array<string,string[]>
+     */
+    private static function graph_of(array $rows): array
+    {
+        $graph = array();
+        foreach ($rows as $row) {
+            $graph[strtolower((string) $row->shortcode)] = self::references((string) $row->content);
+        }
+        return $graph;
+    }
+
+    // ------------------------------------------------------------------ batches
+
+    /**
+     * The reference graph of the stored tags, kept for the length of a batch (null outside one, and until first needed).
+     * Without a batch every check loads and scans every stored tag, which is right for one write at a time and quadratic
+     * for an import: the batch loads the graph once and the actions the facade fires keep it current.
+     *
+     * @var array<string,string[]>|null
+     */
+    private static $batch_graph = null;
+
+    /** @var bool */
+    private static $in_batch = false;
+
+    /**
+     * Starts a batch of writes made through the facade (an import). Always pair with end_batch(), in a finally block.
+     * Writes that bypass the facade during a batch are not seen by its checks.
+     */
+    public static function begin_batch(): void
+    {
+        self::$in_batch = true;
+        self::$batch_graph = null;
+        add_action('wp_dynamic_tags_tag_created', array(__CLASS__, 'batch_created'), 10, 2);
+        add_action('wp_dynamic_tags_tag_updated', array(__CLASS__, 'batch_updated'), 10, 3);
+        add_action('wp_dynamic_tags_tag_deleted', array(__CLASS__, 'batch_deleted'), 10, 2);
+    }
+
+    public static function end_batch(): void
+    {
+        remove_action('wp_dynamic_tags_tag_created', array(__CLASS__, 'batch_created'), 10);
+        remove_action('wp_dynamic_tags_tag_updated', array(__CLASS__, 'batch_updated'), 10);
+        remove_action('wp_dynamic_tags_tag_deleted', array(__CLASS__, 'batch_deleted'), 10);
+        self::$in_batch = false;
+        self::$batch_graph = null;
+    }
+
+    /** @return array<string,string[]> */
+    private static function batch_graph(): array
+    {
+        if (self::$batch_graph === null) {
+            self::$batch_graph = self::graph_of(self::all_rows());
+        }
+        return self::$batch_graph;
+    }
+
+    /** @param mixed $data */
+    public static function batch_created($id, $data): void
+    {
+        if (self::$batch_graph !== null && is_array($data)) {
+            self::$batch_graph[strtolower((string) ($data['shortcode'] ?? ''))] = self::references((string) ($data['content'] ?? ''));
+        }
+    }
+
+    /** @param mixed $data */
+    public static function batch_updated($id, $data, $existing): void
+    {
+        if (self::$batch_graph === null || !is_array($data) || !is_object($existing)) {
+            return;
+        }
+        $shortcode = isset($data['shortcode']) ? (string) $data['shortcode'] : (string) $existing->shortcode;
+        $content = array_key_exists('content', $data) ? (string) $data['content'] : (string) $existing->content;
+        unset(self::$batch_graph[strtolower((string) $existing->shortcode)]);
+        self::$batch_graph[strtolower($shortcode)] = self::references($content);
+    }
+
+    public static function batch_deleted($id, $existing): void
+    {
+        if (self::$batch_graph !== null && is_object($existing)) {
+            unset(self::$batch_graph[strtolower((string) $existing->shortcode)]);
+        }
     }
 
     /**
@@ -158,7 +251,11 @@ final class WP_Dynamic_Tags_Tag_Service
         if (is_wp_error($name)) {
             return $name;
         }
-        return self::check_cycle($shortcode, (string) ($data['content'] ?? ''), self::all_rows());
+        $content = (string) ($data['content'] ?? '');
+        if (self::$in_batch) {
+            return self::check_cycle_in_graph($shortcode, $content, self::batch_graph(), null);
+        }
+        return self::check_cycle($shortcode, $content, self::all_rows());
     }
 
     /**
@@ -183,6 +280,9 @@ final class WP_Dynamic_Tags_Tag_Service
         $content_changed = array_key_exists('content', $data) && (string) $data['content'] !== (string) $existing->content;
         if ($content_changed || $renamed) {
             $content = array_key_exists('content', $data) ? (string) $data['content'] : (string) $existing->content;
+            if (self::$in_batch) {
+                return self::check_cycle_in_graph($shortcode, $content, self::batch_graph(), strtolower((string) $existing->shortcode));
+            }
             $rows = array_filter(self::all_rows(), static function ($row) use ($existing) {
                 return (int) $row->id !== (int) $existing->id; // this tag is represented by its new content
             });

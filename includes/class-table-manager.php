@@ -430,12 +430,12 @@ class WP_Dynamic_Tags_Table_Manager {
         }
 
         // Validate tag name format
-        if (!empty($data['tag_name']) && !preg_match('/^[a-zA-Z0-9_\-\s]+$/', $data['tag_name'])) {
+        if (!empty($data['tag_name']) && !preg_match(WP_Dynamic_Tags_Tag_Service::NAME_PATTERN, $data['tag_name'])) {
             $errors[] = 'Tag name can only contain letters, numbers, spaces, hyphens and underscores.';
         }
 
         // Validate shortcode format
-        if (!empty($data['shortcode']) && !preg_match('/^[a-zA-Z0-9_\-]+$/', $data['shortcode'])) {
+        if (!empty($data['shortcode']) && !preg_match(WP_Dynamic_Tags_Tag_Service::SHORTCODE_PATTERN, $data['shortcode'])) {
             $errors[] = 'Shortcode can only contain letters, numbers, hyphens and underscores.';
         }
 
