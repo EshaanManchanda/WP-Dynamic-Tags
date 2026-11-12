@@ -867,22 +867,25 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     }
 
     /**
-     * Handle tag update
+     * Handle tag update.
+     *
+     * The callback of a registered shortcode holds the row it was registered with, so after any change the shortcode is
+     * registered again from the stored row: an edit shows at once (also to code that edits and renders in the same
+     * request), a tag switched off stops rendering, one switched on starts, and a renamed one moves to its new name.
      */
     public function on_tag_updated($tag_id, $data, $old_data) {
-        // If shortcode changed, update registration
-        if (isset($data['shortcode']) && $data['shortcode'] !== $old_data->shortcode) {
-            // Remove old shortcode
-            if (shortcode_exists($old_data->shortcode) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_data->shortcode)) {
-                remove_shortcode($old_data->shortcode);
-                unset($this->registered_shortcodes[$old_data->shortcode]);
-            }
+        $old_code = isset($old_data->shortcode) ? (string) $old_data->shortcode : '';
 
-            // Register new shortcode
-            $tag = $this->table_manager->get_tag($tag_id);
-            if ($tag) {
-                $this->register_single_shortcode($tag);
+        if ($old_code !== '' && isset($this->registered_shortcodes[$old_code])) {
+            if (shortcode_exists($old_code) && WP_Dynamic_Tags_Plugin::shortcode_is_ours($old_code)) {
+                remove_shortcode($old_code);
             }
+            unset($this->registered_shortcodes[$old_code]);
+        }
+
+        $tag = $this->table_manager->get_tag($tag_id);
+        if ($tag && $tag->status === 'active') {
+            $this->register_single_shortcode($tag);
         }
 
         // Clear cache for this tag
