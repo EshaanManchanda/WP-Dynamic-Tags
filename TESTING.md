@@ -405,6 +405,8 @@ WordPress core and a throwaway database (never a site you use), see `tools/integ
 | Sibling plugins | `tests/golden-master/siblings.php` | the facade called with the real payloads of Certificate Generator, certificate-generator-gema and chatbot-by-eshaan |
 | Live migration | `tests/live/migration-scenarios.php` with `WP_DB_NAME=local_mgtest` | 80 checks of dry run, locking, batches, verification, conflicts, cleanup, backup tampering and restore. **Destructive: disposable clone only.** |
 | Performance | `tests/perf/run.ps1 -Label after -Count 5000 -Seed` | queries and writes per boot and per render on a 5,000-tag clone (no writes while rendering) |
+| Scale | `tests/perf/scale.ps1 -Count 50000 -Out <file>` | list, search, bulk, export and import timings and memory at 5,000 / 10,000 / 50,000 rows on `local_perf` (writes to the clone only) |
+| Exposure matrix | `tests/wp/ExposureMatrixTest.php`, `tests/wp-admin/ActionSecurityTest.php` | role x path: what a visitor, subscriber, contributor, author, editor and administrator can read through tokens, shortcodes and REST, and every AJAX action per role |
 | Mutation (by hand) | `php tools/mutation/mutants.php` | 26 deliberate defects in the parsers that the unit tests must catch |
 | Static analysis | `vendor/bin/phpstan analyse` (baseline may only shrink), `vendor/bin/phpcs --standard=WordPress --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.DB.PreparedSQL,WordPress.WP.I18n admin includes wp-dynamic-tags.php uninstall.php` (0 findings), `tools/static` for PHP 8.2-8.5 compatibility and the WordPress 7.0 floor | |
 

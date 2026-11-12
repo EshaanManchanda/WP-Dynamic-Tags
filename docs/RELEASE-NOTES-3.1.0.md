@@ -5,8 +5,10 @@ database while a page renders, replaces the admin with one screen, and closes th
 reliability findings of an audit of 3.0.0. Tags written for 3.0.0 keep rendering; the deliberate
 differences are listed under [Output differences](#output-differences-from-300).
 
-Requirements: WordPress 7.0 or newer, PHP 8.2 or newer. Tested on WordPress 7.0 and 7.1.4, as a single
-site and as a network, on PHP 8.2 (and 8.5 for the unit suite).
+Requirements: WordPress 7.0 or newer, PHP 8.2 or newer. Tested on WordPress 7.0 and 7.1.4 (as a network on
+7.0), with the full suites on PHP 8.2, 8.3 and 8.5 against MySQL 8.4 and MariaDB 10.11. PHP 8.3 was run
+without the curl extension (this machine's application control blocked that one library); PHP 8.4 has not
+been run.
 
 ## What changes for a site owner
 
@@ -134,7 +136,9 @@ The full register, with a failing test for each item that could be tested, is `d
   retrieval, and a nonce no code created (S5, S6); unguarded request keys (S7); uninstall deleted other
   plugins' user meta and transients (S8); object injection through stored meta (S9); `{api:}` response
   size, content type and fetch limits (S11); the export download id was guessable and reusable (I1);
-  import upload checks and XML entity expansion (I2, I3).
+  import upload checks and XML entity expansion (I2, I3); `{post_content}` printed the body of a
+  password-protected post for every viewer when that post was the current one, for example from a tag in a
+  widget or template part (A5; it now renders empty until WordPress would show the content).
 * **Rendering and runtime:** sequential `{if}` blocks (L1) and negation (L2); hard-coded demo values in
   formatters (L3); shortcodes not registered on REST requests (L4); date formatters (L5); the Duplicate
   button (L6); `WP_Error` from term lookups (L7); **no recursion guard**, so a tag that contained itself
@@ -145,8 +149,10 @@ The full register, with a failing test for each item that could be tested, is `d
   breaks and the importer could not read a spreadsheet's file (N2); SQL could be imported through a
   parser that cut content at the first comma (N1); a copy of every tag stayed in `wp_options` after an
   uninstall that was asked to delete the data, and on a network only one site was cleaned.
-* **Tests:** the root suite (141 tests, no WordPress), the WordPress suites (front 122, admin 163, on 7.0 and
-  7.1.4 and as a network), a golden master of 396 renders compared with the recorded 3.0.0 output, 80 live
+* **Tests:** the root suite (141 tests, no WordPress), the WordPress suites (front 169, admin 237, on 7.0 and
+  7.1.4 and as a network), an exposure matrix (six roles across query and meta tokens, `[dt_template]`, `[dt_loop]`, REST-rendered
+  content and password-protected posts; every AJAX action for subscriber, contributor, author, editor and a
+  visitor), a golden master of 396 renders compared with the recorded 3.0.0 output, 80 live
   migration checks, a performance probe, and hand-written negative controls (deliberate defects that
   the tests must catch; all are caught).
 
@@ -172,3 +178,10 @@ The full register, with a failing test for each item that could be tested, is `d
 * A very large export is held in one transient for ten minutes (one `wp_options` row): size it against
   `max_allowed_packet`.
 * The licence and plan settings in the code are not used to limit anything in 3.1.0.
+* **How many tags.** There is no cap, and the cost of a tag is paid on every request, because every active tag
+  is registered as a shortcode. Measured on a development PC without a page cache, per uncached page: 1,000
+  tags about +2 MB and +10 ms, 5,000 about +10 MB and +55 ms, 10,000 about +20 MB and +110 ms, 20,000 about
+  +40 MB and +210 ms, 50,000 about +106 MB and +550 ms (2.05 KB and about 8 microseconds per tag, plus the
+  time WordPress's own `do_shortcode()` spends comparing every registered name on each call). Advice: up to
+  5,000 tags on shared hosting with one CPU core and 1 GB of RAM, 10,000 behind a page cache. A 50,000-tag
+  table imported (about 170 s), listed (75 to 250 ms a page), searched and exported without an error.

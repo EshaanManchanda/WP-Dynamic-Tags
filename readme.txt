@@ -51,6 +51,10 @@ No. ACF and WooCommerce integration are entirely optional and inert if those plu
 
 No. The `{func:...}` placeholder only calls functions a developer has explicitly registered in code via `register_dynamic_tag_function()`. There is no `eval()` of tag content anywhere in the plugin.
 
+= How many tags can I create? =
+
+There is no built-in limit, but every page request registers every active tag as a shortcode, so the cost grows with the number of tags. Measured without a page cache: about 2 MB and 10 ms extra per request at 1,000 tags, 10 MB and 55 ms at 5,000, 20 MB and 110 ms at 10,000, and 106 MB and 550 ms at 50,000. On shared hosting with one CPU core and 1 GB of RAM, keep a site to 5,000 tags, or 10,000 behind a page cache.
+
 = Is there a query builder or external API support? =
 
 Yes — `{query:...}` runs a WP_Query and returns an array of post rows, and `{api:...}` fetches external JSON (via WordPress's SSRF-guarded `wp_safe_remote_get()`, with response caching).

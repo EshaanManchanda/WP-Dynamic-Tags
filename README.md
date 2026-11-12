@@ -178,6 +178,7 @@ Render an existing Dynamic Tag once per post in a query:
 - **One query** - All active tags are loaded with a single query per request
 - **Opt-in usage counting** - Off by default; when on, counts are kept in memory and written once at the end of the request, never on admin, AJAX, REST, cron or preview requests
 - **Fast imports** - 5,000 rows import in about 13 seconds
+- **How many tags?** There is no built-in limit. Every request registers every active tag as a shortcode, so the cost grows with the number of tags. Measured on a development PC (PHP 8.2, MySQL 8.4, ten plugins active, no page cache), per uncached page: 1,000 tags about +2 MB and +10 ms; 5,000 about +10 MB and +55 ms; 10,000 about +20 MB and +110 ms; 20,000 about +40 MB and +210 ms; 50,000 about +106 MB and +550 ms. **On shared hosting (one CPU core, 1 GB RAM) keep a site to 5,000 tags, or 10,000 behind a page cache.** Larger sets work (a 50,000-tag site was imported, listed, searched and exported without errors) but every uncached request pays for them. Part of the cost is WordPress itself: `do_shortcode()` compares every registered shortcode name on each call.
 
 ---
 
