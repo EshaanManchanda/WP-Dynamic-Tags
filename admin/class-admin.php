@@ -68,7 +68,8 @@ final class WP_Dynamic_Tags_Admin
             case 'dt_circular_reference':
                 return __('The tag would render itself, directly or through other tags.', 'wp-dynamic-tags');
             case 'dt_tag_limit':
-                return __('No more tags can be created.', 'wp-dynamic-tags');
+                // The same sentence as the refusal itself (a Free site is at its limit), not a generic line: it says what stays untouched.
+                return class_exists('DT_License_Manager') ? DT_License_Manager::limit_message() : __('No more tags can be created.', 'wp-dynamic-tags');
             case 'tag_not_found':
                 return __('That tag no longer exists.', 'wp-dynamic-tags');
             case 'validation_failed':
@@ -384,6 +385,89 @@ final class WP_Dynamic_Tags_Admin
         }
     }
 
+    /** Where the License box is (the Settings screen), for the links that say how to get a Paid key. */
+    private static function settings_url(): string
+    {
+        return admin_url('admin.php?page=dt-settings');
+    }
+
+    /**
+     * The Free plan's line above the list and the new-tag form: how many of the tags a person may create are used. Empty on
+     * Paid. Tags other plugins create are not in the number (DT_License_Manager::count_capped_tags()).
+     */
+    private function plan_note(): string
+    {
+        if (!class_exists('DT_License_Manager') || DT_License_Manager::is_paid()) {
+            return '';
+        }
+        $used = DT_License_Manager::count_capped_tags();
+        $limit = DT_License_Manager::FREE_TAG_LIMIT;
+        $full = $used >= $limit;
+
+        /* translators: 1: tags used, 2: the limit of the Free plan */
+        $text = sprintf(__('Free plan: %1$d of %2$d tags you create yourself are used. Tags that other plugins create are not counted.', 'wp-dynamic-tags'), $used, $limit);
+        if ($full) {
+            $text .= ' ' . __('No more tags can be added until you activate a Paid key; the tags you have keep working.', 'wp-dynamic-tags');
+        }
+        return sprintf(
+            '<div class="notice notice-%s inline dt-plan-note"><p>%s <a href="%s">%s</a></p></div>',
+            $full ? 'warning' : 'info',
+            esc_html($text),
+            esc_url(self::settings_url()),
+            esc_html__('Activate a Paid key', 'wp-dynamic-tags')
+        );
+    }
+
+    /**
+     * On a Free site: the Paid features this content uses (their names, e.g. {wc:}, [dt_loop]); empty on Paid or when it uses none.
+     *
+     * @return string[]
+     */
+    private static function paid_use(string $content): array
+    {
+        if (!class_exists('DT_License_Manager') || DT_License_Manager::is_paid()) {
+            return array();
+        }
+        return DT_License_Manager::paid_features_in($content);
+    }
+
+    /** The small label of a tag in the list that uses a Paid feature on a Free site (escaped; empty otherwise). */
+    public static function paid_badge(string $content): string
+    {
+        $features = self::paid_use($content);
+        if (!$features) {
+            return '';
+        }
+        /* translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop] */
+        $title = sprintf(__('Renders nothing on the Free plan: %s', 'wp-dynamic-tags'), implode(', ', $features));
+        return ' <span class="dt-badge dt-badge-warn" title="' . esc_attr($title) . '">' . esc_html__('Paid feature', 'wp-dynamic-tags') . '</span>';
+    }
+
+    /** The warning on a tag's form (escaped; empty when it does not apply). */
+    private function paid_use_notice(string $content): string
+    {
+        $features = self::paid_use($content);
+        if (!$features) {
+            return '';
+        }
+        /* translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop] */
+        $text = sprintf(__('This tag uses Paid features that render nothing on the Free plan: %s.', 'wp-dynamic-tags'), implode(', ', $features));
+        return sprintf(
+            '<div class="notice notice-warning inline"><p>%s <a href="%s">%s</a></p></div>',
+            esc_html($text),
+            esc_url(self::settings_url()),
+            esc_html__('Activate a Paid key', 'wp-dynamic-tags')
+        );
+    }
+
+    /** The note under the preview (plain text, shown with textContent; empty when nothing in the content is affected). */
+    private static function preview_note(string $content): string
+    {
+        $features = self::paid_use($content);
+        /* translators: %s: the Paid features a tag uses, e.g. {wc:}, [dt_loop] */
+        return $features ? sprintf(__('On the Free plan these Paid features render nothing, here and on your site: %s.', 'wp-dynamic-tags'), implode(', ', $features)) : '';
+    }
+
     private function notices(): void
     {
         if (isset($_GET['dt_notice'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only: chooses what is shown, changes nothing
@@ -406,6 +490,7 @@ final class WP_Dynamic_Tags_Admin
         echo '<div class="wrap dt-wrap"><h1 class="wp-heading-inline">' . esc_html__('Dynamic Tags', 'wp-dynamic-tags') . '</h1> ';
         echo '<a href="' . esc_url(self::edit_url()) . '" class="page-title-action">' . esc_html__('Add New', 'wp-dynamic-tags') . '</a><hr class="wp-header-end">';
         $this->notices();
+        echo $this->plan_note(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in plan_note()
         $list->views();
         echo '<form method="get"><input type="hidden" name="page" value="' . esc_attr(self::MENU) . '">';
         $list->search_box(__('Search Tags', 'wp-dynamic-tags'), 'dt-search');
@@ -458,6 +543,11 @@ final class WP_Dynamic_Tags_Admin
 
         $v = $this->form_values ?? ($row ? (array) $row : array());
         $v = array_merge(array('tag_name' => '', 'shortcode' => '', 'content' => '', 'description' => '', 'category_id' => 0, 'priority' => 0, 'status' => 'active'), $v);
+
+        if ($id === 0) {
+            echo $this->plan_note(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in plan_note()
+        }
+        echo $this->paid_use_notice((string) $v['content']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_html, esc_attr and esc_url in paid_use_notice()
 
         echo '<form method="post" action="' . esc_url($id > 0 ? self::edit_url($id) : self::edit_url()) . '" class="dt-form">';
         wp_nonce_field('dt_save_tag_' . $id);
@@ -574,7 +664,7 @@ final class WP_Dynamic_Tags_Admin
             'description' => '', 'category_id' => 0, 'priority' => 0, 'usage_count' => 0, 'status' => 'active', 'meta_data' => '', 'post_id' => 0,
         );
         $html = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance()->render_row($row, array('cache' => 'false'));
-        wp_send_json_success(array('html' => $html));
+        wp_send_json_success(array('html' => $html, 'note' => self::preview_note($content)));
     }
 
     // ------------------------------------------------------------------ import / export

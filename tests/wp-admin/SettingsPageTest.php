@@ -151,6 +151,58 @@ class DT_Settings_Page_Test extends WP_UnitTestCase
         $this->assertBadge($html, 'dt-badge-on', 'Fine');
     }
 
+    // ------------------------------------------------------------------ the License box
+
+    public function test_a_free_site_sees_its_use_of_the_limit_and_what_a_license_check_sends(): void
+    {
+        remove_all_filters('pre_option_dt_plan');
+        update_option('dt_plan', 'free');
+        $this->seed_rows(4);
+
+        $html = $this->render();
+
+        $this->assertStringContainsString('Tags you have created yourself: 4 of 15', $html);
+        $this->assertStringContainsString('send the key and this site&#039;s address to https://tlvapi.techlovev.in, and nothing else', $html);
+        $this->assertStringContainsString('Without a key nothing is sent', $html);
+        $this->assertStringNotContainsString('Get a Paid key', $html, 'no pricing page is known: no link is invented');
+
+        add_filter('dt_upgrade_url', static fn() => 'https://example.test/plans');
+        $this->assertStringContainsString('href="https://example.test/plans"', $this->render());
+        remove_all_filters('dt_upgrade_url');
+    }
+
+    public function test_a_paid_site_sees_its_key_masked_and_no_use_of_the_limit(): void
+    {
+        update_option('dt_license_key', 'PAID-ABCDEFGH-1234');
+
+        $html = $this->render();
+
+        $this->assertStringNotContainsString('PAID-ABCDEFGH-1234', $html, 'the page never prints the whole key');
+        $this->assertStringContainsString('PAID-' . str_repeat("\u{2022}", 9) . '1234', $html);
+        $this->assertStringNotContainsString('Tags you have created yourself', $html);
+    }
+
+    public function test_the_license_server_address_must_be_https_and_the_old_one_is_kept_otherwise(): void
+    {
+        $page = new WP_Dynamic_Tags_Settings_Page();
+
+        $this->assertSame('', $page->sanitize_license_server_url('  '));
+        $this->assertSame('https://lic.example.test/base', $page->sanitize_license_server_url(' https://lic.example.test/base '));
+
+        update_option('dt_license_server_url', 'https://keep.example.test');
+        $this->assertSame('https://keep.example.test', $page->sanitize_license_server_url('http://insecure.example.test'));
+        $this->assertSame('https://keep.example.test', $page->sanitize_license_server_url('javascript:alert(1)'));
+        $codes = wp_list_pluck(get_settings_errors('wp_dynamic_tags_settings'), 'code');
+        $this->assertContains('dt_license_server_url', $codes);
+    }
+
+    public function test_the_mask_hides_the_middle_of_a_key(): void
+    {
+        $this->assertSame('', DT_License_Manager::mask_key(''));
+        $this->assertSame("\u{2022}\u{2022}\u{2022}", DT_License_Manager::mask_key('abc'), 'a short key is hidden entirely');
+        $this->assertSame('PAID-' . str_repeat("\u{2022}", 9) . '1234', DT_License_Manager::mask_key('PAID-ABCDEFGH-1234'));
+    }
+
     // ------------------------------------------------------------------ who may open it
 
     public function test_a_user_without_manage_options_is_refused(): void

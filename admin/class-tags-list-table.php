@@ -193,12 +193,13 @@ class WP_Dynamic_Tags_List_Table extends WP_List_Table
     /** What the tag renders to, as plain text and cut short; blank when it cannot be rendered. */
     protected function column_value($item)
     {
+        $badge = WP_Dynamic_Tags_Admin::paid_badge((string) $item->content); // a Paid feature on a Free site renders nothing: say so next to the empty value
         $text = WP_Dynamic_Tags_Admin::value_preview($item);
         if ($text === '') {
-            return '';
+            return $badge;
         }
         $cut = mb_strlen($text) > 120;
-        return esc_html(mb_substr($text, 0, 120)) . ($cut ? '&hellip;' : '');
+        return esc_html(mb_substr($text, 0, 120)) . ($cut ? '&hellip;' : '') . $badge;
     }
 
     protected function column_category($item)

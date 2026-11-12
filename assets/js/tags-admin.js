@@ -98,6 +98,9 @@
                 var frame = el('iframe', null, { sandbox: '', title: 'Preview', 'class': 'dt-preview-frame' });
                 frame.srcdoc = response.data.html;
                 box.appendChild(frame);
+                if (response.data.note) {
+                    box.appendChild(el('p', response.data.note, { 'class': 'description dt-preview-note' }));
+                }
             } else {
                 box.appendChild(el('p', errorText(response) || t.previewFailed));
             }

@@ -90,7 +90,7 @@ class WP_Dynamic_Tags_Settings_Page {
             array(
                 'type' => 'string',
                 'default' => '',
-                'sanitize_callback' => 'esc_url_raw'
+                'sanitize_callback' => array($this, 'sanitize_license_server_url')
             )
         );
 
@@ -114,7 +114,7 @@ class WP_Dynamic_Tags_Settings_Page {
      * License section description
      */
     public function license_section_callback() {
-        echo '<p>' . esc_html__('Activate a license key to unlock the Paid plan (unlimited tags, WooCommerce/ACF arrays, dt_loop, dt_if, query/api data sources).', 'wp-dynamic-tags') . '</p>';
+        echo '<p>' . esc_html__('Activate a license key to unlock the Paid plan (unlimited tags, WooCommerce/ACF arrays, dt_loop, field conditions, query/api data sources).', 'wp-dynamic-tags') . '</p>';
     }
 
     /**
@@ -126,12 +126,33 @@ class WP_Dynamic_Tags_Settings_Page {
         <input type="url"
                name="dt_license_server_url"
                value="<?php echo esc_attr($value); ?>"
-               placeholder="https://your-license-server.com"
+               placeholder="<?php echo esc_attr(DT_License_Manager::DEFAULT_LICENSE_SERVER); ?>"
+               pattern="https://.*"
                class="regular-text">
         <p class="description">
-            <?php esc_html_e('Leave blank to reuse the Certificate Generator plugin\'s configured license server, if any.', 'wp-dynamic-tags'); ?>
+            <?php
+            /* translators: %s: the default license server address */
+            echo esc_html(sprintf(__('Leave blank to use %s (or the license server of the Certificate Generator plugin, if one is configured there). Only https addresses are used.', 'wp-dynamic-tags'), DT_License_Manager::DEFAULT_LICENSE_SERVER));
+            ?>
         </p>
         <?php
+    }
+
+    /**
+     * Sanitize the license server address: https only (the license key travels to it), anything else is refused with a message
+     * and the previous value is kept.
+     */
+    public function sanitize_license_server_url($input) {
+        $input = trim((string) $input);
+        if ($input === '') {
+            return '';
+        }
+        $url = esc_url_raw($input, array('https'));
+        if ($url === '') {
+            add_settings_error('wp_dynamic_tags_settings', 'dt_license_server_url', __('The license server address must start with https://. The previous address was kept.', 'wp-dynamic-tags'));
+            return (string) get_option('dt_license_server_url', '');
+        }
+        return $url;
     }
 
     /**
@@ -404,12 +425,25 @@ class WP_Dynamic_Tags_Settings_Page {
                     <?php endif; ?>
                 </p>
 
+                <?php if (!$is_paid) : ?>
+                    <p>
+                        <?php
+                        /* translators: 1: tags you created yourself, 2: the limit of the Free plan */
+                        echo esc_html(sprintf(__('Tags you have created yourself: %1$d of %2$d. Tags that other plugins create are not counted, and every tag you already have keeps working.', 'wp-dynamic-tags'), DT_License_Manager::count_capped_tags(), DT_License_Manager::FREE_TAG_LIMIT));
+                        $upgrade_url = DT_License_Manager::get_upgrade_url();
+                        if ($upgrade_url !== '') :
+                            ?>
+                            <a href="<?php echo esc_url($upgrade_url); ?>" target="_blank" rel="noopener"><?php esc_html_e('Get a Paid key', 'wp-dynamic-tags'); ?></a>
+                        <?php endif; ?>
+                    </p>
+                <?php endif; ?>
+
                 <div id="dt-license-notice"></div>
 
                 <p>
                     <input type="text" id="dt-license-key" class="regular-text"
                            placeholder="<?php esc_attr_e('Enter license key', 'wp-dynamic-tags'); ?>"
-                           value="<?php echo esc_attr($license_key); ?>"
+                           value="<?php echo esc_attr(DT_License_Manager::mask_key($license_key)); ?>"
                            <?php disabled($is_paid); ?>>
                     <button type="button" id="dt-license-activate" class="button button-primary" <?php echo $is_paid ? 'style="display:none;"' : ''; ?>>
                         <?php esc_html_e('Activate', 'wp-dynamic-tags'); ?>
@@ -438,6 +472,12 @@ class WP_Dynamic_Tags_Settings_Page {
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                <p class="description">
+                    <?php
+                    /* translators: %s: the license server address */
+                    echo esc_html(sprintf(__('Activating a key, and the check twice a day while a key is stored, send the key and this site\'s address to %s, and nothing else. Without a key nothing is sent.', 'wp-dynamic-tags'), DT_License_Manager::get_license_server()));
+                    ?>
+                </p>
             </div>
 
             <script>
