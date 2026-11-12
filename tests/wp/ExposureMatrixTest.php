@@ -56,8 +56,8 @@ class DT_Exposure_Matrix_Test extends WP_UnitTestCase
         update_user_meta($this->author_b, 'session_tokens', array('hash' => array('expiration' => 1)));
         update_user_meta($this->author_b, 'api_secret_key', 'bee-secret');
 
-        // The fixture is written as an administrator (raw content, no kses), then the test acts as the viewer.
-        wp_set_current_user($this->users['administrator']);
+        // The fixture is written by its own administrator (raw content, no kses), then the test acts as the viewer.
+        wp_set_current_user($this->fixture_author());
         $statuses = array('public' => 'publish', 'private' => 'private', 'draft' => 'draft', 'pending' => 'pending', 'future' => 'future', 'locked' => 'publish');
         foreach (self::MARKERS as $key => $title) {
             $args = array('post_title' => $title, 'post_content' => 'body of ' . $key, 'post_status' => $statuses[$key], 'post_type' => 'post', 'post_author' => $this->author_b);
@@ -75,6 +75,20 @@ class DT_Exposure_Matrix_Test extends WP_UnitTestCase
         wp_set_current_user(0);
 
         $this->seed('ex_card', '<i>{post_title}</i>');
+    }
+
+    /**
+     * The user the fixture is written as: an administrator, and on a network a super administrator. Only a super
+     * administrator has unfiltered_html there, and kses would otherwise rewrite the & in a shortcode's query attribute
+     * (standard WordPress behaviour for every shortcode), which would change what the query asks for.
+     */
+    private function fixture_author(): int
+    {
+        $id = self::factory()->user->create(array('role' => 'administrator'));
+        if (is_multisite()) {
+            grant_super_admin($id);
+        }
+        return $id;
     }
 
     private function seed(string $code, string $content): void
@@ -149,7 +163,7 @@ class DT_Exposure_Matrix_Test extends WP_UnitTestCase
     /** @dataProvider roles */
     public function test_rest_rendered_content_follows_the_viewers_role(string $role): void
     {
-        wp_set_current_user($this->users['administrator']);
+        wp_set_current_user($this->fixture_author());
         $host = (int) wp_insert_post(array(
             'post_title' => 'Host page', 'post_status' => 'publish', 'post_type' => 'post',
             'post_content' => '[dt_template tag="ex_card" query="' . self::QUERY . '"]',
