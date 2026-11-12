@@ -22,15 +22,17 @@ WP Dynamic Tags lets you create reusable, dynamic content snippets ("tags") and 
 * `[dt_loop]` to repeat a template per item of an array (an ACF repeater, a query result, …)
 * `[dt_template]` to render a Dynamic Tag once per post in a query — a repeating card/list template
 * `{query:...}` and `{api:...}` data sources, and a whitelist-based `{func:...}` developer escape hatch
-* Dual storage (WordPress post type or an optimized custom database table) with bi-directional migration
-* Conflict detection between tag names/shortcodes
-* Import/export in JSON, CSV, XML, and SQL
+* One tag store: an optimized custom database table; nothing is written to the database while a page renders
+* One admin screen with search, filters, sorting, bulk actions, a live preview and a "Value" column that shows what each tag renders to
+* Safe by design: a tag cannot take a shortcode name that belongs to the plugin, WordPress or another plugin, and cannot render itself
+* Migration of tags stored by older versions as posts, in batches, with a dry run, verification, backups and WP-CLI commands
+* Import from JSON, CSV and XML (with a per-row report) and export to JSON, CSV, XML and SQL
 
 See the plugin's `ROADMAP.md` and `TESTING.md` (in the plugin directory) for the complete feature list and a full manual test guide.
 
 == Installation ==
 
-1. Upload the plugin files to `/wp-content/plugins/wp-dynamic-tags`, or install the plugin through the WordPress admin's "Add New Plugin" screen.
+1. Upload the plugin folder to `/wp-content/plugins/`, or install the plugin through the WordPress admin's "Add New Plugin" screen.
 2. Activate the plugin through the "Plugins" screen in WordPress.
 3. Go to **Dynamic Tags → Add New** to create your first tag.
 4. Use the generated shortcode anywhere `do_shortcode()` runs.
@@ -55,6 +57,14 @@ Yes — `{query:...}` runs a WP_Query and returns an array of post rows, and `{a
 
 == Changelog ==
 
+= 3.1.0 =
+* The custom table is the only tag store; the post-to-table bridge, dual mode and the post editor for tags are gone
+* Nothing is written to the database while a page renders; usage counting is opt-in
+* New admin: one menu, a searchable and sortable list with a Value column, bulk actions, a form with a live preview, Tools and diagnostics
+* Reserved and foreign shortcode names, circular references and markup are checked when a tag is saved
+* Import and export rebuilt (lossless CSV, per-row reports, limits; SQL is export only)
+* The findings of a security and reliability audit of 3.0.0 are fixed; see docs/BUG-REGISTER.md and docs/RELEASE-NOTES-3.1.0.md
+
 = 3.0.0 =
 * Array/repeater primitives (`|join`, `|count`, `|first`, `|last`, `[dt_loop]`)
 * WooCommerce field placeholders (`{wc:...}`)
@@ -76,6 +86,9 @@ Yes — `{query:...}` runs a WP_Query and returns an array of post rows, and `{a
 * Initial release: post-type-based dynamic tags, groups, and basic shortcodes
 
 == Upgrade Notice ==
+
+= 3.1.0 =
+Back up your database first, then open Dynamic Tags > Tools to move tags that older versions stored as posts into the table (dry run, migrate, verify). Old posts are never deleted without your confirmation. Output of some tags changes in documented ways: see docs/RELEASE-NOTES-3.1.0.md.
 
 = 3.0.0 =
 Adds a large set of new placeholder types and shortcodes; fully backward compatible with existing tags. If you use a persistent object cache (Redis/Memcached), this release also fixes a bug where editing a tag could serve stale data until the cache naturally expired.

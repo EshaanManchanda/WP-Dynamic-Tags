@@ -1,0 +1,2322 @@
+# Copyright (C) 2026 Eshaan Manchanda
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Dynamic Tags 3.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-12T01:01:25+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: wp-dynamic-tags\n"
+
+#. Plugin Name of the plugin
+#: wp-dynamic-tags.php
+msgid "WP Dynamic Tags"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: wp-dynamic-tags.php
+msgid "https://github.com/EshaanManchanda/WP-Dynamic-Tags"
+msgstr ""
+
+#. Description of the plugin
+#: wp-dynamic-tags.php
+msgid "Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders."
+msgstr ""
+
+#. Author of the plugin
+#: wp-dynamic-tags.php
+msgid "Eshaan Manchanda"
+msgstr ""
+
+#. Author URI of the plugin
+#: wp-dynamic-tags.php
+msgid "https://eshaanportfolio.vercel.app/"
+msgstr ""
+
+#: admin/class-admin.php:42
+msgid "Tag created."
+msgstr ""
+
+#: admin/class-admin.php:44
+msgid "Tag saved."
+msgstr ""
+
+#: admin/class-admin.php:46
+msgid "Tag deleted."
+msgstr ""
+
+#: admin/class-admin.php:48
+msgid "Tag activated."
+msgstr ""
+
+#: admin/class-admin.php:50
+msgid "Tag deactivated."
+msgstr ""
+
+#: admin/class-admin.php:52
+msgid "Tag duplicated. The copy is inactive until you activate it."
+msgstr ""
+
+#: admin/class-admin.php:54
+msgid "The action was applied to the selected tags."
+msgstr ""
+
+#: admin/class-admin.php:56
+msgid "Debug log cleared."
+msgstr ""
+
+#: admin/class-admin.php:65
+msgid "That shortcode name is reserved for the plugin's own shortcodes."
+msgstr ""
+
+#: admin/class-admin.php:67
+msgid "That shortcode name is already used by WordPress or another plugin."
+msgstr ""
+
+#: admin/class-admin.php:69
+msgid "The tag would render itself, directly or through other tags."
+msgstr ""
+
+#: admin/class-admin.php:71
+#: includes/class-tag-service.php:77
+msgid "No more tags can be created."
+msgstr ""
+
+#: admin/class-admin.php:73
+#: admin/class-admin.php:258
+#: admin/class-admin.php:439
+msgid "That tag no longer exists."
+msgstr ""
+
+#: admin/class-admin.php:75
+msgid "The action could not be completed because some values are not valid."
+msgstr ""
+
+#: admin/class-admin.php:77
+msgid "The action could not be carried out."
+msgstr ""
+
+#: admin/class-admin.php:114
+#: admin/class-admin.php:253
+#: admin/class-admin.php:301
+#: admin/class-admin.php:506
+#: admin/class-admin.php:651
+msgid "You do not have permission to manage dynamic tags."
+msgstr ""
+
+#: admin/class-admin.php:136
+#: admin/class-admin.php:394
+#: wp-dynamic-tags.php:143
+#: wp-dynamic-tags.php:145
+msgid "Dynamic Tags"
+msgstr ""
+
+#: admin/class-admin.php:137
+#: wp-dynamic-tags.php:151
+msgid "All Tags"
+msgstr ""
+
+#: admin/class-admin.php:138
+#: admin/class-admin.php:437
+#: wp-dynamic-tags.php:146
+msgid "Add New Tag"
+msgstr ""
+
+#: admin/class-admin.php:138
+#: admin/class-admin.php:395
+msgid "Add New"
+msgstr ""
+
+#: admin/class-admin.php:139
+#: admin/class-admin.php:523
+msgid "Import / Export"
+msgstr ""
+
+#: admin/class-admin.php:140
+#: admin/class-admin.php:582
+msgid "Tools and Diagnostics"
+msgstr ""
+
+#: admin/class-admin.php:140
+msgid "Tools"
+msgstr ""
+
+#: admin/class-admin.php:218
+msgid "Copied"
+msgstr ""
+
+#: admin/class-admin.php:219
+msgid "Copy failed"
+msgstr ""
+
+#: admin/class-admin.php:220
+msgid "Rendering..."
+msgstr ""
+
+#: admin/class-admin.php:221
+msgid "The preview could not be rendered."
+msgstr ""
+
+#: admin/class-admin.php:222
+msgid "Exporting..."
+msgstr ""
+
+#: admin/class-admin.php:223
+msgid "The export failed."
+msgstr ""
+
+#: admin/class-admin.php:224
+msgid "Validating..."
+msgstr ""
+
+#: admin/class-admin.php:225
+msgid "Importing..."
+msgstr ""
+
+#: admin/class-admin.php:226
+msgid "The import failed."
+msgstr ""
+
+#: admin/class-admin.php:227
+msgid "Choose a file first."
+msgstr ""
+
+#: admin/class-admin.php:228
+msgid "Import this file? Tags with the same shortcode are changed only if you ticked \"update existing\"."
+msgstr ""
+
+#: admin/class-admin.php:229
+msgid "Working..."
+msgstr ""
+
+#: admin/class-admin.php:230
+msgid "The request failed."
+msgstr ""
+
+#: admin/class-admin.php:231
+msgid "Records in the file"
+msgstr ""
+
+#: admin/class-admin.php:232
+msgid "Created"
+msgstr ""
+
+#: admin/class-admin.php:233
+msgid "Updated"
+msgstr ""
+
+#: admin/class-admin.php:234
+msgid "Skipped"
+msgstr ""
+
+#: admin/class-admin.php:235
+msgid "Errors"
+msgstr ""
+
+#: admin/class-admin.php:236
+msgid "The file is valid."
+msgstr ""
+
+#: admin/class-admin.php:237
+msgid "The file has problems:"
+msgstr ""
+
+#: admin/class-admin.php:238
+msgid "Row"
+msgstr ""
+
+#: admin/class-admin.php:278
+msgid "Unknown action."
+msgstr ""
+
+#: admin/class-admin.php:399
+#: wp-dynamic-tags.php:152
+msgid "Search Tags"
+msgstr ""
+
+#: admin/class-admin.php:437
+msgid "Edit Tag"
+msgstr ""
+
+#: admin/class-admin.php:440
+msgid "Back to all tags"
+msgstr ""
+
+#: admin/class-admin.php:455
+#: admin/class-tags-list-table.php:27
+msgid "Name"
+msgstr ""
+
+#: admin/class-admin.php:457
+msgid "Letters, numbers, spaces, hyphens and underscores."
+msgstr ""
+
+#: admin/class-admin.php:459
+#: admin/class-tags-list-table.php:28
+#: includes/class-tag-groups.php:984
+msgid "Shortcode"
+msgstr ""
+
+#: admin/class-admin.php:461
+msgid "Leave empty to create it from the name. Changing it breaks pages that use the old one."
+msgstr ""
+
+#: admin/class-admin.php:463
+#: admin/class-tags-list-table.php:188
+msgid "Copy"
+msgstr ""
+
+#: admin/class-admin.php:467
+#: admin/class-admin.php:528
+#: admin/class-tags-list-table.php:29
+msgid "Group"
+msgstr ""
+
+#: admin/class-admin.php:467
+msgid "No group"
+msgstr ""
+
+#: admin/class-admin.php:474
+#: admin/class-admin.php:527
+#: admin/class-admin.php:585
+#: admin/class-tags-list-table.php:30
+#: includes/class-migration-admin.php:214
+msgid "Status"
+msgstr ""
+
+#: admin/class-admin.php:475
+#: admin/class-tags-list-table.php:74
+#: admin/class-tags-list-table.php:202
+msgid "Active"
+msgstr ""
+
+#: admin/class-admin.php:476
+#: admin/class-tags-list-table.php:74
+#: admin/class-tags-list-table.php:203
+msgid "Inactive"
+msgstr ""
+
+#: admin/class-admin.php:479
+#: admin/class-tags-list-table.php:31
+msgid "Priority"
+msgstr ""
+
+#: admin/class-admin.php:481
+#: includes/class-tag-groups.php:159
+msgid "Description"
+msgstr ""
+
+#: admin/class-admin.php:483
+msgid "Content"
+msgstr ""
+
+#: admin/class-admin.php:487
+msgid "Placeholders you can use (click to insert)"
+msgstr ""
+
+#: admin/class-admin.php:493
+msgid "Preview"
+msgstr ""
+
+#: admin/class-admin.php:493
+msgid "Rendered here with the current page context of this screen; scripts are not run."
+msgstr ""
+
+#: admin/class-admin.php:497
+msgid "Save Tag"
+msgstr ""
+
+#: admin/class-admin.php:497
+msgid "Create Tag"
+msgstr ""
+
+#: admin/class-admin.php:525
+#: admin/class-admin.php:533
+msgid "Export"
+msgstr ""
+
+#: admin/class-admin.php:526
+msgid "Format"
+msgstr ""
+
+#: admin/class-admin.php:527
+#: admin/class-tags-list-table.php:74
+msgid "All"
+msgstr ""
+
+#: admin/class-admin.php:527
+msgid "Active only"
+msgstr ""
+
+#: admin/class-admin.php:527
+msgid "Inactive only"
+msgstr ""
+
+#: admin/class-admin.php:528
+#: admin/class-tags-list-table.php:127
+msgid "All groups"
+msgstr ""
+
+#: admin/class-admin.php:534
+msgid "Exports contain the full content of the tags, including any personal data they hold. Keep the file private."
+msgstr ""
+
+#: admin/class-admin.php:536
+#: admin/class-admin.php:540
+msgid "Import"
+msgstr ""
+
+#: admin/class-admin.php:537
+msgid "File"
+msgstr ""
+
+#: admin/class-admin.php:538
+msgid "JSON, CSV or XML, up to 5 MB."
+msgstr ""
+
+#: admin/class-admin.php:538
+msgid "Sample CSV"
+msgstr ""
+
+#: admin/class-admin.php:539
+msgid "Options"
+msgstr ""
+
+#: admin/class-admin.php:539
+msgid "Update existing tags (same shortcode)"
+msgstr ""
+
+#: admin/class-admin.php:539
+msgid "Skip duplicates"
+msgstr ""
+
+#: admin/class-admin.php:540
+msgid "Check the file"
+msgstr ""
+
+#: admin/class-admin.php:587
+msgid "Tags"
+msgstr ""
+
+#. translators: 1: total, 2: active
+#: admin/class-admin.php:587
+#, php-format
+msgid "%1$d (%2$d active)"
+msgstr ""
+
+#. translators: 1: total, 2: active
+#: admin/class-admin.php:588
+msgid "Shortcodes registered in this request"
+msgstr ""
+
+#: admin/class-admin.php:589
+msgid "Usage counting"
+msgstr ""
+
+#: admin/class-admin.php:589
+#: admin/class-admin.php:614
+msgid "On"
+msgstr ""
+
+#: admin/class-admin.php:589
+msgid "Off (Settings)"
+msgstr ""
+
+#: admin/class-admin.php:590
+msgid "Database table"
+msgstr ""
+
+#: admin/class-admin.php:590
+msgid "exists"
+msgstr ""
+
+#: admin/class-admin.php:590
+msgid "MISSING"
+msgstr ""
+
+#: admin/class-admin.php:591
+msgid "Versions"
+msgstr ""
+
+#: admin/class-admin.php:595
+msgid "Shortcode names"
+msgstr ""
+
+#. translators: %s: plugin folder
+#: admin/class-admin.php:598
+#, php-format
+msgid "Not registered: the name belongs to %s."
+msgstr ""
+
+#. translators: %s: plugin folder
+#: admin/class-admin.php:602
+#, php-format
+msgid "Replaced by %s after this plugin registered it: that plugin's shortcode is shown on pages."
+msgstr ""
+
+#: admin/class-admin.php:608
+msgid "No conflicts found."
+msgstr ""
+
+#: admin/class-admin.php:611
+msgid "Rendering and debug log"
+msgstr ""
+
+#: admin/class-admin.php:613
+msgid "Times the render guard cut off a tag in this request"
+msgstr ""
+
+#: admin/class-admin.php:614
+msgid "Debug mode"
+msgstr ""
+
+#: admin/class-admin.php:614
+msgid "Off: define DT_DEBUG_MODE as true in wp-config.php, or use the dt_debug_mode filter"
+msgstr ""
+
+#: admin/class-admin.php:618
+msgid "Time (UTC)"
+msgstr ""
+
+#: admin/class-admin.php:618
+msgid "Event"
+msgstr ""
+
+#: admin/class-admin.php:618
+msgid "Tag"
+msgstr ""
+
+#: admin/class-admin.php:618
+msgid "Type"
+msgstr ""
+
+#: admin/class-admin.php:618
+msgid "Context"
+msgstr ""
+
+#: admin/class-admin.php:624
+msgid "Clear the log"
+msgstr ""
+
+#: admin/class-admin.php:628
+msgid "Older tag posts"
+msgstr ""
+
+#: admin/class-admin.php:632
+msgid "Tag posts of earlier versions"
+msgstr ""
+
+#: admin/class-admin.php:633
+msgid "Writes to them carried into the table"
+msgstr ""
+
+#. translators: 1: count, 2: time
+#: admin/class-admin.php:633
+#, php-format
+msgid "%1$d, the last on %2$s"
+msgstr ""
+
+#. translators: 1: count, 2: time
+#: admin/class-admin.php:633
+msgid "none"
+msgstr ""
+
+#. translators: 1: count, 2: time
+#: admin/class-admin.php:634
+msgid "Tags that point at a post that no longer exists"
+msgstr ""
+
+#: admin/class-admin.php:635
+msgid "Inactive tags"
+msgstr ""
+
+#: admin/class-admin.php:638
+msgid "Moving older tag posts into the table"
+msgstr ""
+
+#: admin/class-admin.php:641
+msgid "Database"
+msgstr ""
+
+#: admin/class-admin.php:642
+msgid "Check the table"
+msgstr ""
+
+#: admin/class-admin.php:642
+msgid "Create the table if it is missing"
+msgstr ""
+
+#: admin/class-admin.php:672
+msgid "The table already exists."
+msgstr ""
+
+#: admin/class-admin.php:679
+msgid "The table was created."
+msgstr ""
+
+#: admin/class-admin.php:701
+msgid "The table is healthy."
+msgstr ""
+
+#: admin/class-admin.php:701
+msgid "The table exists but has problems."
+msgstr ""
+
+#: admin/class-admin.php:704
+msgid "The table does not exist."
+msgstr ""
+
+#: admin/class-tags-list-table.php:32
+msgid "Used"
+msgstr ""
+
+#: admin/class-tags-list-table.php:33
+msgid "Modified"
+msgstr ""
+
+#: admin/class-tags-list-table.php:50
+#: admin/class-tags-list-table.php:168
+#: admin/settings-page.php:255
+msgid "Activate"
+msgstr ""
+
+#: admin/class-tags-list-table.php:51
+#: admin/class-tags-list-table.php:168
+#: admin/settings-page.php:258
+msgid "Deactivate"
+msgstr ""
+
+#: admin/class-tags-list-table.php:52
+#: admin/class-tags-list-table.php:167
+msgid "Duplicate"
+msgstr ""
+
+#: admin/class-tags-list-table.php:53
+#: admin/class-tags-list-table.php:173
+msgid "Delete"
+msgstr ""
+
+#: admin/class-tags-list-table.php:116
+msgid "No tags found."
+msgstr ""
+
+#: admin/class-tags-list-table.php:126
+msgid "Filter by group"
+msgstr ""
+
+#: admin/class-tags-list-table.php:132
+msgid "Filter"
+msgstr ""
+
+#: admin/class-tags-list-table.php:166
+#: includes/class-tag-groups.php:994
+msgid "Edit"
+msgstr ""
+
+#: admin/class-tags-list-table.php:172
+msgid "Delete this tag? Pages that use its shortcode will show nothing."
+msgstr ""
+
+#. translators: %s: shortcode
+#: admin/class-tags-list-table.php:187
+#, php-format
+msgid "Copy %s"
+msgstr ""
+
+#: admin/class-tags-list-table.php:215
+msgid "Usage counting is off"
+msgstr ""
+
+#: admin/settings-page.php:28
+#: admin/settings-page.php:29
+msgid "Settings"
+msgstr ""
+
+#: admin/settings-page.php:54
+msgid "General Settings"
+msgstr ""
+
+#: admin/settings-page.php:62
+msgid "Delete Data on Uninstall"
+msgstr ""
+
+#: admin/settings-page.php:80
+msgid "Count Tag Usage"
+msgstr ""
+
+#: admin/settings-page.php:99
+#: admin/settings-page.php:230
+msgid "License"
+msgstr ""
+
+#: admin/settings-page.php:106
+msgid "License Server URL"
+msgstr ""
+
+#: admin/settings-page.php:117
+msgid "Activate a license key to unlock the Paid plan (unlimited tags, WooCommerce/ACF arrays, dt_loop, dt_if, query/api data sources)."
+msgstr ""
+
+#: admin/settings-page.php:132
+msgid "Leave blank to reuse the Certificate Generator plugin's configured license server, if any."
+msgstr ""
+
+#: admin/settings-page.php:148
+msgid "Configure how WP Dynamic Tags handles your data."
+msgstr ""
+
+#: admin/settings-page.php:162
+msgid "Delete all plugin data when uninstalling"
+msgstr ""
+
+#: admin/settings-page.php:165
+msgid "If unchecked (recommended), your tags and groups will be preserved if you reinstall the plugin later."
+msgstr ""
+
+#: admin/settings-page.php:181
+msgid "Count how often each tag is shown"
+msgstr ""
+
+#: admin/settings-page.php:184
+msgid "Off by default. When on, visits are counted in memory and written once at the end of each page request (one database update per tag shown); admin, AJAX, cron and REST requests are never counted. Usage columns show a dash while this is off."
+msgstr ""
+
+#: admin/settings-page.php:196
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: admin/settings-page.php:197
+msgid "Permission Denied"
+msgstr ""
+
+#: admin/settings-page.php:224
+msgid "WP Dynamic Tags - Settings"
+msgstr ""
+
+#: admin/settings-page.php:238
+msgid "Current plan:"
+msgstr ""
+
+#. translators: %s: the date the license expires
+#: admin/settings-page.php:243
+#, php-format
+msgid "(expires %s)"
+msgstr ""
+
+#: admin/settings-page.php:251
+msgid "Enter license key"
+msgstr ""
+
+#: admin/settings-page.php:266
+msgid "Feature"
+msgstr ""
+
+#: admin/settings-page.php:267
+#: includes/class-license-manager.php:38
+msgid "Free"
+msgstr ""
+
+#: admin/settings-page.php:268
+#: includes/class-license-manager.php:38
+msgid "Paid"
+msgstr ""
+
+#: admin/settings-page.php:309
+#: admin/settings-page.php:321
+msgid "Request failed. Please try again."
+msgstr ""
+
+#: admin/settings-page.php:314
+msgid "Deactivate this license?"
+msgstr ""
+
+#: admin/settings-page.php:329
+msgid "Current Data Status"
+msgstr ""
+
+#: admin/settings-page.php:332
+msgid "Published Tags (Posts):"
+msgstr ""
+
+#: admin/settings-page.php:336
+msgid "Tags in Database Table:"
+msgstr ""
+
+#: admin/settings-page.php:340
+msgid "Tag Groups:"
+msgstr ""
+
+#: admin/settings-page.php:361
+msgid "💾 Data Retention (Recommended)"
+msgstr ""
+
+#: admin/settings-page.php:363
+msgid "By default, your tags and groups are preserved when you uninstall the plugin. This means:"
+msgstr ""
+
+#: admin/settings-page.php:366
+msgid "If you reinstall the plugin later, all your tags will work immediately"
+msgstr ""
+
+#: admin/settings-page.php:367
+msgid "Your shortcodes will be automatically restored"
+msgstr ""
+
+#: admin/settings-page.php:368
+msgid "No data loss if you accidentally uninstall"
+msgstr ""
+
+#: admin/settings-page.php:369
+msgid "Easy to move your site between environments"
+msgstr ""
+
+#: admin/settings-page.php:372
+msgid "What is preserved:"
+msgstr ""
+
+#: admin/settings-page.php:375
+#: admin/settings-page.php:391
+msgid "All dynamic tag posts"
+msgstr ""
+
+#: admin/settings-page.php:376
+msgid "Custom database table (wp_dynamic_tags)"
+msgstr ""
+
+#: admin/settings-page.php:377
+msgid "Tag groups taxonomy"
+msgstr ""
+
+#: admin/settings-page.php:378
+msgid "Usage statistics"
+msgstr ""
+
+#: admin/settings-page.php:386
+msgid "🗑️ Clean Uninstall"
+msgstr ""
+
+#: admin/settings-page.php:388
+msgid "If you enable \"Delete Data on Uninstall\", the following will be permanently deleted:"
+msgstr ""
+
+#: admin/settings-page.php:392
+msgid "All tag groups"
+msgstr ""
+
+#: admin/settings-page.php:393
+msgid "Custom database table"
+msgstr ""
+
+#: admin/settings-page.php:394
+msgid "All plugin options and settings"
+msgstr ""
+
+#: admin/settings-page.php:395
+msgid "All transients and cached data"
+msgstr ""
+
+#: admin/settings-page.php:398
+msgid "⚠️ Warning: This action cannot be undone!"
+msgstr ""
+
+#: admin/settings-page.php:406
+msgid "💼 Backup Your Data"
+msgstr ""
+
+#: admin/settings-page.php:408
+msgid "Before uninstalling or making major changes, you can export your tags:"
+msgstr ""
+
+#: admin/settings-page.php:413
+msgid "Go to Import/Export"
+msgstr ""
+
+#. translators: %s: human-readable time difference, e.g. "2 days"
+#: includes/class-dynamic-formatters.php:140
+#, php-format
+msgid "%s ago"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1360
+msgid "Current user login name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1361
+msgid "Current user email address"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1362
+msgid "Current user display name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1363
+msgid "Current user first name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1364
+msgid "Current user last name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1365
+msgid "Current user role(s)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1368
+msgid "Current year (e.g., 2024)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1369
+msgid "Current month name (e.g., January)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1370
+msgid "Current day of month (e.g., 15)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1371
+msgid "Current date in site format"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1372
+msgid "Current time in site format"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1373
+msgid "Current date and time"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1376
+msgid "Site title"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1377
+msgid "Site URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1378
+msgid "Site tagline/description"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1379
+msgid "Site admin email"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1380
+msgid "Site language code"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1383
+msgid "Current post title"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1384
+msgid "Current post author name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1385
+msgid "Current post publication date"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1386
+msgid "Current post excerpt"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1387
+msgid "Current post URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1388
+msgid "Current post ID"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1389
+msgid "Current post slug"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1390
+msgid "Current post content"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1391
+msgid "Current post status"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1392
+msgid "Current post type"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1393
+msgid "Current post last-modified date"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1394
+msgid "Current post comment count"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1395
+msgid "Current post comment status"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1396
+msgid "Current post shortlink"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1397
+msgid "Current post featured image URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1398
+msgid "Current post featured image ID"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1399
+msgid "Current post featured image alt text"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1400
+msgid "Current post featured image caption"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1401
+msgid "Current post's parent post title"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1402
+msgid "Current post's parent post URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1405
+msgid "Current post's primary category name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1406
+msgid "Current post's primary category ID"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1407
+msgid "Current post's primary category slug"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1408
+msgid "Current post's primary category description"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1409
+msgid "Current post's primary category URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1410
+msgid "All of the current post's categories, comma-separated"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1411
+msgid "All of the current post's tags, comma-separated"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1414
+msgid "Current post author's display name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1415
+msgid "Current post author's user ID"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1416
+msgid "Current post author's email address"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1417
+msgid "Current post author's biography"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1418
+msgid "Current post author's archive URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1419
+msgid "Current post author's website"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1420
+msgid "Current post author's avatar URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1423
+msgid "Current page URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1424
+msgid "Current page path"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1425
+msgid "Current query string"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1426
+msgid "Current HTTP host"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1427
+msgid "Referring URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1428
+msgid "Visitor user agent"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1431
+msgid "WordPress version"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1432
+msgid "Active theme name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1433
+msgid "Active theme version"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1434
+msgid "Site logo URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1435
+msgid "Site icon URL"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1436
+msgid "PHP version"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1437
+msgid "Site timezone"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1440
+msgid "Conditional content for logged-in users"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1441
+msgid "Conditional content for specific user role"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1442
+msgid "Conditional content for mobile devices"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1443
+msgid "Conditional content for front page"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1444
+msgid "Condition can also test a field value: truthy check (e.g. {if:acf:featured}) or comparison with =, !=, >, <, >=, <=, contains"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1445
+msgid "Wrap a whole block of content (not just a token) so it can be hidden/shown by any condition above, e.g. [dt_if condition=\"wc:price>50\"]On sale![dt_else]Regular price[/dt_if]"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1448
+msgid "Post meta value for the given key, e.g. {meta:price}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1449
+msgid "Post author's user meta value, e.g. {user_meta:phone}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1450
+msgid "Primary term's term meta value, e.g. {term_meta:icon}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1451
+msgid "ACF field value; use field.subfield to pull a column out of a repeater/group, e.g. {acf:team_members.name} (requires ACF)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1452
+msgid "WooCommerce product field: price, regular_price, sale_price, sale_percent, sku, stock_status, stock_quantity, categories, tags (requires WooCommerce)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1453
+msgid "Query posts as an array of rows (id, title, permalink, excerpt, date, thumbnail) for use with [dt_loop]"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1454
+msgid "Fetch external JSON and optionally walk a dot-notation path into it, e.g. {api:https://api.example.com/rates::usd|round:2}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1455
+msgid "Call a developer-registered function (see register_dynamic_tag_function() in code) - not arbitrary PHP, only functions explicitly exposed by name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1458
+msgid "Join an array value into text with a separator, e.g. {wc:categories|join:\", \"}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1459
+msgid "Count the items in an array value, e.g. {acf:gallery|count}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1460
+msgid "First item of an array value, e.g. {acf:team_members.name|first}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1461
+msgid "Last item of an array value, e.g. {acf:team_members.name|last}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1462
+msgid "Repeat a template once per item of an array source, e.g. [dt_loop source=\"acf:gallery\"]<img src=\"{item}\">[/dt_loop]"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1465
+msgid "Custom date format (replace Y-m-d with desired format)"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1466
+msgid "Apply a formatter, e.g. {post_title|upper} or {meta:price|currency}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1467
+msgid "Fallback text shown when the token resolves empty, e.g. {meta:subtitle??Coming soon}"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1468
+msgid "Render an existing Dynamic Tag once per post in a query, e.g. [dt_template tag=\"product_card\" query=\"post_type=product&posts_per_page=6\"]"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1481
+msgid "Personal greeting with user name"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1482
+msgid "Dynamic copyright notice"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1483
+msgid "Site contact information"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1484
+msgid "Post metadata"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1487
+msgid "Different content based on login status"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1488
+msgid "Content only for specific user roles"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1489
+msgid "Device-specific content"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1490
+msgid "Condition based on a field value"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1491
+msgid "Hide/show a whole block of content, not just text inside a tag"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1494
+msgid "Custom date format"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1495
+msgid "Complex conditional logic"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1498
+msgid "Comma-join a repeater column across all rows"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1499
+msgid "Format a WooCommerce product field"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1500
+msgid "Render a template once per gallery image"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1501
+msgid "Render a template once per repeater row"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1504
+msgid "Render a Dynamic Tag once per product, like a repeating card"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1505
+msgid "Render a Dynamic Tag once per team member, in a custom order"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1508
+msgid "List recent posts without creating a Dynamic Tag first"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1509
+msgid "Pull a single value out of an external JSON API"
+msgstr ""
+
+#: includes/class-dynamic-placeholders.php:1510
+msgid "Call a function a developer registered in code, e.g. WP_Dynamic_Tags_Placeholders::register_dynamic_tag_function()"
+msgstr ""
+
+#: includes/class-license-manager.php:80
+msgid "License server not configured."
+msgstr ""
+
+#: includes/class-license-manager.php:101
+msgid "Invalid response from license server."
+msgstr ""
+
+#: includes/class-license-manager.php:113
+msgid "License key cannot be empty."
+msgstr ""
+
+#: includes/class-license-manager.php:129
+msgid "Invalid license key."
+msgstr ""
+
+#: includes/class-license-manager.php:139
+msgid "Unknown plan returned by server."
+msgstr ""
+
+#: includes/class-license-manager.php:149
+#: includes/class-license-manager.php:173
+msgid "License activated! Your plan is now Paid."
+msgstr ""
+
+#: includes/class-license-manager.php:161
+msgid "Invalid license key. Keys must start with PAID-."
+msgstr ""
+
+#: includes/class-license-manager.php:244
+msgid "Dynamic tags"
+msgstr ""
+
+#: includes/class-license-manager.php:244
+msgid "Up to 15"
+msgstr ""
+
+#: includes/class-license-manager.php:244
+msgid "Unlimited"
+msgstr ""
+
+#: includes/class-license-manager.php:245
+msgid "WooCommerce fields {wc:...}"
+msgstr ""
+
+#: includes/class-license-manager.php:246
+msgid "ACF repeater/gallery/relationship"
+msgstr ""
+
+#: includes/class-license-manager.php:247
+msgid "{user_meta:} / {term_meta:}"
+msgstr ""
+
+#: includes/class-license-manager.php:248
+msgid "[dt_loop] array iteration"
+msgstr ""
+
+#: includes/class-license-manager.php:249
+msgid "Field-based conditionals & [dt_if]"
+msgstr ""
+
+#: includes/class-license-manager.php:250
+msgid "[dt_template] per-record rendering"
+msgstr ""
+
+#: includes/class-license-manager.php:251
+msgid "{query:...} / {api:...} data sources"
+msgstr ""
+
+#: includes/class-license-manager.php:252
+msgid "{func:...} developer escape hatch"
+msgstr ""
+
+#: includes/class-license-manager.php:253
+msgid "Support"
+msgstr ""
+
+#: includes/class-license-manager.php:253
+msgid "Community"
+msgstr ""
+
+#: includes/class-license-manager.php:253
+msgid "Priority email"
+msgstr ""
+
+#: includes/class-license-manager.php:279
+#: includes/class-license-manager.php:296
+msgid "Permission denied."
+msgstr ""
+
+#: includes/class-license-manager.php:299
+msgid "License deactivated."
+msgstr ""
+
+#: includes/class-migration-admin.php:66
+#: includes/class-migration-admin.php:138
+msgid "Not allowed."
+msgstr ""
+
+#: includes/class-migration-admin.php:144
+msgid "Backup not found."
+msgstr ""
+
+#: includes/class-migration-admin.php:176
+msgid "Dynamic Tags is moving your tags into its new tag table."
+msgstr ""
+
+#. translators: 1: migrated so far, 2: total legacy posts
+#: includes/class-migration-admin.php:181
+#, php-format
+msgid "Migrating… %1$d of %2$d done. Keep this page open; it also continues in the background."
+msgstr ""
+
+#: includes/class-migration-admin.php:186
+msgid "The last step failed and was rolled back. Nothing was lost."
+msgstr ""
+
+#. translators: %d: number of conflicts
+#: includes/class-migration-admin.php:190
+#, php-format
+msgid "%d tag needs your decision."
+msgid_plural "%d tags need your decision."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-migration-admin.php:194
+msgid "Migration is complete. Verify it, then remove the old posts."
+msgstr ""
+
+#: includes/class-migration-admin.php:196
+msgid "Open the migration panel"
+msgstr ""
+
+#: includes/class-migration-admin.php:211
+msgid "Older versions stored tags as posts. The table is now the only storage. This moves existing posts into it safely: a backup first, in small resumable steps, and the old posts are removed only after you confirm."
+msgstr ""
+
+#. translators: %d: number of legacy posts not migrated yet
+#: includes/class-migration-admin.php:216
+msgid "Legacy posts"
+msgstr ""
+
+#. translators: %d: number of legacy posts not migrated yet
+#: includes/class-migration-admin.php:216
+#, php-format
+msgid "(%d not yet migrated)"
+msgstr ""
+
+#: includes/class-migration-admin.php:218
+msgid "This run"
+msgstr ""
+
+#. translators: 1: rows inserted, 2: rows updated, 3: rows linked, 4: posts skipped, 5: open conflicts
+#: includes/class-migration-admin.php:220
+#, php-format
+msgid "%1$d inserted, %2$d updated, %3$d linked, %4$d skipped, %5$d conflicts"
+msgstr ""
+
+#: includes/class-migration-admin.php:224
+msgid "Backup"
+msgstr ""
+
+#. translators: 1: posts in the backup, 2: rows in the backup, 3: file size
+#: includes/class-migration-admin.php:226
+#, php-format
+msgid "(%1$d posts, %2$d rows, %3$s)"
+msgstr ""
+
+#: includes/class-migration-admin.php:230
+msgid "Verification"
+msgstr ""
+
+#: includes/class-migration-admin.php:230
+msgid "Passed"
+msgstr ""
+
+#: includes/class-migration-admin.php:230
+msgid "Failed"
+msgstr ""
+
+#: includes/class-migration-admin.php:230
+msgid "(out of date: data changed since)"
+msgstr ""
+
+#: includes/class-migration-admin.php:233
+msgid "Last error"
+msgstr ""
+
+#: includes/class-migration-admin.php:239
+msgid "Dry run"
+msgstr ""
+
+#: includes/class-migration-admin.php:240
+msgid "Resume migration"
+msgstr ""
+
+#: includes/class-migration-admin.php:240
+msgid "Run migration"
+msgstr ""
+
+#: includes/class-migration-admin.php:241
+msgid "Rescan"
+msgstr ""
+
+#: includes/class-migration-admin.php:242
+msgid "Verify"
+msgstr ""
+
+#: includes/class-migration-admin.php:247
+msgid "Remove old posts"
+msgstr ""
+
+#: includes/class-migration-admin.php:251
+msgid "Needs your decision"
+msgstr ""
+
+#: includes/class-migration-admin.php:252
+msgid "Post"
+msgstr ""
+
+#: includes/class-migration-admin.php:252
+msgid "Why"
+msgstr ""
+
+#: includes/class-migration-admin.php:252
+msgid "State"
+msgstr ""
+
+#: includes/class-migration-admin.php:258
+msgid "Migrate under a new name"
+msgstr ""
+
+#: includes/class-migration-admin.php:258
+msgid "Keep the post, skip it"
+msgstr ""
+
+#: includes/class-migration-admin.php:266
+msgid "Recent activity"
+msgstr ""
+
+#: includes/class-migration-admin.php:285
+msgid "Nothing to migrate"
+msgstr ""
+
+#: includes/class-migration-admin.php:286
+msgid "Not started"
+msgstr ""
+
+#: includes/class-migration-admin.php:287
+msgid "In progress"
+msgstr ""
+
+#: includes/class-migration-admin.php:288
+msgid "Migrated"
+msgstr ""
+
+#: includes/class-migration-admin.php:289
+msgid "Failed (rolled back, safe to resume)"
+msgstr ""
+
+#: includes/class-migration-admin.php:297
+msgid "Another tag already uses this shortcode"
+msgstr ""
+
+#: includes/class-migration-admin.php:298
+msgid "Another tag already uses this name"
+msgstr ""
+
+#: includes/class-migration-admin.php:299
+msgid "Its table record belongs to a different post"
+msgstr ""
+
+#: includes/class-migration-admin.php:300
+msgid "The title is longer than 255 characters"
+msgstr ""
+
+#: includes/class-migration-admin.php:319
+msgid "Working…"
+msgstr ""
+
+#: includes/class-migration-admin.php:320
+msgid "Permanently delete the old tag posts? A backup of exactly what will be deleted is written first."
+msgstr ""
+
+#. translators: 1: posts done, 2: posts in total
+#: includes/class-migration-admin.php:323
+#, php-format
+msgid "Migrating… %1$d of %2$d done."
+msgstr ""
+
+#: includes/class-migration-admin.php:324
+msgid "Done."
+msgstr ""
+
+#: includes/class-migration-engine.php:627
+#: includes/class-migration-engine.php:646
+#: includes/class-migration-engine.php:942
+#: includes/class-migration-engine.php:1197
+#: includes/class-migration-engine.php:1363
+msgid "Another migration step is already running."
+msgstr ""
+
+#: includes/class-migration-engine.php:948
+msgid "There is no open conflict for that post."
+msgstr ""
+
+#: includes/class-migration-engine.php:958
+msgid "Unknown resolution."
+msgstr ""
+
+#: includes/class-migration-engine.php:964
+msgid "The post no longer exists."
+msgstr ""
+
+#: includes/class-migration-engine.php:974
+msgid "The renamed tag would also collide."
+msgstr ""
+
+#: includes/class-migration-engine.php:1005
+msgid "Could not create the private backup directory."
+msgstr ""
+
+#: includes/class-migration-engine.php:1114
+msgid "Could not write the backup file."
+msgstr ""
+
+#: includes/class-migration-engine.php:1119
+msgid "Could not finalize the backup file."
+msgstr ""
+
+#: includes/class-migration-engine.php:1138
+msgid "The backup failed validation after writing and was discarded."
+msgstr ""
+
+#: includes/class-migration-engine.php:1179
+msgid "That backup file was not found."
+msgstr ""
+
+#: includes/class-migration-engine.php:1182
+msgid "The tags table is not InnoDB, so a restore could not be made atomic. Nothing was changed."
+msgstr ""
+
+#: includes/class-migration-engine.php:1188
+msgid "The backup does not match its recorded checksum (missing or modified). Nothing was changed."
+msgstr ""
+
+#: includes/class-migration-engine.php:1192
+msgid "That file is not a Dynamic Tags backup."
+msgstr ""
+
+#: includes/class-migration-engine.php:1383
+msgid "Cleanup requires a passing verification of the current data. Run Verify first."
+msgstr ""
+
+#: includes/class-migration-engine.php:1386
+msgid "Resolve or accept every conflict before cleaning up."
+msgstr ""
+
+#: includes/class-table-import-export.php:82
+msgid "No data found to export"
+msgstr ""
+
+#: includes/class-table-import-export.php:121
+msgid "Export failed."
+msgstr ""
+
+#: includes/class-table-import-export.php:189
+msgid "The tags could not be written as JSON."
+msgstr ""
+
+#. translators: %s: the formats a file can be imported from
+#: includes/class-table-import-export.php:431
+#, php-format
+msgid "This format cannot be imported. Use %s."
+msgstr ""
+
+#: includes/class-table-import-export.php:454
+msgid "The file contains no tags."
+msgstr ""
+
+#. translators: 1: rows in the file, 2: the limit
+#: includes/class-table-import-export.php:460
+#, php-format
+msgid "The file has %1$d rows and at most %2$d can be imported at once. Split the file, or raise the limit with the dt_import_max_rows filter."
+msgstr ""
+
+#: includes/class-table-import-export.php:483
+msgid "Import failed."
+msgstr ""
+
+#. translators: %s: the parser's message
+#: includes/class-table-import-export.php:505
+#, php-format
+msgid "Invalid JSON format: %s"
+msgstr ""
+
+#: includes/class-table-import-export.php:509
+msgid "The JSON file must hold a list of tags, or an object with a \"tags\" list."
+msgstr ""
+
+#: includes/class-table-import-export.php:514
+msgid "The \"tags\" entry of the JSON file must be a list."
+msgstr ""
+
+#: includes/class-table-import-export.php:536
+msgid "The first row must be the header the export writes, with at least the columns Tag Name and Shortcode."
+msgstr ""
+
+#. translators: 1: columns in the row, 2: columns in the header
+#: includes/class-table-import-export.php:543
+#, php-format
+msgid "The row has %1$d columns and the header has %2$d."
+msgstr ""
+
+#: includes/class-table-import-export.php:557
+msgid "The CSV file is empty."
+msgstr ""
+
+#: includes/class-table-import-export.php:572
+msgid "Only XML in UTF-8 is accepted."
+msgstr ""
+
+#: includes/class-table-import-export.php:577
+msgid "XML with a DOCTYPE or entity declaration is not accepted."
+msgstr ""
+
+#: includes/class-table-import-export.php:588
+msgid "Invalid XML format"
+msgstr ""
+
+#. translators: %s: the parser's message
+#: includes/class-table-import-export.php:590
+#, php-format
+msgid "XML parsing failed: %s"
+msgstr ""
+
+#: includes/class-table-import-export.php:667
+msgid "The row is not a tag."
+msgstr ""
+
+#. translators: %s: a field name
+#: includes/class-table-import-export.php:678
+#, php-format
+msgid "%s must be text or a number."
+msgstr ""
+
+#: includes/class-table-import-export.php:690
+msgid "Tag name is required."
+msgstr ""
+
+#: includes/class-table-import-export.php:692
+msgid "Tag name can only contain letters, numbers, spaces, hyphens and underscores."
+msgstr ""
+
+#: includes/class-table-import-export.php:696
+msgid "Shortcode is required."
+msgstr ""
+
+#: includes/class-table-import-export.php:698
+msgid "Shortcode can only contain letters, numbers, hyphens and underscores."
+msgstr ""
+
+#: includes/class-table-import-export.php:710
+msgid "Status must be \"active\" or \"inactive\"."
+msgstr ""
+
+#: includes/class-table-import-export.php:715
+msgid "Priority must be a number between 0 and 100."
+msgstr ""
+
+#: includes/class-table-import-export.php:720
+msgid "Usage count must be a number, zero or more."
+msgstr ""
+
+#: includes/class-table-import-export.php:725
+msgid "Group id must be a number."
+msgstr ""
+
+#. translators: 1: row number, 2: group id
+#: includes/class-table-import-export.php:728
+#, php-format
+msgid "Row %1$d: the group %2$d does not exist on this site, so the tag is imported without a group."
+msgstr ""
+
+#. translators: 1: row number, 2: shortcode, 3: the first row that has it
+#: includes/class-table-import-export.php:736
+#, php-format
+msgid "Row %1$d: the shortcode [%2$s] is also in row %3$d."
+msgstr ""
+
+#. translators: 1: row number, 2: shortcode
+#: includes/class-table-import-export.php:743
+#, php-format
+msgid "Row %1$d: the shortcode [%2$s] already exists (it is skipped or updated, as the options say)."
+msgstr ""
+
+#: includes/class-table-import-export.php:748
+msgid "Another tag already has this name."
+msgstr ""
+
+#: includes/class-table-import-export.php:750
+msgid "Another row of the file has this name."
+msgstr ""
+
+#: includes/class-table-import-export.php:809
+msgid "The row could not be imported."
+msgstr ""
+
+#. translators: %s: shortcode
+#: includes/class-table-import-export.php:866
+#, php-format
+msgid "The shortcode [%s] already exists."
+msgstr ""
+
+#: includes/class-table-import-export.php:888
+msgid "Invalid nonce"
+msgstr ""
+
+#: includes/class-table-import-export.php:895
+msgid "Export data not found or expired"
+msgstr ""
+
+#: includes/class-table-import-export.php:938
+#: includes/class-table-import-export.php:1038
+#: includes/class-table-import-export.php:1061
+#: includes/class-tag-groups.php:957
+#: includes/class-tag-groups.php:1021
+msgid "Unauthorized"
+msgstr ""
+
+#: includes/class-table-import-export.php:980
+msgid "No file uploaded"
+msgstr ""
+
+#. translators: %d: PHP's upload error code
+#: includes/class-table-import-export.php:984
+#, php-format
+msgid "The upload failed (error code %d)."
+msgstr ""
+
+#: includes/class-table-import-export.php:990
+#: includes/class-table-import-export.php:1008
+msgid "Failed to read file"
+msgstr ""
+
+#. translators: %s: the size limit
+#: includes/class-table-import-export.php:994
+#, php-format
+msgid "The file is larger than the %s limit."
+msgstr ""
+
+#. translators: %s: the file types that can be imported
+#: includes/class-table-import-export.php:1000
+#, php-format
+msgid "Unsupported file type. Use %s."
+msgstr ""
+
+#: includes/class-tag-groups.php:41
+#: includes/class-tag-groups.php:120
+msgid "Tag Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:42
+msgid "Tag Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:43
+#: includes/class-tag-groups.php:92
+#: includes/class-tag-groups.php:93
+msgid "Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:44
+msgid "All Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:45
+#: includes/class-tag-groups.php:176
+msgid "Parent Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:46
+msgid "Parent Group:"
+msgstr ""
+
+#: includes/class-tag-groups.php:47
+msgid "New Group Name"
+msgstr ""
+
+#: includes/class-tag-groups.php:48
+msgid "Add New Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:49
+#: includes/class-tag-groups.php:319
+#: includes/class-tag-groups.php:619
+msgid "Edit Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:50
+msgid "Update Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:51
+msgid "View Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:52
+msgid "Separate groups with commas"
+msgstr ""
+
+#: includes/class-tag-groups.php:53
+msgid "Add or remove groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:54
+msgid "Choose from the most used"
+msgstr ""
+
+#: includes/class-tag-groups.php:55
+msgid "Popular Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:56
+msgid "Search Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:57
+msgid "Not Found"
+msgstr ""
+
+#: includes/class-tag-groups.php:58
+msgid "No groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:59
+msgid "Groups list"
+msgstr ""
+
+#: includes/class-tag-groups.php:60
+msgid "Groups list navigation"
+msgstr ""
+
+#: includes/class-tag-groups.php:112
+msgid "Dynamic Tags - Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:125
+msgid "Add Root Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:128
+msgid "Expand All"
+msgstr ""
+
+#: includes/class-tag-groups.php:131
+msgid "Collapse All"
+msgstr ""
+
+#: includes/class-tag-groups.php:144
+#: includes/class-tag-groups.php:336
+msgid "Group Details"
+msgstr ""
+
+#: includes/class-tag-groups.php:151
+msgid "Group Name"
+msgstr ""
+
+#: includes/class-tag-groups.php:154
+msgid "Enter group name..."
+msgstr ""
+
+#: includes/class-tag-groups.php:162
+msgid "Optional description..."
+msgstr ""
+
+#: includes/class-tag-groups.php:167
+msgid "Color"
+msgstr ""
+
+#: includes/class-tag-groups.php:171
+msgid "Choose a color for visual identification"
+msgstr ""
+
+#: includes/class-tag-groups.php:180
+#: includes/class-tag-groups.php:1138
+msgid "None (Root Group)"
+msgstr ""
+
+#: includes/class-tag-groups.php:189
+msgid "Save Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:192
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-tag-groups.php:195
+msgid "Delete Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:202
+msgid "Tags in this Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:207
+msgid "Select a group from the tree to view details and manage tags, or create a new group to get started."
+msgstr ""
+
+#: includes/class-tag-groups.php:209
+msgid "Quick Actions"
+msgstr ""
+
+#: includes/class-tag-groups.php:211
+msgid "Create Groups:"
+msgstr ""
+
+#: includes/class-tag-groups.php:211
+msgid "Organize your tags into logical categories"
+msgstr ""
+
+#: includes/class-tag-groups.php:212
+msgid "Hierarchical Structure:"
+msgstr ""
+
+#: includes/class-tag-groups.php:212
+msgid "Create parent-child relationships"
+msgstr ""
+
+#: includes/class-tag-groups.php:213
+msgid "Color Coding:"
+msgstr ""
+
+#: includes/class-tag-groups.php:213
+msgid "Assign colors for visual organization"
+msgstr ""
+
+#: includes/class-tag-groups.php:214
+msgid "Bulk Assignment:"
+msgstr ""
+
+#: includes/class-tag-groups.php:214
+msgid "Assign multiple tags to groups at once"
+msgstr ""
+
+#: includes/class-tag-groups.php:223
+msgid "Group Statistics"
+msgstr ""
+
+#: includes/class-tag-groups.php:283
+msgid "No group selected for deletion. Please select a group first."
+msgstr ""
+
+#: includes/class-tag-groups.php:287
+msgid "Are you sure you want to delete this group? Tags will not be deleted, only removed from this group."
+msgstr ""
+
+#: includes/class-tag-groups.php:319
+msgid "New Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:357
+msgid "Error loading group details:"
+msgstr ""
+
+#: includes/class-tag-groups.php:357
+#: includes/class-tag-groups.php:397
+#: includes/class-tag-groups.php:455
+msgid "Unknown error occurred."
+msgstr ""
+
+#: includes/class-tag-groups.php:361
+msgid "Network error occurred while loading group details. Please try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:397
+msgid "Error loading group data:"
+msgstr ""
+
+#: includes/class-tag-groups.php:402
+msgid "Network error occurred while loading group data. Please try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:427
+msgid "Error:"
+msgstr ""
+
+#: includes/class-tag-groups.php:431
+msgid "Network error occurred while saving group. Please try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:438
+msgid "Invalid group selected for deletion."
+msgstr ""
+
+#: includes/class-tag-groups.php:452
+#: includes/class-tag-groups.php:946
+#: includes/class-tag-groups.php:1214
+msgid "Group deleted successfully."
+msgstr ""
+
+#: includes/class-tag-groups.php:455
+msgid "Error deleting group:"
+msgstr ""
+
+#: includes/class-tag-groups.php:459
+msgid "Network error occurred while deleting group. Please try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:588
+msgid "No groups created yet. Click \"Add Root Group\" to get started."
+msgstr ""
+
+#: includes/class-tag-groups.php:616
+msgid "Add Child Group"
+msgstr ""
+
+#: includes/class-tag-groups.php:740
+msgid "Total Groups"
+msgstr ""
+
+#: includes/class-tag-groups.php:745
+msgid "Total Tags"
+msgstr ""
+
+#: includes/class-tag-groups.php:750
+msgid "Ungrouped Tags"
+msgstr ""
+
+#. translators: %d: number of tags in the group
+#: includes/class-tag-groups.php:757
+#, php-format
+msgid "Most Used Group (%d tags)"
+msgstr ""
+
+#: includes/class-tag-groups.php:779
+#: includes/class-tag-groups.php:830
+#: includes/class-tag-groups.php:887
+msgid "Security check failed. Please refresh the page and try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:784
+msgid "Unauthorized. You do not have permission to create groups."
+msgstr ""
+
+#: includes/class-tag-groups.php:790
+#: includes/class-tag-groups.php:841
+#: includes/class-tag-groups.php:903
+msgid "Taxonomy not registered. Please refresh the page and try again."
+msgstr ""
+
+#: includes/class-tag-groups.php:799
+#: includes/class-tag-groups.php:851
+msgid "Group name is required."
+msgstr ""
+
+#: includes/class-tag-groups.php:818
+#: includes/class-tag-groups.php:1212
+msgid "Group created successfully."
+msgstr ""
+
+#: includes/class-tag-groups.php:835
+msgid "Unauthorized. You do not have permission to edit groups."
+msgstr ""
+
+#: includes/class-tag-groups.php:868
+#: includes/class-tag-groups.php:1213
+msgid "Group updated successfully."
+msgstr ""
+
+#: includes/class-tag-groups.php:895
+msgid "Unauthorized. You do not have permission to delete groups."
+msgstr ""
+
+#: includes/class-tag-groups.php:912
+msgid "Invalid group ID provided."
+msgstr ""
+
+#: includes/class-tag-groups.php:921
+msgid "Group not found. It may have already been deleted."
+msgstr ""
+
+#: includes/class-tag-groups.php:963
+#: includes/class-tag-groups.php:1027
+msgid "Invalid group ID."
+msgstr ""
+
+#: includes/class-tag-groups.php:970
+#: includes/class-tag-groups.php:1034
+msgid "Group not found."
+msgstr ""
+
+#: includes/class-tag-groups.php:979
+msgid "No tags in this group yet."
+msgstr ""
+
+#: includes/class-tag-groups.php:983
+msgid "Tag Name"
+msgstr ""
+
+#: includes/class-tag-groups.php:985
+msgid "Actions"
+msgstr ""
+
+#. translators: %d: number of tags
+#: includes/class-tag-groups.php:1002
+#, php-format
+msgid "Total: %d tags"
+msgstr ""
+
+#. translators: %s: the name of the old category
+#: includes/class-tag-groups.php:1094
+#, php-format
+msgid "Migrated from category: %s"
+msgstr ""
+
+#: includes/class-tag-groups.php:1215
+msgid "An error occurred."
+msgstr ""
+
+#. translators: %s: shortcode name
+#: includes/class-tag-service.php:53
+#, php-format
+msgid "The shortcode name [%s] is reserved for the plugin's own shortcodes."
+msgstr ""
+
+#. translators: %s: shortcode name
+#: includes/class-tag-service.php:58
+#, php-format
+msgid "The shortcode name [%s] is already used by WordPress or another plugin."
+msgstr ""
+
+#. translators: %s: shortcode name
+#: includes/class-tag-service.php:119
+#, php-format
+msgid "The tag [%s] would render itself: its content refers back to it, directly or through other tags."
+msgstr ""
+
+#: wp-dynamic-tags.php:144
+msgid "Dynamic Tag"
+msgstr ""
+
+#: wp-dynamic-tags.php:147
+msgid "Add New Dynamic Tag"
+msgstr ""
+
+#: wp-dynamic-tags.php:148
+msgid "New Dynamic Tag"
+msgstr ""
+
+#: wp-dynamic-tags.php:149
+msgid "Edit Dynamic Tag"
+msgstr ""
+
+#: wp-dynamic-tags.php:150
+msgid "View Dynamic Tag"
+msgstr ""
+
+#: wp-dynamic-tags.php:153
+msgid "No tags found"
+msgstr ""
+
+#: wp-dynamic-tags.php:154
+msgid "No tags found in trash"
+msgstr ""
+
+#: wp-dynamic-tags.php:399
+msgid "no tags"
+msgstr ""
+
+#: wp-dynamic-tags.php:401
+msgid "1 tag"
+msgstr ""
+
+#. translators: %d: number of tags
+#: wp-dynamic-tags.php:404
+#, php-format
+msgid "%d tags"
+msgstr ""
+
+#: wp-dynamic-tags.php:749
+msgid "🎉 Welcome Back to WP Dynamic Tags!"
+msgstr ""
+
+#: wp-dynamic-tags.php:751
+msgid "Your data has been automatically restored:"
+msgstr ""
+
+#. translators: %d: number of tag posts
+#: wp-dynamic-tags.php:759
+#, php-format
+msgid "%d tag post"
+msgid_plural "%d tag posts"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of database tags
+#: wp-dynamic-tags.php:770
+#, php-format
+msgid "%d database tag"
+msgid_plural "%d database tags"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of tag groups
+#: wp-dynamic-tags.php:781
+#, php-format
+msgid "%d tag group"
+msgid_plural "%d tag groups"
+msgstr[0] ""
+msgstr[1] ""
+
+#: wp-dynamic-tags.php:789
+msgid "✅ All your shortcodes are working and ready to use!"
+msgstr ""
+
+#: wp-dynamic-tags.php:814
+msgid "WP Dynamic Tags Deactivated"
+msgstr ""
+
+#: wp-dynamic-tags.php:817
+msgid "✅ Your data is safe!"
+msgstr ""
+
+#: wp-dynamic-tags.php:818
+msgid "All your tags and groups have been preserved. If you reinstall the plugin, everything will work automatically."
+msgstr ""
+
+#: wp-dynamic-tags.php:822
+msgid "⚠️ Data deletion is enabled"
+msgstr ""
+
+#: wp-dynamic-tags.php:823
+msgid "If you uninstall the plugin, all data will be permanently deleted."
+msgstr ""
+
+#: wp-dynamic-tags.php:828
+msgid "Manage Data Retention Settings"
+msgstr ""
+
+#: wp-dynamic-tags.php:844
+#: wp-dynamic-tags.php:866
+msgid "You do not have permission to download sample files."
+msgstr ""
+
+#: wp-dynamic-tags.php:850
+#: wp-dynamic-tags.php:872
+msgid "Sample file not found."
+msgstr ""

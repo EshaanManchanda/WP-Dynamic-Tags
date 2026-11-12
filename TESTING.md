@@ -35,12 +35,17 @@ it yourself with ACF/WooCommerce installed.
 
 ## 0. Setup
 
-**How a Dynamic Tag becomes a shortcode:** create a post under **Dynamic
+**How a Dynamic Tag becomes a shortcode (3.1):** create a tag under **Dynamic
 Tags → Add New**, put the test content (given in each case below) in the
-post body, and publish it. The post *title* becomes the shortcode name:
-lowercase, non-alphanumeric characters replaced with `_`. E.g. a tag titled
-`Test Array Join` becomes `[test_array_join]`. Use a distinct, descriptive
-title per test case so you can find/reuse it.
+Content field, and save. The **Shortcode** field is the name you use; when you
+leave it empty it is made from the Name: lowercase, non-alphanumeric characters
+replaced with `_`. E.g. a tag named `Test Array Join` becomes
+`[test_array_join]`. Use a distinct, descriptive name per test case so you can
+find/reuse it. The **Preview** button under the editor renders the content the
+way a page would, and the **Value** column of **All Tags** shows what each saved
+tag renders to. Conditions that contain `<` or `>` are safest in the editor's
+**Code** tab (the Visual tab rewrites them). (Earlier versions used a post for
+each tag; the steps below that say "post" mean this form now.)
 
 **Where to render a shortcode to check output:** paste `[your_shortcode]`
 into any post/page content (classic editor, Gutenberg shortcode block, or a
@@ -64,10 +69,9 @@ Check `wp-content/debug.log` if something doesn't resolve as expected.
   enabled, a category, and a tag.
 - Everything else needs only WordPress core + this plugin.
 
-**Cache note:** this plugin caches shortcode registration. If a newly
-created/edited Dynamic Tag's shortcode doesn't show updated output, save
-the post again, or use **Dynamic Tags → Tools → Force Refresh** if present,
-or just wait — saves auto-clear the relevant cache.
+**Cache note:** tags are loaded once per request and nothing is cached between
+requests by the plugin, so a saved change shows on the next page load. If it does
+not, a page cache or a builder cache is serving the old page.
 
 ---
 
@@ -382,3 +386,26 @@ Run these once at the end, they exercise the shared engine all the features abov
 - [ ] **A separator with meaningful whitespace survives**: `{wc:categories|join:, }` (comma-space) must actually join with `", "`, not `","` — a real bug (formatter args getting over-trimmed) was found and fixed here.
 - [ ] **Creating, then deleting, a Dynamic Tag post doesn't break the plugin's own system shortcodes for the rest of that page load**: create a throwaway Dynamic Tag, delete it again, then immediately test `[dt_loop]`, `[dt_if]`, `[dt_group]`, etc. on the same page load — all should still work. (A real bug here caused these to silently stop working after any Dynamic Tag save/delete, in a narrow timing window.)
 - [ ] **A Dynamic Tag used as a `[dt_template]` immediately after being created/edited reflects the new content**, not stale/empty data (another real caching bug, now fixed).
+
+---
+
+## 6. Automated test suites (what runs without a browser)
+
+The manual script above checks the rendering features by eye. Everything below is automated and is what a
+change must keep green. Paths are relative to the plugin folder; the WordPress suites need an extracted
+WordPress core and a throwaway database (never a site you use), see `tools/integration/`.
+
+| Suite | Command | What it covers |
+|---|---|---|
+| Unit (no WordPress) | `vendor/bin/phpunit` | the condition parser, token parsers, formatters, meta decoding, CSV transport (property tests), migration planner |
+| WordPress, front | `tools/integration/run.ps1 -Core 7.1.4` (and `-Core 7.0`) | rendering, the facade, the Tag Service, token safety, usage counting, uninstall |
+| WordPress, admin | `tools/integration/run.ps1 -Core 7.1.4 -Suite admin` | the admin screens, every AJAX endpoint (generated from `tests/wp-admin/support/actions.php`), groups, import and export |
+| As a network | set `WP_MULTISITE=1`, then run the two commands above | the same suites on a multisite install |
+| Golden master | `tests/golden-master/run.ps1 -Label current -Paths unified`, then `php diff.php baseline post current unified <context> --all --allow=allowed-differences.json` (and `table`) | 396 renders against the recorded 3.0.0 output; every deliberate difference is an entry in `allowed-differences.json`; unlisted and stale entries fail |
+| Sibling plugins | `tests/golden-master/siblings.php` | the facade called with the real payloads of Certificate Generator, certificate-generator-gema and chatbot-by-eshaan |
+| Live migration | `tests/live/migration-scenarios.php` with `WP_DB_NAME=local_mgtest` | 80 checks of dry run, locking, batches, verification, conflicts, cleanup, backup tampering and restore. **Destructive: disposable clone only.** |
+| Performance | `tests/perf/run.ps1 -Label after -Count 5000 -Seed` | queries and writes per boot and per render on a 5,000-tag clone (no writes while rendering) |
+| Mutation (by hand) | `php tools/mutation/mutants.php` | 26 deliberate defects in the parsers that the unit tests must catch |
+| Static analysis | `vendor/bin/phpstan analyse` (baseline may only shrink), `vendor/bin/phpcs --standard=WordPress --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.DB.PreparedSQL,WordPress.WP.I18n admin includes wp-dynamic-tags.php uninstall.php` (0 findings), `tools/static` for PHP 8.2-8.5 compatibility and the WordPress 7.0 floor | |
+
+Every bug fixed in 3.1 has a test that failed before the fix; `docs/BUG-REGISTER.md` names the test.
