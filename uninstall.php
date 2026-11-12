@@ -298,6 +298,17 @@ function wp_dynamic_tags_uninstall() {
         delete_option('wp_dynamic_tags_cache_version');
         delete_option('dt_menu_notice_dismissed');
 
+        // The rest of what the plugin keeps in wp_options: the debug log, the legacy-write record and flag, setup errors and
+        // activation markers, group colours, the import/export counters.
+        foreach (array(
+            'wp_dynamic_tags_debug_log', 'wp_dynamic_tags_legacy_writes', 'wp_dynamic_tags_legacy_pending',
+            'wp_dynamic_tags_table_creation_error', 'wp_dynamic_tags_table_error', 'wp_dynamic_tags_activated',
+            'wp_dynamic_tags_activation_time', 'wp_dynamic_tags_table_integration_enabled',
+            'dt_group_colors', 'dt_categories_migrated', 'dt_total_exports', 'dt_total_imports', 'dt_last_export', 'dt_last_import',
+        ) as $own_option) {
+            delete_option($own_option);
+        }
+
         // Migration state (see includes/class-migration-engine.php) and its own, now superseded, migration backups.
         // The uninstall backup written above is deliberately left in place.
         foreach (array('wp_dynamic_tags_migration', 'wp_dynamic_tags_migration_log', 'wp_dynamic_tags_migration_lock', 'wp_dynamic_tags_migration_status', 'wp_dynamic_tags_posts_cleaned') as $migration_option) {
@@ -326,7 +337,11 @@ function wp_dynamic_tags_uninstall() {
             'dt_tag_groups_',
             'dt_migration_progress',
             'dt_table_stats',
-            'dt_heartbeat_'
+            'dt_heartbeat_',
+            'dt_api_',                       // cached answers of {api:} placeholders
+            'dt_export_',                    // pending export downloads (they hold every tag)
+            'wp_dynamic_tags_data_restored',
+            'wp_dynamic_tags_deactivated'
         );
 
         foreach ($transients as $transient_prefix) {

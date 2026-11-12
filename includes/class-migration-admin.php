@@ -172,7 +172,7 @@ class WP_Dynamic_Tags_Migration_Admin
             return;
         }
 
-        $page = admin_url('edit.php?post_type=' . WP_Dynamic_Tags_Migration_Engine::POST_TYPE . '&page=dt-table-manager');
+        $page = admin_url('admin.php?page=dt-tools');
         echo '<div class="notice notice-warning" id="dt-mig-notice"><p><strong>' . esc_html__('Dynamic Tags is moving your tags into its new tag table.', 'wp-dynamic-tags') . '</strong> ';
 
         if ($s['has_work']) {

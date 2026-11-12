@@ -707,7 +707,7 @@
    "from": "post",
    "ctx": "out_singular",
    "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
    "bug": "C1",
    "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
   },
@@ -1247,7 +1247,7 @@
    "from": "post",
    "ctx": "in_singular",
    "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
    "bug": "C1",
    "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
   },
@@ -1796,7 +1796,7 @@
    "from": "post",
    "ctx": "out_archive",
    "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
+   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|<TODAY>",
    "bug": "C1",
    "why": "The format attribute is now honoured for tags that came from dynamic_tag posts (the post path ignored it)."
   },
@@ -2299,15 +2299,6 @@
    "path": "unified",
    "from": "table",
    "ctx": "out_singular",
-   "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
-   "bug": "C8",
-   "why": "format= applied to text the engine now resolves (a date is no longer the ISO form the harness normalizes)."
-  },
-  {
-   "path": "unified",
-   "from": "table",
-   "ctx": "out_singular",
    "invocation": "[gm_tpl cache=\"false\"]",
    "expected": "<i>Hello world!</i>|<i>GM Context Post</i>",
    "bug": "C9",
@@ -2708,15 +2699,6 @@
    "expected": "29.99|$29.99|N/A",
    "bug": "C6",
    "why": "The placeholder engine now runs for table-native tags: {meta:}, {acf:}, {wc:}, formatters, ?? fallbacks, role and field conditions resolve instead of staying raw."
-  },
-  {
-   "path": "unified",
-   "from": "table",
-   "ctx": "in_singular",
-   "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
-   "bug": "C8",
-   "why": "format= applied to text the engine now resolves (a date is no longer the ISO form the harness normalizes)."
   },
   {
    "path": "unified",
@@ -3194,15 +3176,6 @@
    "expected": "|||",
    "bug": "C7",
    "why": "Shared tokens come from the engine for table-native tags: {user_name} is empty for guests and the login name for users, {user_role} expands, {current_date} uses the site's date format, post tokens are empty without a post."
-  },
-  {
-   "path": "unified",
-   "from": "table",
-   "ctx": "out_archive",
-   "invocation": "[gm_site format=\"uppercase\"]",
-   "expected": "GEMA ECOSYSTEM|HTTP://GEMA-ECOSYSTEM.LOCAL|<EMAIL>|2026|NOVEMBER 11, 2026",
-   "bug": "C8",
-   "why": "format= applied to text the engine now resolves (a date is no longer the ISO form the harness normalizes)."
   },
   {
    "path": "unified",

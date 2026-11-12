@@ -4,8 +4,8 @@
  * can fetch it with a second request. It used a uniqid() id (13 characters, derived from the clock), no owner and a
  * one hour lifetime, so any administrator who guessed the id could download another one's export later.
  *
- * I4: the old import page (class-import-export.php) read $_POST['conflict_resolution'] without isset() and echoed
- * translated strings unescaped.
+ * (I4, the old import page's unescaped notices, went away with that page; the new screens' notices are covered by
+ * AdminScreensTest.)
  */
 class DT_Export_Download_Test extends WP_Ajax_UnitTestCase
 {
@@ -62,54 +62,4 @@ class DT_Export_Download_Test extends WP_Ajax_UnitTestCase
         $this->assertFalse(get_transient('dt_export_' . $e['id']));
     }
 
-    // ------------------------------------------------------------------ I4
-
-    private function legacy_import(array $post, string $file_name, string $content): string
-    {
-        wp_set_current_user(self::factory()->user->create(array('role' => 'administrator')));
-        $tmp = tempnam(sys_get_temp_dir(), 'dtleg');
-        file_put_contents($tmp, $content);
-        $_FILES['import_file'] = array('name' => $file_name, 'type' => 'application/octet-stream', 'tmp_name' => $tmp, 'error' => UPLOAD_ERR_OK, 'size' => strlen($content));
-        $_POST = array_merge(array('import_tags' => '1', 'dt_import_nonce' => wp_create_nonce('dt_import_tags')), $post);
-        $_REQUEST = $_POST; // check_admin_referer() reads $_REQUEST
-
-        $prop = new ReflectionProperty(WP_Dynamic_Tags_Plugin::class, 'import_export');
-        $prop->setAccessible(true);
-        $prop->getValue(WP_Dynamic_Tags_Plugin::get_instance())->handle_import();
-
-        ob_start();
-        do_action('admin_notices');
-        $html = (string) ob_get_clean();
-        @unlink($tmp);
-        unset($_FILES['import_file']);
-        return $html;
-    }
-
-    public function test_the_old_import_page_does_not_need_conflict_resolution_in_the_request(): void
-    {
-        // A missing key used to raise an Undefined array key warning. This suite does not turn warnings into exceptions,
-        // so the test collects them itself.
-        $warnings = array();
-        set_error_handler(static function ($no, $message) use (&$warnings) {
-            $warnings[] = $message;
-            return true;
-        }, E_WARNING | E_NOTICE | E_DEPRECATED);
-        try {
-            $this->legacy_import(array(), 'tags.json', wp_json_encode(array('tags' => array())));
-        } finally {
-            restore_error_handler();
-        }
-        $this->assertSame(array(), $warnings);
-    }
-
-    public function test_translated_notice_strings_of_the_old_import_page_are_escaped(): void
-    {
-        $unsupported = 'Unsupported file format. Please upload JSON or CSV files only.';
-        add_filter('gettext', static fn($translated, $text) => $text === $unsupported ? '<img src=x onerror=alert(1)>' : $translated, 10, 2);
-
-        $html = $this->legacy_import(array('conflict_resolution' => 'skip'), 'tags.txt', 'not a tag file');
-
-        $this->assertStringContainsString('&lt;img', $html, 'the notice must be shown');
-        $this->assertStringNotContainsString('<img', $html, 'a translation can contain markup; it must be escaped, not echoed');
-    }
 }

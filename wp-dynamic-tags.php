@@ -48,14 +48,11 @@ class WP_Dynamic_Tags_Plugin
 
     private static $instance = null;
     private $post_type = 'dynamic_tag';
-    private $import_export;
     private $placeholders;
     private $tag_groups;
     private $db_manager;
-    private $migration_manager;
     private $migration_admin;
     private $table_manager;
-    private $table_manager_admin;
     private $table_shortcode_processor;
     private $table_import_export;
 
@@ -78,7 +75,6 @@ class WP_Dynamic_Tags_Plugin
         add_action('init', array($this, 'init'));
         add_filter('user_has_cap', array($this, 'grant_tag_capabilities'));
         add_action('admin_init', array($this, 'ensure_certificates_group'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
         // Load enhanced classes
         $this->load_includes();
@@ -167,16 +163,17 @@ class WP_Dynamic_Tags_Plugin
             'labels' => $labels,
             'public' => false,
             'publicly_queryable' => false,
-            'show_ui' => true,
-            'show_in_menu' => true,
+            'show_ui' => false,
+            'show_in_menu' => false,
+            'show_in_admin_bar' => false,
+            'show_in_nav_menus' => false,
+            'exclude_from_search' => true,
             'query_var' => false,
             'rewrite' => false,
             'capability_type' => array('dynamic_tag', 'dynamic_tags'),
             'map_meta_cap' => true,
             'has_archive' => false,
             'hierarchical' => false,
-            'menu_position' => 30,
-            'menu_icon' => 'dashicons-tag',
             'supports' => array('title', 'editor'),
             'show_in_rest' => false,
         );
@@ -666,11 +663,17 @@ class WP_Dynamic_Tags_Plugin
         return null;
     }
 
-    /** Remembers that a tag could not be registered because the name belongs to someone else. */
-    private static function record_shortcode_conflict($name)
+    /**
+     * Who registered the callback of a shortcode: the plugin folder, "core" for WordPress itself, or an empty string when
+     * nothing is registered under that name.
+     */
+    public static function shortcode_owner($name)
     {
         global $shortcode_tags;
-        $file = isset($shortcode_tags[$name]) ? self::callback_file($shortcode_tags[$name]) : null;
+        if (!isset($shortcode_tags[$name])) {
+            return '';
+        }
+        $file = self::callback_file($shortcode_tags[$name]);
         $owner = 'core';
         if ($file) {
             $file = wp_normalize_path($file);
@@ -681,7 +684,15 @@ class WP_Dynamic_Tags_Plugin
                 $owner = basename(dirname($file));
             }
         }
+        return $owner;
+    }
+
+    /** Remembers that a tag could not be registered because the name belongs to someone else. */
+    private static function record_shortcode_conflict($name)
+    {
+        $owner = self::shortcode_owner($name) ?: 'core';
         self::$shortcode_conflicts[$name] = $owner;
+        WP_Dynamic_Tags_Debug::log('shortcode_conflict', array('shortcode' => $name, 'error_type' => 'taken_by_' . $owner));
         do_action('dt_shortcode_conflict', $name, $owner);
     }
 
@@ -792,7 +803,7 @@ class WP_Dynamic_Tags_Plugin
         }
 
         $delete_on_uninstall = get_option('wp_dynamic_tags_delete_on_uninstall', false);
-        $settings_url = admin_url('edit.php?post_type=dynamic_tag&page=dt-settings');
+        $settings_url = admin_url('admin.php?page=dt-settings');
 
         ?>
         <div class="notice notice-info is-dismissible">
@@ -1046,27 +1057,11 @@ class WP_Dynamic_Tags_Plugin
     }
 
     /**
-     * Get migration manager instance
-     */
-    public function get_migration_manager()
-    {
-        return $this->migration_manager;
-    }
-
-    /**
      * Get table manager instance
      */
     public function get_table_manager()
     {
         return $this->table_manager;
-    }
-
-    /**
-     * Get post-table bridge instance
-     */
-    public function get_post_table_bridge()
-    {
-        return null; // the Bridge is no longer started (plan Phase 3); the admin screens treat null as "not available"
     }
 
     /**
@@ -1083,14 +1078,6 @@ class WP_Dynamic_Tags_Plugin
     public function get_table_import_export()
     {
         return $this->table_import_export;
-    }
-
-    /**
-     * Check if table integration is enabled
-     */
-    public function is_table_integration_enabled()
-    {
-        return get_option('wp_dynamic_tags_table_integration_enabled', false);
     }
 
     /**
@@ -1122,9 +1109,7 @@ class WP_Dynamic_Tags_Plugin
             require_once $includes_dir . 'class-migration-cli.php';
         }
 
-        if (file_exists($includes_dir . 'class-migration-manager.php')) {
-            require_once $includes_dir . 'class-migration-manager.php';
-        }
+        require_once $includes_dir . 'class-debug.php';
 
         if (file_exists($includes_dir . 'class-tag-service.php')) {
             require_once $includes_dir . 'class-tag-service.php';
@@ -1143,10 +1128,6 @@ class WP_Dynamic_Tags_Plugin
         }
 
         // Load existing classes
-        if (file_exists($includes_dir . 'class-import-export.php')) {
-            require_once $includes_dir . 'class-import-export.php';
-        }
-
         if (file_exists($includes_dir . 'class-dynamic-formatters.php')) {
             require_once $includes_dir . 'class-dynamic-formatters.php';
         }
@@ -1167,8 +1148,8 @@ class WP_Dynamic_Tags_Plugin
             require_once $includes_dir . 'class-tag-groups.php';
         }
 
-        if (file_exists(plugin_dir_path(__FILE__) . 'admin/table-manager-admin.php')) {
-            require_once plugin_dir_path(__FILE__) . 'admin/table-manager-admin.php';
+        if (is_admin() && file_exists(plugin_dir_path(__FILE__) . 'admin/class-admin.php')) {
+            require_once plugin_dir_path(__FILE__) . 'admin/class-admin.php';
         }
 
         if (file_exists(plugin_dir_path(__FILE__) . 'admin/settings-page.php')) {
@@ -1189,10 +1170,6 @@ class WP_Dynamic_Tags_Plugin
             if ($this->db_manager && method_exists($this->db_manager, 'ensure_table_exists')) {
                 $this->db_manager->ensure_table_exists();
             }
-        }
-
-        if (class_exists('WP_Dynamic_Tags_Migration_Manager')) {
-            $this->migration_manager = WP_Dynamic_Tags_Migration_Manager::get_instance();
         }
 
         // Migration entry points: admin notice + AJAX, WP-Cron. Never triggered by a frontend request.
@@ -1222,11 +1199,6 @@ class WP_Dynamic_Tags_Plugin
             $this->table_import_export = WP_Dynamic_Tags_Table_Import_Export::get_instance();
         }
 
-        // Initialize import/export
-        if (class_exists('WP_Dynamic_Tags_Import_Export')) {
-            $this->import_export = new WP_Dynamic_Tags_Import_Export();
-        }
-
         // Initialize dynamic placeholders
         if (class_exists('WP_Dynamic_Tags_Placeholders')) {
             $this->placeholders = new WP_Dynamic_Tags_Placeholders();
@@ -1252,72 +1224,18 @@ class WP_Dynamic_Tags_Plugin
             }
         }
 
+        // The admin screens (menu, tag list, form, tools); never loaded on the front end
+        if (is_admin() && class_exists('WP_Dynamic_Tags_Admin')) {
+            new WP_Dynamic_Tags_Admin();
+        }
+
         // Initialize tag groups
         if (class_exists('WP_Dynamic_Tags_Groups')) {
             $this->tag_groups = new WP_Dynamic_Tags_Groups();
         }
 
-        // Initialize table manager admin interface
-        if (is_admin() && class_exists('WP_Dynamic_Tags_Table_Manager_Admin')) {
-            $this->table_manager_admin = new WP_Dynamic_Tags_Table_Manager_Admin();
-        }
-
         // Shortcodes of existing tags are registered by the table processor on init (also after a reinstall). A SHOW TABLES
         // and a COUNT(*) used to run here on every request just to clear two registration locks; the locks are gone.
-    }
-
-    /**
-     * Enqueue admin assets
-     */
-    public function enqueue_admin_assets($hook)
-    {
-        // Only load on our plugin pages
-        if (strpos($hook, 'dynamic_tag') === false && strpos($hook, 'dt-') === false) {
-            return;
-        }
-
-        // Enqueue CSS
-        wp_enqueue_style(
-            'dt-admin-css',
-            WP_DYNAMIC_TAGS_PLUGIN_URL . 'assets/css/admin.css',
-            array(),
-            WP_DYNAMIC_TAGS_VERSION
-        );
-
-        // Enqueue JavaScript
-        wp_enqueue_script(
-            'dt-admin-js',
-            WP_DYNAMIC_TAGS_PLUGIN_URL . 'assets/js/admin.js',
-            array('jquery'),
-            WP_DYNAMIC_TAGS_VERSION,
-            true
-        );
-
-        // Localize script with data
-        wp_localize_script('dt-admin-js', 'dtAdmin', array(
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonces' => array(
-                'inline_edit' => wp_create_nonce('dt_inline_edit'),
-                'bulk_delete' => wp_create_nonce('dt_bulk_delete'),
-                'duplicate' => wp_create_nonce('dt_duplicate'),
-                'export' => wp_create_nonce('dt_export')
-            ),
-            'strings' => array(
-                'saved' => __('Changes saved successfully.', 'wp-dynamic-tags'),
-                'error' => __('An error occurred.', 'wp-dynamic-tags'),
-                'confirmBulkDelete' => __('Are you sure you want to delete the selected tags?', 'wp-dynamic-tags'),
-                'confirmDuplicate' => __('A tag with this key already exists. Do you want to update it?', 'wp-dynamic-tags'),
-                'invalidFileFormat' => __('Please select a JSON or CSV file.', 'wp-dynamic-tags'),
-                'shortcodeCopied' => __('Shortcode copied to clipboard!', 'wp-dynamic-tags'),
-                'copyFailed' => __('Failed to copy shortcode. Please copy manually.', 'wp-dynamic-tags'),
-                'fileTooLarge' => __('File is too large. Maximum size is 5MB.', 'wp-dynamic-tags'),
-                'selectedFile' => __('Selected file', 'wp-dynamic-tags'),
-                'placeholderCopied' => __('Placeholder copied to clipboard!', 'wp-dynamic-tags'),
-                'copied' => __('Copied!', 'wp-dynamic-tags'),
-                'keySanitized' => __('Tag key was automatically sanitized.', 'wp-dynamic-tags'),
-                'fillRequired' => __('Please fill in both tag key and value.', 'wp-dynamic-tags')
-            )
-        ));
     }
 
 }

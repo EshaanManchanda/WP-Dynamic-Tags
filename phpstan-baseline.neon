@@ -6,56 +6,6 @@ parameters:
 			path: admin/settings-page.php
 
 		-
-			message: "#^If condition is always false\\.$#"
-			count: 1
-			path: admin/table-manager-admin.php
-
-		-
-			message: "#^Call to function is_wp_error\\(\\) with array\\{path\\: string, url\\: string, subdir\\: string, basedir\\: string, baseurl\\: string, error\\: string\\|false\\} will always evaluate to false\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Method WP_Dynamic_Tags_Import_Export\\:\\:import_csv\\(\\) is unused\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Method WP_Dynamic_Tags_Import_Export\\:\\:import_json\\(\\) is unused\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int given\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Property WP_Dynamic_Tags_Import_Export\\:\\:\\$cache_version is never read, only written\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Property WP_Term\\:\\:\\$name \\(string\\) in isset\\(\\) is not nullable\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Static property WP_Dynamic_Tags_Import_Export\\:\\:\\$static_cache is never read, only written\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^Variable \\$group_name might not be defined\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
-			message: "#^is_wp_error\\(array\\<string, string\\|false\\>\\) will always evaluate to false\\.$#"
-			count: 1
-			path: includes/class-import-export.php
-
-		-
 			message: "#^Parameter \\#2 \\$array of function implode expects array\\<string\\>, array\\<int, array\\<int, string\\>\\|string\\> given\\.$#"
 			count: 1
 			path: includes/class-table-import-export.php
@@ -127,16 +77,6 @@ parameters:
 
 		-
 			message: "#^If condition is always false\\.$#"
-			count: 1
-			path: wp-dynamic-tags.php
-
-		-
-			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$import_export is never read, only written\\.$#"
-			count: 1
-			path: wp-dynamic-tags.php
-
-		-
-			message: "#^Property WP_Dynamic_Tags_Plugin\\:\\:\\$table_manager_admin is never read, only written\\.$#"
 			count: 1
 			path: wp-dynamic-tags.php
 

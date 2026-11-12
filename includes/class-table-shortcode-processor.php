@@ -286,6 +286,11 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
     /** Incremented every time a guard trips; a result produced while it changed is context-dependent and not cached. */
     private static $guard_trips = 0;
 
+    /** How often the render guard cut something off in this request (cycles, depth, output size). */
+    public static function guard_trips() {
+        return self::$guard_trips;
+    }
+
     /**
      * Process shortcode with enhanced features.
      *
@@ -297,12 +302,14 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
 
         if (isset(self::$render_stack[$tag->id])) {
             self::$guard_trips++;
+            WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'cycle'));
             return $fallback; // cycle: this tag is already being rendered further up
         }
 
         $max_depth = max(1, (int) apply_filters('dt_max_render_depth', 10));
         if (count(self::$render_stack) >= $max_depth) {
             self::$guard_trips++;
+            WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'depth'));
             return $fallback;
         }
 
@@ -366,6 +373,7 @@ class WP_Dynamic_Tags_Table_Shortcode_Processor {
             $max_size = (int) apply_filters('dt_max_render_size', 1048576);
             if ($max_size > 0 && strlen($content) > $max_size) {
                 self::$guard_trips++;
+                WP_Dynamic_Tags_Debug::log('render_guard', array('tag_id' => $tag->id, 'shortcode' => $tag->shortcode, 'error_type' => 'size'));
                 return $atts['default'];
             }
 

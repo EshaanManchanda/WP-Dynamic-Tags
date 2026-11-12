@@ -148,6 +148,8 @@ class WP_Dynamic_Tags_Database_Manager {
 
     /**
      * Check if table exists
+     *
+     * @phpstan-impure
      */
     public function table_exists($verify = false) {
         global $wpdb;

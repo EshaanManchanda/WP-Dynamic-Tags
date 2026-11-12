@@ -104,7 +104,7 @@ class WP_Dynamic_Tags_Groups {
      */
     public function add_admin_menu() {
         add_submenu_page(
-            'edit.php?post_type=' . $this->post_type,
+            WP_Dynamic_Tags_Admin::MENU,
             __('Groups', 'wp-dynamic-tags'),
             __('Groups', 'wp-dynamic-tags'),
             'manage_options',
@@ -848,7 +848,7 @@ class WP_Dynamic_Tags_Groups {
 
         if (empty($groups)) {
             echo '<p>' . __('No groups available.', 'wp-dynamic-tags') . ' ';
-            echo '<a href="' . admin_url('edit.php?post_type=' . $this->post_type . '&page=dt-group-manager') . '">';
+            echo '<a href="' . admin_url('admin.php?page=dt-group-manager') . '">';
             echo __('Create groups', 'wp-dynamic-tags') . '</a></p>';
             return;
         }

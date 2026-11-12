@@ -10,6 +10,16 @@ class DT_Uninstall_Test extends WP_UnitTestCase
 {
     private int $user = 0;
 
+    /** Options the plugin writes (found by grepping get/update/add_option and the OPTION_* constants). */
+    private const OWN_OPTIONS = array(
+        'wp_dynamic_tags_debug_log', 'wp_dynamic_tags_legacy_writes', 'wp_dynamic_tags_legacy_pending',
+        'wp_dynamic_tags_table_creation_error', 'wp_dynamic_tags_table_error', 'wp_dynamic_tags_activated',
+        'wp_dynamic_tags_activation_time', 'wp_dynamic_tags_table_integration_enabled',
+        'dt_group_colors', 'dt_categories_migrated', 'dt_total_exports', 'dt_total_imports', 'dt_last_export', 'dt_last_import',
+    );
+
+    private const OWN_TRANSIENTS = array('dt_api_0123456789abcdef', 'dt_export_0123456789abcdef', 'wp_dynamic_tags_data_restored', 'wp_dynamic_tags_deactivated');
+
     public function tear_down(): void
     {
         // uninstall.php dropped the table (DDL commits the open transaction, so this test's rows survive the usual
@@ -18,8 +28,11 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         if ($this->user) {
             wp_delete_user($this->user);
         }
-        foreach (['_transient_dtxtagxgroupsx_foreign', '_transient_dt_tag_groups_demo', 'wp_dynamic_tags_delete_on_uninstall', 'wp_dynamic_tags_last_uninstall', 'wp_dynamic_tags_data_preserved'] as $option) {
+        foreach (array_merge(['_transient_dtxtagxgroupsx_foreign', '_transient_dt_tag_groups_demo', 'dt_other_plugin_option', 'wp_dynamic_tags_delete_on_uninstall', 'wp_dynamic_tags_last_uninstall', 'wp_dynamic_tags_data_preserved'], self::OWN_OPTIONS) as $option) {
             delete_option($option);
+        }
+        foreach (self::OWN_TRANSIENTS as $transient) {
+            delete_transient($transient);
         }
         parent::tear_down();
     }
@@ -39,10 +52,29 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         // Ours
         update_option('_transient_dt_tag_groups_demo', 'drop');
 
+        // Everything else the plugin stores: its own options, the cached API answers and the one-off notices
+        $ours = self::OWN_OPTIONS;
+        foreach ($ours as $option) {
+            update_option($option, 'x');
+        }
+        foreach (self::OWN_TRANSIENTS as $transient) {
+            set_transient($transient, 'x', HOUR_IN_SECONDS);
+        }
+        update_option('dt_other_plugin_option', 'keep'); // same prefix, not ours
+
         update_option('wp_dynamic_tags_delete_on_uninstall', true);
         update_option('wp_dynamic_tags_table_version', '1.0.0');
         define('WP_UNINSTALL_PLUGIN', true);
         require dirname(__DIR__, 2) . '/uninstall.php';
+
+        foreach ($ours as $option) {
+            $this->assertFalse(get_option($option), $option . ' must not outlive an uninstall that deletes the data');
+        }
+        foreach (self::OWN_TRANSIENTS as $transient) {
+            $this->assertFalse(get_transient($transient), $transient . ' must not outlive an uninstall that deletes the data');
+        }
+        $this->assertSame('keep', get_option('dt_other_plugin_option'), 'another plugin\'s dt_ option survives');
+        delete_option('dt_other_plugin_option');
 
         $this->assertSame('', get_user_meta($user, 'dt_menu_consolidation_dismissed', true), 'our user meta is removed');
         $this->assertSame('keep', get_user_meta($user, 'dt_other_plugin_setting', true), 'another plugin\'s dt_ user meta survives');

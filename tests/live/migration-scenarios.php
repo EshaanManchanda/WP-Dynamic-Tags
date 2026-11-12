@@ -368,15 +368,13 @@ $rev = state()['revision'];
 $r   = $engine->run_batch(100);
 ok(!is_wp_error($r) && $r['done'] === true && state()['revision'] === $rev, 'a redundant call after completion changes nothing (it must not rewrite state and invalidate a verification)');
 
-// ================================================================== 10. compatibility facade
-section('10. The compatibility facade keeps old screens working and is no longer destructive');
-$mm = WP_Dynamic_Tags_Migration_Manager::get_instance();
-ok($mm->get_migration_status() === 'completed', 'get_migration_status() maps to the old vocabulary');
-$stats = $mm->get_migration_statistics();
-ok(isset($stats['total_posts'], $stats['total_table_records'], $stats['migration_status'], $stats['integrity_issues']), 'get_migration_statistics() keeps its keys');
+// ================================================================== 10. resetting is not destructive
+// (The old Migration Manager facade and the screens that called it were removed with the admin redesign.)
+section('10. Forgetting the migration state does not touch the data, and no request starts a migration');
+ok(state()['status'] === 'completed', 'the state before the reset says completed');
 $rows_before_reset = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$T}");
-$mm->reset_migration();
-ok((int) $wpdb->get_var("SELECT COUNT(*) FROM {$T}") === $rows_before_reset && $rows_before_reset > 0, 'reset_migration() no longer truncates the table (it only forgets progress)');
+$engine->reset_state();
+ok((int) $wpdb->get_var("SELECT COUNT(*) FROM {$T}") === $rows_before_reset && $rows_before_reset > 0, 'reset_state() does not truncate the table (it only forgets progress)');
 ok(strpos((string) file_get_contents(dirname(__DIR__, 2) . '/includes/class-table-manager.php'), 'migrate_posts_to_table') === false, 'the Table Manager no longer starts a migration on frontend requests');
 
 // ================================================================== put the site back

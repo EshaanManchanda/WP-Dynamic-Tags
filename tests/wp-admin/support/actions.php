@@ -11,27 +11,16 @@
  * listed here (or lists one that no longer exists), so a new endpoint cannot ship without a security decision.
  */
 return [
-    // --- Table Manager page (admin/table-manager-admin.php)
-    'dt_table_migrate'         => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_sync'            => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_reset'           => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
+    // --- Admin screens (admin/class-admin.php)
+    'dt_preview_tag'           => ['nonce' => 'dt_preview', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_table_statistics'      => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_create_table'          => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_check_table_health'    => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
+
+    // --- Import and export (includes/class-table-import-export.php)
     'dt_table_export'          => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_table_import'          => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
     'dt_table_validate_import' => ['nonce' => 'dt_table_manager', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-
-    // --- Table Manager facade (includes/class-table-manager.php): nobody creates this nonce today (S6)
-    'dt_table_create_tag'      => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_update_tag'      => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_delete_tag'      => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_get_tags'        => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-    'dt_table_bulk_action'     => ['nonce' => 'wp_dynamic_tags_nonce', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],
-
-    // --- Old import-export (replaced in Phase 7)
-    'dt_export_json'           => ['nonce' => 'dt_export', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'stream'],
-    'dt_export_csv'            => ['nonce' => 'dt_export', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'stream'],
 
     // --- Tag groups
     'dt_create_group'          => ['nonce' => 'dt_group_operation', 'key' => 'nonce', 'cap' => 'manage_options', 'kind' => 'json'],

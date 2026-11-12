@@ -161,6 +161,24 @@ class WP_Dynamic_Tags_Placeholders {
     }
     
     /**
+     * The tokens an author can use, for the placeholder helper of the tag form: {key} for the simple ones and {prefix:...}
+     * for the ones that take an argument. Names only, no callback is run.
+     *
+     * @return string[]
+     */
+    public function get_placeholder_names() {
+        $names = array();
+        foreach (array_keys($this->placeholders) as $key) {
+            $names[] = '{' . $key . '}';
+        }
+        foreach (array_keys($this->parameterized_placeholders) as $prefix) {
+            $names[] = '{' . $prefix . ':...}';
+        }
+        sort($names);
+        return $names;
+    }
+
+    /**
      * Register a placeholder
      */
     public function register_placeholder($key, $callback) {

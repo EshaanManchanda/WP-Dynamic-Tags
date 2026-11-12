@@ -11,8 +11,6 @@ if (!defined('ABSPATH')) {
 
 class WP_Dynamic_Tags_Settings_Page {
 
-    private $post_type = 'dynamic_tag';
-
     public function __construct() {
         // Add admin menu
         add_action('admin_menu', array($this, 'add_settings_menu'), 25);
@@ -26,7 +24,7 @@ class WP_Dynamic_Tags_Settings_Page {
      */
     public function add_settings_menu() {
         add_submenu_page(
-            'edit.php?post_type=' . $this->post_type,
+            WP_Dynamic_Tags_Admin::MENU,
             __('Settings', 'wp-dynamic-tags'),
             __('Settings', 'wp-dynamic-tags'),
             'manage_options',
@@ -408,7 +406,7 @@ class WP_Dynamic_Tags_Settings_Page {
                             <?php esc_html_e('Before uninstalling or making major changes, you can export your tags:', 'wp-dynamic-tags'); ?>
                         </p>
                         <p>
-                            <a href="<?php echo esc_url(admin_url('edit.php?post_type=dynamic_tag&page=dt-import-export')); ?>"
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=dt-import-export')); ?>"
                                class="button button-primary">
                                 <?php esc_html_e('Go to Import/Export', 'wp-dynamic-tags'); ?>
                             </a>
