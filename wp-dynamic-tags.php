@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Dynamic Tags
  * Plugin URI: https://github.com/EshaanManchanda/WP-Dynamic-Tags
- * Description: Create and manage unlimited dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders.
+ * Description: Create dynamic tags and use them as shortcodes in WordPress, Elementor and other page builders. Free for 15 tags you create yourself; Paid is unlimited.
  * Version: 3.0.0
  * Author: Eshaan Manchanda
  * Author URI: https://eshaanportfolio.vercel.app/
@@ -11,7 +11,6 @@
  * Text Domain: wp-dynamic-tags
  * Domain Path: /languages
  * Requires at least: 7.0
- * Tested up to: 7.1
  * Requires PHP: 8.2
  */
 

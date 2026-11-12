@@ -130,7 +130,7 @@ If a tag uses the Paid `{api:URL}` placeholder, the plugin fetches that URL (pub
 == Upgrade Notice ==
 
 = 3.1.0 =
-Back up your database first, then open Dynamic Tags > Tools to move tags that older versions stored as posts into the table (dry run, migrate, verify). Old posts are never deleted without your confirmation. Output of some tags changes in documented ways: see docs/RELEASE-NOTES-3.1.0.md. This version adds the Free and Paid plans: on the Free plan the Paid placeholders, `[dt_loop]`, `[dt_template]` and field conditions render nothing, and a site can create 15 tags by hand (tags created by other plugins and all existing tags are unaffected). Check Dynamic Tags > All Tags for the "Paid feature" labels before you update a live site that uses them.
+Back up first, then run Dynamic Tags > Tools to move tags stored as posts into the table (dry run, migrate, verify; nothing is deleted without your confirmation). New Free and Paid plans: Paid features render nothing on Free, and Free allows 15 tags you create. See docs/RELEASE-NOTES-3.1.0.md.
 
 = 3.0.0 =
 Adds a large set of new placeholder types and shortcodes; fully backward compatible with existing tags. If you use a persistent object cache (Redis/Memcached), this release also fixes a bug where editing a tag could serve stale data until the cache naturally expired.
