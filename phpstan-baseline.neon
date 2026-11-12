@@ -1,11 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Parameter \\#1 \\$text of function esc_html expects string, int\\<0, max\\> given\\.$#"
-			count: 1
-			path: admin/settings-page.php
-
-		-
 			message: "#^Property WP_Dynamic_Tags_Table_Manager\\:\\:\\$cache_expiry is never read, only written\\.$#"
 			count: 1
 			path: includes/class-table-manager.php

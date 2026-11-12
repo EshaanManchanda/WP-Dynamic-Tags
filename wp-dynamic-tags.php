@@ -1127,6 +1127,11 @@ class WP_Dynamic_Tags_Plugin
             WP_Dynamic_Tags_Cache_Purge::register();
         }
 
+        // The Settings page tells the site owner how many tags the site can carry (pure: reads nothing, writes nothing).
+        if (file_exists($includes_dir . 'class-capacity-advisor.php')) {
+            require_once $includes_dir . 'class-capacity-advisor.php';
+        }
+
         if (file_exists($includes_dir . 'class-table-manager.php')) {
             require_once $includes_dir . 'class-table-manager.php';
         }

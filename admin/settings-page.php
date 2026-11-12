@@ -187,6 +187,186 @@ class WP_Dynamic_Tags_Settings_Page {
     }
 
     /**
+     * A two-column table of facts.
+     *
+     * @param array<int,array{0:string,1:string}> $rows Label and value; the value is already escaped.
+     */
+    private function facts_table(array $rows) {
+        echo '<table class="widefat striped dt-facts"><tbody>';
+        foreach ($rows as $row) {
+            echo '<tr><th scope="row">' . esc_html($row[0]) . '</th><td>' . $row[1] . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every caller passes a value that is already escaped
+        }
+        echo '</tbody></table>';
+    }
+
+    /**
+     * "Tags and your server": how tags work, what a lot of tags cost, where this site stands (live numbers) and what each kind
+     * of hosting carries. The figures live in WP_Dynamic_Tags_Capacity_Advisor (measured in Phase 9c, docs/BUG-REGISTER.md).
+     */
+    private function render_capacity_section() {
+        $db = WP_Dynamic_Tags_Database_Manager::get_instance();
+        $processor = WP_Dynamic_Tags_Table_Shortcode_Processor::get_instance();
+
+        $total = (int) $db->get_tags_count(array('status' => ''));
+        $active = (int) $db->get_tags_count(array('status' => 'active'));
+        $inactive = max(0, $total - $active);
+
+        $groups = get_terms(array('taxonomy' => 'tag_groups', 'hide_empty' => false));
+        $groups_count = is_array($groups) ? count($groups) : 0;
+
+        $stats = $processor->get_performance_stats();
+        $register_ms = isset($stats['shortcode_registration']['execution_time']) ? (float) $stats['shortcode_registration']['execution_time'] * 1000 : null;
+
+        // WordPress raises this limit inside wp-admin, so what visitors get can be lower: the caption below says so.
+        $limit = ini_get('memory_limit');
+        $limit_bytes = (is_string($limit) && $limit !== '') ? (int) wp_convert_hr_to_bytes($limit) : 0;
+        if ($limit_bytes === -1) {
+            $limit_label = __('Unlimited', 'wp-dynamic-tags');
+        } elseif ($limit_bytes > 0) {
+            $limit_label = (string) size_format($limit_bytes);
+        } else {
+            $limit_label = __('Unknown', 'wp-dynamic-tags');
+        }
+
+        // A cache run by the host (not a plugin) cannot be seen from here: sites with one can return true from the filter.
+        $page_cache = (bool) apply_filters('dt_page_cache_active', (defined('WP_CACHE') && WP_CACHE) || defined('LSCWP_V') || defined('WP_ROCKET_VERSION'));
+
+        $assessment = WP_Dynamic_Tags_Capacity_Advisor::assess($active, $limit_bytes, $page_cache);
+        $estimate = WP_Dynamic_Tags_Capacity_Advisor::estimate($active);
+        $safe = number_format_i18n($assessment['safe_max']);
+
+        $badges = array(
+            'ok'    => array('dt-badge-on', __('Fine', 'wp-dynamic-tags')),
+            'watch' => array('dt-badge-warn', __('Watch', 'wp-dynamic-tags')),
+            'high'  => array('dt-badge-bad', __('Too many', 'wp-dynamic-tags')),
+        );
+        $badge = $badges[$assessment['level']];
+
+        /* translators: %s: number of active tags */
+        $advice = sprintf(_n('You have %s active tag.', 'You have %s active tags.', $active, 'wp-dynamic-tags'), number_format_i18n($active)) . ' ';
+        if ($assessment['reason'] === 'memory') {
+            /* translators: 1: memory the tags take in MB, 2: the PHP memory limit */
+            $advice .= sprintf(__('The tags take about %1$s MB of every request, a quarter or more of your PHP memory limit (%2$s). Raise the memory limit or deactivate tags you do not use.', 'wp-dynamic-tags'), number_format_i18n($estimate['memory_mb'], 1), $limit_label);
+        } elseif ($assessment['level'] === 'high') {
+            $advice .= __('That will make every page that is not served from a page cache, and the admin, noticeably slower, and a small host can run out of memory. Deactivate tags you do not use, or move the site to a stronger server.', 'wp-dynamic-tags');
+        } elseif ($assessment['level'] === 'watch') {
+            /* translators: 1: the recommended maximum, 2: extra milliseconds, 3: extra megabytes */
+            $advice .= sprintf(__('That is above the recommended maximum of %1$s for a small host. Expect about %2$s ms and %3$s MB extra on every page that is not served from a page cache. Deactivate tags you do not use, or put a page cache in front of the site.', 'wp-dynamic-tags'), $safe, number_format_i18n($estimate['extra_ms']), number_format_i18n($estimate['memory_mb'], 1));
+        } else {
+            /* translators: %s: the recommended maximum number of tags */
+            $advice .= sprintf(__('That is within the recommended maximum of %s for a small host.', 'wp-dynamic-tags'), $safe);
+            if (!$page_cache) {
+                /* translators: %s: the recommended maximum with a page cache */
+                $advice .= ' ' . sprintf(__('With a page cache in front of the site the maximum is %s.', 'wp-dynamic-tags'), number_format_i18n(WP_Dynamic_Tags_Capacity_Advisor::SAFE_MAX_CACHED));
+            }
+        }
+
+        if ($estimate['memory_mb'] < 0.1 && $estimate['extra_ms'] < 1) {
+            $adds = __('Next to nothing (under 0.1 MB and 1 ms per uncached page)', 'wp-dynamic-tags');
+        } else {
+            /* translators: 1: megabytes, 2: milliseconds */
+            $adds = sprintf(__('about %1$s MB and %2$s ms per uncached page', 'wp-dynamic-tags'), number_format_i18n($estimate['memory_mb'], 1), number_format_i18n($estimate['extra_ms']));
+        }
+
+        $kinds = array(
+            'entry'     => __('Entry shared hosting (about 1 CPU core, 1 GB of RAM)', 'wp-dynamic-tags'),
+            'mid'       => __('Mid-range shared or cloud hosting (2 or more cores, 2 to 4 GB of RAM)', 'wp-dynamic-tags'),
+            'vps'       => __('VPS or managed WordPress hosting (4 GB of RAM or more, PHP opcache, an object cache)', 'wp-dynamic-tags'),
+            'dedicated' => __('Large dedicated server', 'wp-dynamic-tags'),
+        );
+        $number = static function ($value) {
+            return $value === null ? '&mdash;' : esc_html(number_format_i18n((int) $value));
+        };
+        ?>
+        <div class="postbox dt-capacity">
+            <div class="inside">
+                <h2><?php esc_html_e('Tags and your server', 'wp-dynamic-tags'); ?></h2>
+
+                <h3><?php esc_html_e('How Dynamic Tags works', 'wp-dynamic-tags'); ?></h3>
+                <ul>
+                    <li><?php esc_html_e('Every tag is one row in the plugin\'s database table: a name, a shortcode, the content and a status.', 'wp-dynamic-tags'); ?></li>
+                    <li><?php esc_html_e('Every active tag is registered as a shortcode, for example [your_tag], on every request: front end, admin, AJAX, cron and REST. Inactive tags are not loaded.', 'wp-dynamic-tags'); ?></li>
+                    <li><?php esc_html_e('When a page is shown, WordPress runs the shortcode and the plugin fills in placeholders such as {site_name} or {post_title} for that page and that visitor.', 'wp-dynamic-tags'); ?></li>
+                    <li><?php esc_html_e('Showing a tag never writes to the database. Saving a tag does, and the change appears on the whole site at once: the supported page-cache plugins are cleared automatically.', 'wp-dynamic-tags'); ?></li>
+                </ul>
+
+                <h3><?php esc_html_e('Why a lot of tags can slow your site down', 'wp-dynamic-tags'); ?></h3>
+                <p><?php esc_html_e('Because every active tag is registered on every request, each tag costs a little memory and time on every page that is not served from a page cache. WordPress also compares every registered shortcode name each time it processes content, so the cost grows with the number of tags. A few hundred tags are not noticeable; thousands are.', 'wp-dynamic-tags'); ?></p>
+                <table class="widefat striped dt-measured">
+                    <caption><?php esc_html_e('Measured on a development PC (PHP 8.2, MySQL 8.4, no page cache). Shared hosting can be about twice as slow.', 'wp-dynamic-tags'); ?></caption>
+                    <thead>
+                        <tr>
+                            <th scope="col"><?php esc_html_e('Active tags', 'wp-dynamic-tags'); ?></th>
+                            <th scope="col"><?php esc_html_e('Extra memory per request', 'wp-dynamic-tags'); ?></th>
+                            <th scope="col"><?php esc_html_e('Extra time per uncached page', 'wp-dynamic-tags'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach (WP_Dynamic_Tags_Capacity_Advisor::measured() as $row) : ?>
+                        <tr>
+                            <td><?php echo esc_html(number_format_i18n($row['tags'])); ?></td>
+                            <td><?php /* translators: %s: megabytes */ echo esc_html(sprintf(__('%s MB', 'wp-dynamic-tags'), number_format_i18n($row['memory_mb']))); ?></td>
+                            <td><?php /* translators: %s: milliseconds */ echo esc_html(sprintf(__('%s ms', 'wp-dynamic-tags'), number_format_i18n($row['extra_ms']))); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <h3><?php esc_html_e('Your site now', 'wp-dynamic-tags'); ?></h3>
+                <?php
+                $this->facts_table(array(
+                    array(__('Tags', 'wp-dynamic-tags'), esc_html(sprintf(/* translators: 1: all tags, 2: active tags, 3: inactive tags */ __('%1$s (%2$s active, %3$s inactive)', 'wp-dynamic-tags'), number_format_i18n($total), number_format_i18n($active), number_format_i18n($inactive)))),
+                    array(__('Tag groups', 'wp-dynamic-tags'), esc_html(number_format_i18n($groups_count))),
+                    array(__('Shortcodes registered in this request', 'wp-dynamic-tags'), esc_html(number_format_i18n(count($processor->get_registered_shortcodes())))),
+                    array(__('Time to load and register the tags in this request', 'wp-dynamic-tags'), $register_ms === null ? '&mdash;' : esc_html(sprintf(/* translators: %s: milliseconds */ __('%s ms', 'wp-dynamic-tags'), number_format_i18n($register_ms, 1)))),
+                    array(__('What your active tags add (estimate)', 'wp-dynamic-tags'), esc_html($adds)),
+                    array(__('PHP version', 'wp-dynamic-tags'), esc_html(PHP_VERSION)),
+                    array(__('PHP memory limit', 'wp-dynamic-tags'), esc_html($limit_label)),
+                    array(__('Page cache', 'wp-dynamic-tags'), esc_html($page_cache ? __('Detected', 'wp-dynamic-tags') : __('Not detected (a cache run by your host cannot be seen from here)', 'wp-dynamic-tags'))),
+                    array(__('Status', 'wp-dynamic-tags'), '<span class="dt-badge ' . esc_attr($badge[0]) . '">' . esc_html($badge[1]) . '</span> ' . esc_html($advice)),
+                ));
+                ?>
+                <p class="description"><?php esc_html_e('WordPress raises the PHP memory limit inside wp-admin, so the limit your visitors get can be lower than the one shown here.', 'wp-dynamic-tags'); ?></p>
+
+                <h3><?php esc_html_e('Recommended tag counts by hosting type', 'wp-dynamic-tags'); ?></h3>
+                <table class="widefat striped dt-tiers">
+                    <thead>
+                        <tr>
+                            <th scope="col"><?php esc_html_e('Hosting', 'wp-dynamic-tags'); ?></th>
+                            <th scope="col"><?php esc_html_e('Comfortable', 'wp-dynamic-tags'); ?></th>
+                            <th scope="col"><?php esc_html_e('Recommended maximum', 'wp-dynamic-tags'); ?></th>
+                            <th scope="col"><?php esc_html_e('With a page cache', 'wp-dynamic-tags'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach (WP_Dynamic_Tags_Capacity_Advisor::tiers() as $key => $tier) : ?>
+                        <tr>
+                            <th scope="row"><?php echo esc_html($kinds[$key]); ?></th>
+                            <td><?php echo $number($tier['comfortable']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the closure ?></td>
+                            <td><?php echo $number($tier['max']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the closure ?></td>
+                            <td><?php echo $number($tier['max_cached']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the closure ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <p class="description"><?php esc_html_e('The first row follows from the limits of a real shared-hosting plan (1 CPU core, 1 GB of RAM) and the measurements above; the other rows are estimates scaled from it. A table of 50,000 tags was imported, listed, searched and exported without errors in testing: that is a stress result, not a support claim.', 'wp-dynamic-tags'); ?></p>
+
+                <h3><?php esc_html_e('What you can do', 'wp-dynamic-tags'); ?></h3>
+                <ul>
+                    <li><?php esc_html_e('Deactivate or delete tags you no longer use: inactive tags are not loaded.', 'wp-dynamic-tags'); ?></li>
+                    <li><?php esc_html_e('Use a page cache, so visitors do not run PHP for every page view. Changing a tag clears the supported caches automatically.', 'wp-dynamic-tags'); ?></li>
+                    <li><?php
+                    /* translators: %s: the name of a filter, in code tags */
+                    printf(esc_html__('On a site with a very large number of tags, developers can stop tags being registered on REST requests with the filter %s.', 'wp-dynamic-tags'), '<code>dt_register_shortcodes_on_rest</code>');
+                    ?></li>
+                    <li><?php esc_html_e('An import is limited to 5,000 rows at a time by default. Check the numbers above before importing thousands of tags.', 'wp-dynamic-tags'); ?></li>
+                </ul>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Settings page content
      */
     public function settings_page() {
@@ -199,28 +379,8 @@ class WP_Dynamic_Tags_Settings_Page {
             );
         }
 
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'dynamic_tags';
-
-        // Get statistics
-        $tags_count = wp_count_posts('dynamic_tag');
-        $published_tags = isset($tags_count->publish) ? $tags_count->publish : 0;
-
-        $groups = get_terms(array(
-            'taxonomy' => 'tag_groups',
-            'hide_empty' => false
-        ));
-        $groups_count = is_array($groups) ? count($groups) : 0;
-
-        $table_tags_count = 0;
-        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) === $table_name) {
-            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is the plugin's own (prefix + dynamic_tags) or a core table from $wpdb; every value goes through prepare()
-            $table_tags_count = $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
-            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        }
-
         ?>
-        <div class="wrap">
+        <div class="wrap dt-wrap">
             <h1><?php esc_html_e('WP Dynamic Tags - Settings', 'wp-dynamic-tags'); ?></h1>
 
             <?php settings_errors('wp_dynamic_tags_settings'); ?>
@@ -236,7 +396,7 @@ class WP_Dynamic_Tags_Settings_Page {
                 ?>
                 <p>
                     <strong><?php esc_html_e('Current plan:', 'wp-dynamic-tags'); ?></strong>
-                    <span id="dt-plan-badge" style="padding:2px 10px;border-radius:3px;color:#fff;background:<?php echo $is_paid ? '#00a32a' : '#787c82'; ?>;">
+                    <span id="dt-plan-badge" style="padding:2px 10px;border-radius:3px;color:#fff;background:<?php echo $is_paid ? '#007017' : '#646970'; ?>;">
                         <?php echo esc_html($plan_label); ?>
                     </span>
                     <?php if ($is_paid && $expiry) : ?>
@@ -324,24 +484,8 @@ class WP_Dynamic_Tags_Settings_Page {
             })(jQuery);
             </script>
 
-            <!-- Current Data Status -->
-            <div class="notice notice-info" style="padding: 15px; margin: 20px 0;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Current Data Status', 'wp-dynamic-tags'); ?></h3>
-                <table class="widefat" style="max-width: 600px;">
-                    <tr>
-                        <td><strong><?php esc_html_e('Published Tags (Posts):', 'wp-dynamic-tags'); ?></strong></td>
-                        <td><?php echo esc_html($published_tags); ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong><?php esc_html_e('Tags in Database Table:', 'wp-dynamic-tags'); ?></strong></td>
-                        <td><?php echo esc_html($table_tags_count); ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong><?php esc_html_e('Tag Groups:', 'wp-dynamic-tags'); ?></strong></td>
-                        <td><?php echo esc_html($groups_count); ?></td>
-                    </tr>
-                </table>
-            </div>
+            <!-- How tags work, what many tags cost, where this site stands -->
+            <?php $this->render_capacity_section(); ?>
 
             <!-- Settings Form -->
             <form method="post" action="options.php">
