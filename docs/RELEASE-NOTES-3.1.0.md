@@ -192,14 +192,17 @@ The full register, with a failing test for each item that could be tested, is `d
   breaks and the importer could not read a spreadsheet's file (N2); SQL could be imported through a
   parser that cut content at the first comma (N1); a copy of every tag stayed in `wp_options` after an
   uninstall that was asked to delete the data, and on a network only one site was cleaned.
-* **Tests:** the root suite (159 tests, no WordPress), the WordPress suites (front 217, admin 274, on 7.0 and
+* **Tests:** the root suite (191 tests, no WordPress), the WordPress suites (front 217, admin 278, on 7.0 and
   7.1.4 and as a network), an exposure matrix (six roles across query and meta tokens, `[dt_template]`, `[dt_loop]`, REST-rendered
   content and password-protected posts; every AJAX action for subscriber, contributor, author, editor and a
   visitor), the Free and Paid plans (every Paid gate on Free and on Paid, the limit and its mark, activation and
   the license server with a mocked HTTP layer, the admin notices), a golden master of 396 renders compared with the
-  recorded 3.0.0 output (run as the Paid plan, which 3.0.0 effectively was), 80 live migration checks, a real-HTTP
-  end-to-end pass over six roles (334 checks) and over the plan (27 checks), a performance probe, and hand-written
-  negative controls (deliberate defects in a copy of the plugin that the tests must catch; all 59 of the plan's are caught).
+  recorded 3.0.0 output (run as the Paid plan, which 3.0.0 effectively was), 80 live migration checks, a recovery drill on
+  a clone of real data (backup, an injected crash, restore, cleanup: 42 and 35 checks), a real-HTTP end-to-end pass over six
+  roles (334 checks) and over the plan (28 checks), a real-browser accessibility pass (Lighthouse 95 to 99 on every screen,
+  what is left is WordPress core's), fuzzing of the parsers and the plan helpers, a performance probe, and hand-written
+  negative controls (deliberate defects in a copy of the plugin that the tests must catch: 62 against the WordPress suites
+  and 73 against the unit suite, all caught).
 
 ## Privacy
 
