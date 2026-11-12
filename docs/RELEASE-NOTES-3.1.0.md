@@ -195,7 +195,7 @@ The full register, with a failing test for each item that could be tested, is `d
   breaks and the importer could not read a spreadsheet's file (N2); SQL could be imported through a
   parser that cut content at the first comma (N1); a copy of every tag stayed in `wp_options` after an
   uninstall that was asked to delete the data, and on a network only one site was cleaned.
-* **Tests:** the root suite (191 tests, no WordPress), the WordPress suites (front 217, admin 278, on 7.0 and
+* **Tests:** the root suite (191 tests, no WordPress), the WordPress suites (front 218, admin 278, on 7.0 and
   7.1.4 and as a network), an exposure matrix (six roles across query and meta tokens, `[dt_template]`, `[dt_loop]`, REST-rendered
   content and password-protected posts; every AJAX action for subscriber, contributor, author, editor and a
   visitor), the Free and Paid plans (every Paid gate on Free and on Paid, the limit and its mark, activation and
