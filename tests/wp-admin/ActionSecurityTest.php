@@ -166,6 +166,37 @@ class DT_Action_Security_Test extends WP_Ajax_UnitTestCase
         $this->assertTrue($this->is_denied($r), "$action must deny a contributor; got " . $this->describe($r));
     }
 
+    /** @return array<string, array{0: string, 1: string}> every action x the remaining roles ('' is a logged-out visitor) */
+    public static function json_actions_by_other_role(): array
+    {
+        $out = [];
+        foreach (self::json_actions() as $label => [$action]) {
+            foreach (['author', 'editor', ''] as $role) {
+                $out[$label . ' / ' . ($role === '' ? 'visitor' : $role)] = [$action, $role];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Gate 8 / A5: an author and an editor hold the post-editing capabilities and a visitor holds none; all three are
+     * denied every tag action, even with a nonce made for their own session.
+     *
+     * @dataProvider json_actions_by_other_role
+     */
+    public function test_denies_an_author_an_editor_and_a_visitor_even_with_a_valid_nonce(string $action, string $role): void
+    {
+        $meta = self::$registry[$action];
+        if ($role === '') {
+            wp_set_current_user(0);
+        } else {
+            $this->as_role($role);
+        }
+        $_POST[$meta['key']] = wp_create_nonce($meta['nonce']);
+        $r = $this->call($action);
+        $this->assertTrue($this->is_denied($r), "$action must deny " . ($role === '' ? 'a visitor' : "an $role") . '; got ' . $this->describe($r));
+    }
+
     /**
      * Every nonce a handler verifies must be created by some code in the plugin, otherwise the endpoint can never be
      * called by its own UI (S6). Static check: the nonce action literal must sit in a file that also creates nonces.

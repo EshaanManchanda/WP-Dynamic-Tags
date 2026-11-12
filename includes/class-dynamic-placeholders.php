@@ -1124,7 +1124,12 @@ class WP_Dynamic_Tags_Placeholders {
 
     private function get_post_content() {
         global $post;
-        return $post ? $post->post_content : '';
+        // WordPress withholds a password-protected post's body until the password is entered (an administrator included);
+        // a tag in a widget or template part on that page must not print it either (A5).
+        if (!$post || post_password_required($post)) {
+            return '';
+        }
+        return $post->post_content;
     }
 
     private function get_post_status() {
