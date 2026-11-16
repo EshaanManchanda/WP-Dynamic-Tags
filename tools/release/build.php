@@ -95,7 +95,9 @@ $zip_path = rtrim($out, '/\\') . DIRECTORY_SEPARATOR . "$name.zip";
 if (is_file($zip_path)) {
     unlink($zip_path); // never append to, or silently keep, an earlier build
 }
-[$code, , $err] = $git(array('archive', '--format=zip', '--prefix=wp-dynamic-tags/', '-o', $zip_path, $commit));
+// core.autocrlf=false: git archive otherwise converts text files to this machine's line endings (CRLF on a Windows checkout with
+// autocrlf=true), and the same commit would give a different ZIP here than on the Linux runner that builds the release.
+[$code, , $err] = $git(array('-c', 'core.autocrlf=false', '-c', 'core.eol=lf', 'archive', '--format=zip', '--prefix=wp-dynamic-tags/', '-o', $zip_path, $commit));
 if ($code !== 0 || !is_file($zip_path)) {
     $fail("git archive failed: $err");
 }

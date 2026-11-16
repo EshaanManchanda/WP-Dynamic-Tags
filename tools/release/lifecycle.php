@@ -125,5 +125,59 @@ $step('Run uninstall.php', array('plugin', 'uninstall', $slug, '--skip-delete'))
 $checks('After a delete-data uninstall', array('gone'));
 $wp(array('plugin', 'delete', $slug));
 
+// ---------------------------------------------------------------- the update itself, done by WordPress's own upgrader
+// A real earlier release cannot be used (3.1.0 had no updater, and no earlier build exists for a first release), so the previous
+// version is this very build with its version lowered by one step: it can update itself, which is the point.
+$lowered = static function (string $version): string {
+    [$major, $minor, $patch] = array_map('intval', explode('.', $version));
+    if ($patch > 0) {
+        return "$major.$minor." . ($patch - 1);
+    }
+    return $minor > 0 ? "$major." . ($minor - 1) . '.0' : max(0, $major - 1) . '.0.0';
+};
+$previous = $lowered($v);
+$old_zip  = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'dt-previous-' . getmypid() . '.zip';
+register_shutdown_function(static function () use ($old_zip): void {
+    if (is_file($old_zip)) {
+        unlink($old_zip);
+    }
+});
+$made = copy($opts['zip'], $old_zip);
+$zip  = new ZipArchive();
+if (!$made || $zip->open($old_zip) !== true) {
+    fwrite(STDERR, "cannot make the previous-version ZIP\n");
+    exit(2);
+}
+$main = (string) $zip->getFromName('wp-dynamic-tags/wp-dynamic-tags.php');
+$main = preg_replace('/^( \* Version:[ \t]*)' . preg_quote($v, '/') . '(?=[ \t\r]*$)/m', '${1}' . $previous, $main, 1, $n1);
+$main = preg_replace("/(define\\('WP_DYNAMIC_TAGS_VERSION',\\s*')" . preg_quote($v, '/') . "('\\))/", '${1}' . $previous . '${2}', (string) $main, 1, $n2);
+if ($n1 !== 1 || $n2 !== 1 || !$zip->addFromString('wp-dynamic-tags/wp-dynamic-tags.php', (string) $main) || !$zip->close()) {
+    fwrite(STDERR, "cannot lower the version in the previous-version ZIP\n");
+    exit(2);
+}
+
+$build = realpath($opts['build']);
+$step("Install the PREVIOUS version ($previous: this build with its version lowered)", array('plugin', 'install', $old_zip, '--force', '--activate'));
+$checks('Tags for the update scenarios', array('seed'));
+$checks("UPDATE $previous to $v, by WordPress's own upgrader", array('upgrade', $v, $build, 'ok', $slug));
+$checks('The updated plugin renders the tags it already had', array('render'));
+$step("Back to $previous", array('plugin', 'install', $old_zip, '--force', '--activate'));
+$checks('UPDATE with a ZIP that was changed after the build', array('upgrade', $v, $build, 'tampered', $slug));
+
+// A copy that was not installed from the release ZIP lives in another folder (GitHub's "Source code" ZIP, a renamed folder).
+$step('Deactivate, and move the plugin to a folder with another name', array('plugin', 'deactivate', $slug));
+[, $plugins_dir] = $wp(array('eval', 'echo WP_PLUGIN_DIR;'));
+$plugins_dir     = $value($plugins_dir);
+if (!@rename("$plugins_dir/$slug", "$plugins_dir/dt-renamed")) {
+    echo "  FAIL  could not rename the plugin folder\n";
+    $failed++;
+}
+$step('Activate it there', array('plugin', 'activate', 'dt-renamed'));
+$checks('UPDATE of the copy installed in dt-renamed/', array('upgrade', $v, $build, 'ok', 'dt-renamed'));
+
+$wp(array('option', 'update', 'wp_dynamic_tags_delete_on_uninstall', '1'));
+$wp(array('plugin', 'deactivate', 'dt-renamed'));
+$wp(array('plugin', 'uninstall', 'dt-renamed'));
+
 echo "\n" . ($failed ? "$failed step(s) FAILED\n" : "lifecycle passed\n");
 exit($failed ? 1 : 0);

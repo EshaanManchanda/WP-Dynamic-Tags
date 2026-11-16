@@ -10,7 +10,10 @@
  *   render                        the tags render, [dt_group] and [dt_count] work, a Paid token renders nothing on Free
  *   paid                          (a later request, after the plan was changed) the same Paid token shows its value; no tag limit
  *   update  <x.y.z> <build dir>   the updater accepts the REAL manifest and ZIP the build produced, and refuses a tampered ZIP
- *   kept                          after an uninstall that keeps the data: tags and groups are all still there
+ *   upgrade <x.y.z> <build dir> <ok|tampered> <folder>
+ *                                 WordPress's own upgrader updates an install of the previous version, in the folder it lives in,
+ *                                 keeping the tags and the activation; a changed ZIP is refused and nothing changes
+ *   kept                         after an uninstall that keeps the data: tags and groups are all still there
  *   gone                          after an uninstall that deletes the data: no table, no options, no groups; the private backup stays
  *
  * Exit code 1 if any check fails. Needs a disposable site: it creates and deletes tags and changes the plan.
@@ -36,6 +39,50 @@ $count = static function (string $sql) use ($wpdb): int {
 $plugin_file = 'wp-dynamic-tags/wp-dynamic-tags.php';
 $manager     = static function () {
     return WP_Dynamic_Tags_Table_Manager::get_instance();
+};
+
+/**
+ * Replaces GitHub (and WordPress.org's update check) with the files the build wrote; nothing leaves this machine.
+ *
+ * @param string $zip_bytes What the mock serves for the release ZIP; passed by reference so a phase can tamper with it.
+ * @return array|null The manifest, or null when the build output is incomplete.
+ */
+$serve_github = static function (string $version, string $dir, string &$zip_bytes): ?array {
+    $zip = "$dir/wp-dynamic-tags-$version.zip";
+    $man = "$dir/wp-dynamic-tags-$version.manifest.json";
+    if (!is_file($zip) || !is_file($man)) {
+        return null;
+    }
+    $manifest  = json_decode((string) file_get_contents($man), true);
+    $tag       = 'v' . $version;
+    $base      = "https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/download/$tag/";
+    $release   = array(
+        'tag_name' => $tag, 'draft' => false, 'prerelease' => false, 'body' => "Release $version.", 'published_at' => '2026-11-20T10:00:00Z',
+        'html_url' => "https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/tag/$tag",
+        'assets'   => array(
+            array('name' => "wp-dynamic-tags-$version.zip", 'size' => filesize($zip), 'state' => 'uploaded', 'browser_download_url' => $base . "wp-dynamic-tags-$version.zip"),
+            array('name' => "wp-dynamic-tags-$version.manifest.json", 'size' => filesize($man), 'state' => 'uploaded', 'browser_download_url' => $base . "wp-dynamic-tags-$version.manifest.json"),
+        ),
+    );
+    $zip_bytes = (string) file_get_contents($zip);
+    add_filter('pre_http_request', static function ($pre, $a, $url) use (&$zip_bytes, $release, $man, $base, $version) {
+        $ok = static fn(string $body) => array('headers' => array(), 'body' => $body, 'response' => array('code' => 200, 'message' => 'OK'), 'cookies' => array(), 'filename' => $a['filename'] ?? null);
+        if ($url === WP_Dynamic_Tags_Updater::API_URL) {
+            return $ok(wp_json_encode($release));
+        }
+        if ($url === $base . "wp-dynamic-tags-$version.manifest.json") {
+            return $ok((string) file_get_contents($man));
+        }
+        if ($url === $base . "wp-dynamic-tags-$version.zip" && !empty($a['filename'])) {
+            file_put_contents($a['filename'], $zip_bytes);
+            return $ok('');
+        }
+        if (strpos($url, 'api.wordpress.org/plugins/update-check') !== false) { // WordPress's own check: nothing else to update
+            return $ok(wp_json_encode(array('plugins' => array(), 'translations' => array(), 'no_update' => array())));
+        }
+        return new WP_Error('unexpected', "unexpected request to $url");
+    }, 10, 3);
+    return is_array($manifest) ? $manifest : null;
 };
 
 switch ($phase) {
@@ -108,40 +155,14 @@ switch ($phase) {
     case 'update':
         $version = (string) ($args[1] ?? '');
         $dir     = rtrim((string) ($args[2] ?? ''), '/\\');
-        $zip     = "$dir/wp-dynamic-tags-$version.zip";
-        $man     = "$dir/wp-dynamic-tags-$version.manifest.json";
-        $t(is_file($zip) && is_file($man), 'the build output has the ZIP and its manifest');
-        if (!is_file($zip) || !is_file($man)) {
+        $zip_bytes = '';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        $manifest = $serve_github($version, $dir, $zip_bytes);
+        $t($manifest !== null, 'the build output has the ZIP and its manifest');
+        if ($manifest === null) {
             break;
         }
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        $manifest = json_decode((string) file_get_contents($man), true);
-        $tag      = 'v' . $version;
-        $base     = "https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/download/$tag/";
-        $release  = array(
-            'tag_name' => $tag, 'draft' => false, 'prerelease' => false, 'body' => "Release $version.", 'published_at' => '2026-11-20T10:00:00Z',
-            'html_url' => "https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/tag/$tag",
-            'assets'   => array(
-                array('name' => "wp-dynamic-tags-$version.zip", 'size' => filesize($zip), 'state' => 'uploaded', 'browser_download_url' => $base . "wp-dynamic-tags-$version.zip"),
-                array('name' => "wp-dynamic-tags-$version.manifest.json", 'size' => filesize($man), 'state' => 'uploaded', 'browser_download_url' => $base . "wp-dynamic-tags-$version.manifest.json"),
-            ),
-        );
-        $zip_bytes = (string) file_get_contents($zip);
-        // GitHub is replaced by the files the build wrote; nothing leaves this machine.
-        add_filter('pre_http_request', static function ($pre, $a, $url) use (&$zip_bytes, $release, $man, $base, $version) {
-            $ok = static fn(string $body) => array('headers' => array(), 'body' => $body, 'response' => array('code' => 200, 'message' => 'OK'), 'cookies' => array(), 'filename' => $a['filename'] ?? null);
-            if ($url === WP_Dynamic_Tags_Updater::API_URL) {
-                return $ok(wp_json_encode($release));
-            }
-            if ($url === $base . "wp-dynamic-tags-$version.manifest.json") {
-                return $ok((string) file_get_contents($man));
-            }
-            if ($url === $base . "wp-dynamic-tags-$version.zip" && !empty($a['filename'])) {
-                file_put_contents($a['filename'], $zip_bytes);
-                return $ok('');
-            }
-            return new WP_Error('unexpected', "unexpected request to $url");
-        }, 10, 3);
+        $base = "https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/download/v$version/";
 
         delete_site_option(WP_Dynamic_Tags_Updater::OPTION);
         $older  = array('Version' => '0.0.1');
@@ -163,6 +184,70 @@ switch ($phase) {
         $bad = apply_filters('upgrader_pre_download', false, $package, null, array());
         $t(is_wp_error($bad) && $bad->get_error_code() === 'dt_update_checksum', 'a ZIP that was changed after the build is refused');
         $t(get_site_option(WP_Dynamic_Tags_Updater::OPTION) !== false, 'the checked release is cached (an uninstall must remove this)');
+        break;
+
+    case 'upgrade':
+        // An update by WordPress's own upgrader (the code path of the Plugins screen, WP-CLI and auto-updates) on an install of the
+        // PREVIOUS version that holds the 16 tags of the 'seed' phase, with GitHub replaced by the build output.
+        // $mode: ok | tampered (the ZIP is changed after the build). $folder: the folder the plugin is installed in.
+        $version = (string) ($args[1] ?? '');
+        $dir     = rtrim((string) ($args[2] ?? ''), '/\\');
+        $mode    = (string) ($args[3] ?? 'ok');
+        $folder  = (string) ($args[4] ?? 'wp-dynamic-tags');
+        $file    = $folder . '/wp-dynamic-tags.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/misc.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        WP_Filesystem();
+
+        $zip_bytes = '';
+        $manifest  = $serve_github($version, $dir, $zip_bytes);
+        $t($manifest !== null, 'the build output has the ZIP and its manifest');
+        if ($manifest === null) {
+            break;
+        }
+        if ($mode === 'tampered') {
+            $zip_bytes .= 'tampered';
+        }
+        $header = static function () use ($file): string {
+            return (string) (get_plugin_data(WP_PLUGIN_DIR . '/' . $file, false, false)['Version'] ?? '');
+        };
+
+        $before = $header();
+        $t($before !== '' && version_compare($before, $version, '<'), "the installed copy in $folder/ is an older version ($before)");
+        $t(is_plugin_active($file), 'it is active');
+        $t($count("SELECT COUNT(*) FROM $table") === 16, 'and holds its 16 tags');
+
+        delete_site_option(WP_Dynamic_Tags_Updater::OPTION);
+        delete_site_transient('update_plugins');
+        wp_update_plugins();
+        $found   = get_site_transient('update_plugins');
+        $offered = is_object($found) && isset($found->response[$file]) ? $found->response[$file] : null;
+        $t($offered !== null && ($offered->new_version ?? '') === $version, "WordPress's own update check offers $version for it");
+        if ($offered === null) {
+            break;
+        }
+
+        $result = (new Plugin_Upgrader(new Automatic_Upgrader_Skin()))->upgrade($file);
+        wp_clean_plugins_cache(true);
+        $copies = array_map(static fn(string $p): string => basename(dirname($p)), (array) glob(WP_PLUGIN_DIR . '/*/wp-dynamic-tags.php'));
+
+        if ($mode === 'tampered') {
+            $t($result !== true, 'a ZIP that was changed after the build is not installed');
+            $t($header() === $before, 'the installed version is untouched');
+        } else {
+            $t($result === true, 'WordPress installs the update');
+            $t($header() === $version, "the plugin is now $version");
+            $t(is_file(WP_PLUGIN_DIR . "/$folder/includes/class-updater.php"), 'with the new files');
+            // The upgrader takes the plugin offline while it replaces the files and leaves re-activating it to its caller: the
+            // Plugins screen does it right after an update. Activating loads the new files and runs the activation hook.
+            $activated = activate_plugin($file);
+            $t(!is_wp_error($activated), 'WordPress activates the new version, as the Plugins screen does after an update' . (is_wp_error($activated) ? ': ' . $activated->get_error_message() : ''));
+        }
+        $t($copies === array($folder), 'and there is no second copy of the plugin in another folder' . ($copies === array($folder) ? '' : ' (found: ' . implode(', ', $copies) . ')'));
+        $t(is_plugin_active($file), 'the plugin is still active');
+        $t($count("SELECT COUNT(*) FROM $table") === 16, 'and every tag is still there');
         break;
 
     case 'kept':
