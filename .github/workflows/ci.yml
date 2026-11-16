@@ -1,0 +1,248 @@
+# The release gates, run on every pull request and on main, and by release.yml before a release is built.
+#
+# What each job proves
+#   static     the code lints, PHPStan finds nothing, the security and i18n sniffs find nothing, no dependency has a known advisory
+#   unit       the root test suite and a lint of every file, on PHP 8.2 to 8.5
+#   wordpress  the WordPress test suites (front and admin) on the minimum, the tested and the newest WordPress, on the oldest and the
+#              newest PHP, and as a network; tests/wp*/RigTest.php fails the job if it did not run on what its name says
+#   package    the ZIP the release would publish: built, verified, installed on a blank site and walked through its whole life
+#   secrets    no secret anywhere in the history
+#
+# Every third-party action is pinned to a commit (the comment names the release); nothing here can write to the repository.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  WP_CLI_VERSION: 2.12.0
+  GITLEAKS_VERSION: 8.30.1
+
+jobs:
+  static:
+    name: Static analysis (PHP 8.2)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, xml, xmlwriter, tokenizer, json, filter, ctype
+          coverage: none
+          tools: composer:v2
+          ini-values: memory_limit=2G
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Audit dependencies (known advisories)
+        run: composer audit --locked
+      - name: Lint every PHP file
+        run: php tools/release/lint.php
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=4G | tee phpstan.txt
+      - name: Security and i18n sniffs
+        run: >
+          vendor/bin/phpcs --standard=WordPress
+          --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.Security.SafeRedirect,WordPress.DB.PreparedSQL,WordPress.DB.PreparedSQLPlaceholders,WordPress.WP.I18n
+          --report=full includes admin uninstall.php wp-dynamic-tags.php | tee phpcs.txt
+      - name: Keep the reports of a failed run
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: static-reports
+          path: |
+            phpstan.txt
+            phpcs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+  unit:
+    name: Unit tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, xml, xmlwriter, tokenizer, json, filter, ctype
+          coverage: none
+          tools: composer:v2
+          ini-values: memory_limit=2G
+      - name: Check this really is PHP ${{ matrix.php }}
+        run: test "$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')" = "${{ matrix.php }}"
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Lint every PHP file
+        run: php tools/release/lint.php
+      - name: PHPUnit
+        run: vendor/bin/phpunit --log-junit junit-unit.xml
+      - name: Keep the results of a failed run
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unit-php${{ matrix.php }}
+          path: junit-unit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  wordpress:
+    name: WordPress ${{ matrix.wp }}, PHP ${{ matrix.php }}${{ matrix.multisite && ' (network)' || '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # the minimum the plugin declares, the version it is tested up to, and the newest WordPress (a moving target that
+          # warns of trouble ahead without changing what the plugin promises)
+          - { php: '8.2', wp: '7.0.8' }
+          - { php: '8.2', wp: '7.1.4' }
+          - { php: '8.5', wp: '7.1.4' }
+          - { php: '8.5', wp: 'latest' }
+          # as a network
+          - { php: '8.2', wp: '7.1.4', multisite: true }
+          - { php: '8.5', wp: '7.0.8', multisite: true }
+    env:
+      WP_MULTISITE: ${{ matrix.multisite && '1' || '0' }}
+      WP_TEST_DB: local_wpunit_ci
+      WP_TEST_PORT: '3306'
+      DT_EXPECT_PHP: ${{ matrix.php }}
+      DT_EXPECT_WP: ${{ matrix.wp }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, xml, xmlwriter, tokenizer, json, filter, ctype, mysqli, curl, zip, gd, intl, openssl, sodium, exif, fileinfo
+          coverage: none
+          tools: composer:v2
+          ini-values: memory_limit=2G
+      - name: Start MySQL and create the disposable test database
+        run: |
+          sudo systemctl start mysql.service
+          for i in $(seq 1 30); do mysqladmin ping -h127.0.0.1 -uroot -proot --silent && break; sleep 1; done
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ${WP_TEST_DB} CHARACTER SET utf8mb4"
+      - name: Download WordPress ${{ matrix.wp }} and check its checksum
+        run: |
+          if [ "${{ matrix.wp }}" = latest ]; then url=https://wordpress.org/latest.zip; else url="https://wordpress.org/wordpress-${{ matrix.wp }}.zip"; fi
+          curl -fsSL -o "$RUNNER_TEMP/wp.zip" "$url"
+          curl -fsSL -o "$RUNNER_TEMP/wp.zip.sha1" "$url.sha1"
+          echo "$(cut -d' ' -f1 "$RUNNER_TEMP/wp.zip.sha1")  $RUNNER_TEMP/wp.zip" | sha1sum -c -
+          mkdir "$RUNNER_TEMP/core"
+          unzip -q "$RUNNER_TEMP/wp.zip" -d "$RUNNER_TEMP/core"
+          echo "WP_CORE_DIR=$RUNNER_TEMP/core/wordpress" >> "$GITHUB_ENV"
+          echo "WP_PHP_BINARY=$(command -v php)" >> "$GITHUB_ENV"
+      - name: Install the test tools
+        run: composer install --working-dir=tools/integration --no-interaction --no-progress --prefer-dist
+      - name: Front suite
+        run: php tools/integration/vendor/phpunit/phpunit/phpunit -c tools/integration/phpunit.xml.dist --log-junit "$RUNNER_TEMP/junit-front.xml"
+      - name: Admin suite
+        run: php tools/integration/vendor/phpunit/phpunit/phpunit -c tools/integration/phpunit-admin.xml.dist --log-junit "$RUNNER_TEMP/junit-admin.xml"
+      - name: Keep the results of a failed run
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wordpress-${{ matrix.wp }}-php${{ matrix.php }}${{ matrix.multisite && '-network' || '' }}
+          path: ${{ runner.temp }}/junit-*.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  package:
+    name: Package and lifecycle (PHP ${{ matrix.php }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, xml, zip, mysqli, curl, gd, intl, openssl, sodium, exif, fileinfo
+          coverage: none
+          tools: none
+          ini-values: memory_limit=2G
+      - name: Read the version being released
+        run: |
+          version=$(sed -n 's/^ \* Version:[[:space:]]*\([0-9][0-9.]*\)[[:space:]]*$/\1/p' wp-dynamic-tags.php | head -n1)
+          echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Build the ZIP, its checksum and its manifest
+        run: php tools/release/build.php "$VERSION" --out="$RUNNER_TEMP/build"
+      - name: Verify the version declarations and the ZIP
+        run: php tools/release/verify.php "$VERSION" "$RUNNER_TEMP/build/wp-dynamic-tags-$VERSION.zip"
+      - name: Install WP-CLI (checksum checked)
+        run: |
+          base="https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}"
+          curl -fsSL -o "$RUNNER_TEMP/wp-cli.phar" "$base/wp-cli-${WP_CLI_VERSION}.phar"
+          curl -fsSL -o "$RUNNER_TEMP/wp-cli.phar.sha512" "$base/wp-cli-${WP_CLI_VERSION}.phar.sha512"
+          echo "$(cut -d' ' -f1 "$RUNNER_TEMP/wp-cli.phar.sha512")  $RUNNER_TEMP/wp-cli.phar" | sha512sum -c -
+      - name: Start MySQL and install a blank WordPress
+        run: |
+          sudo systemctl start mysql.service
+          for i in $(seq 1 30); do mysqladmin ping -h127.0.0.1 -uroot -proot --silent && break; sleep 1; done
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE ci_lifecycle CHARACTER SET utf8mb4"
+          wp() { php "$RUNNER_TEMP/wp-cli.phar" "$@"; }
+          site="$RUNNER_TEMP/site"
+          wp core download --path="$site" --version=7.1.4 --quiet
+          wp config create --path="$site" --dbname=ci_lifecycle --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check --quiet
+          wp core install --path="$site" --url=http://ci-lifecycle.test --title=Lifecycle --admin_user=ciadmin --admin_password="$(openssl rand -hex 16)" --admin_email=ci@ci-lifecycle.test --skip-email --quiet
+          echo "SITE=$site" >> "$GITHUB_ENV"
+      - name: Install the ZIP on it and walk it through its whole life
+        run: >
+          php tools/release/lifecycle.php
+          --wp="php $RUNNER_TEMP/wp-cli.phar"
+          --path="$SITE"
+          --zip="$RUNNER_TEMP/build/wp-dynamic-tags-$VERSION.zip"
+          --version="$VERSION"
+          --build="$RUNNER_TEMP/build"
+
+  secrets:
+    name: Secret scan (whole history)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Gitleaks (checksum checked)
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$archive" "$base/$archive"
+          curl -fsSL -o "$RUNNER_TEMP/checksums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          (cd "$RUNNER_TEMP" && grep " $archive\$" checksums.txt | sha256sum -c -)
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan every commit
+        run: '"$RUNNER_TEMP/gitleaks" git --no-banner --redact --verbose .'
