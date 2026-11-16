@@ -2,7 +2,7 @@
 
 > Create and manage dynamic tags as shortcodes for use in WordPress, Elementor, and other page builders. Free for up to 15 tags you create yourself; Paid is unlimited and adds the dynamic-data layer.
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
+[![Version](https://img.shields.io/badge/version-3.1.1-blue.svg)](https://github.com/EshaanManchanda/WP-Dynamic-Tags)
 [![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-brightgreen.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-purple.svg)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPL%20v2%2B-red.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -185,16 +185,19 @@ Render an existing Dynamic Tag once per post in a query:
 ## 📦 Installation
 
 ### Method 1: WordPress Admin
-1. Download the plugin ZIP file
+1. Download `wp-dynamic-tags-<version>.zip` from the [latest release](https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases/latest). **Use that file, not GitHub's "Source code (zip)"**: only the release ZIP has the right folder name (`wp-dynamic-tags`) and can update itself
 2. Go to **Plugins > Add New** in your WordPress admin
 3. Click **Upload Plugin** and select the ZIP file
 4. Click **Install Now**
 5. Activate the plugin
 
 ### Method 2: Manual Installation
-1. Download and extract the plugin files
-2. Upload the plugin folder to `/wp-content/plugins/`
+1. Download the release ZIP (as above) and extract it
+2. Upload the `wp-dynamic-tags` folder to `/wp-content/plugins/`
 3. Activate the plugin through the **Plugins** menu in WordPress
+
+### Updates
+From 3.1.1 on, WordPress offers new versions itself (**Dashboard > Updates**, the Plugins screen, WP-CLI, auto-updates), on the Free and the Paid plan alike. The update comes from this repository's GitHub Releases; before it is installed, the ZIP is checked against the SHA-256 published with the release. A copy installed from an earlier build needs one manual upload of 3.1.1 first. If GitHub cannot be reached, nothing changes and nothing is shown. What is sent to GitHub: `readme.txt`, *External services*.
 
 ### Requirements
 - ✅ WordPress 7.0 or higher (single site or network)
@@ -521,6 +524,14 @@ CREATE TABLE wp_dynamic_tags (
 ---
 
 ## 🔄 Changelog
+
+### Version 3.1.1
+**The first public release: automatic updates**
+
+- ✨ Everything in 3.1.0 (below), which was never published on its own
+- ✨ **Automatic updates from GitHub Releases**, on the Free and the Paid plan alike: WordPress's own update check finds new versions, "View details" shows the notes, and the update installs like any other. The ZIP is checked against the SHA-256 published with the release before it is installed; if GitHub cannot be reached nothing changes and nothing is shown
+- 🔧 Releases are built from a tag by a repeatable, tested pipeline (`tools/release/`, `.github/workflows/`)
+- 📖 What changed, what was tested and the known limits: `docs/RELEASE-NOTES-3.1.1.md`
 
 ### Version 3.1.0
 **One tag store, no writes while rendering, one admin screen**

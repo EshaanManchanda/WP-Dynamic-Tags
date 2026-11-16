@@ -1,5 +1,9 @@
 # WP Dynamic Tags 3.1.0: release notes
 
+> **3.1.0 was never published on its own.** 3.1.1 is the first public release: it contains everything below plus automatic
+> updates from GitHub (see [RELEASE-NOTES-3.1.1.md](RELEASE-NOTES-3.1.1.md), which also corrects the *Privacy* section here and
+> states what was verified for the release). This document remains the reference for what 3.1.0 changed.
+
 3.1.0 makes the custom table the **only** place tags live, stops the plugin from writing to the
 database while a page renders, replaces the admin with one screen, and closes the security and
 reliability findings of an audit of 3.0.0. Tags written for 3.0.0 keep rendering; the deliberate
@@ -212,7 +216,8 @@ The full register, with a failing test for each item that could be tested, is `d
 * The plugin has no telemetry. It makes an outbound request only when a Paid tag uses `{api:URL}` (the tag author chose the URL;
   see the limits above) and when a licence key is stored: activating or deactivating a key, and a check twice a day, send the
   key and the site address (the home URL) to the licence server (`https://tlvapi.techlovev.in` by default) and nothing else.
-  With no key stored, nothing is sent. This is listed under *External services* in `readme.txt`.
+  With no key stored, nothing is sent. This is listed under *External services* in `readme.txt`. (From 3.1.1 there is a third
+  request, the update check against GitHub: it sends neither the site address nor the key. See `RELEASE-NOTES-3.1.1.md`.)
 * What it stores: the tags table, a few options (settings, migration state and log, the debug log when
   enabled), and a private backup folder in the uploads directory (`wp-dynamic-tags-private`, blocked from the
   web, unguessable names) for migration and uninstall backups. Tag content can hold personal data (the

@@ -3,7 +3,7 @@
   "slug": "wp-dynamic-tags",
   "tagline": "Dynamic content tags as shortcodes that work in any builder: Gutenberg, Elementor, Divi and more.",
   "description": "WP Dynamic Tags lets you create reusable, dynamic content snippets (\"tags\") and insert them anywhere as shortcodes: the block editor, Elementor, Divi, widgets, or any theme template that runs do_shortcode(). It includes a placeholder engine (post, taxonomy, author, site, URL, date, meta, ACF, WooCommerce), formatters, fallback syntax, inline and block-level conditionals, array loops, per-record templates, query and external API data sources, one optimized custom table as the only tag store with migration from older versions, shortcode-name and self-reference safety checks, and import/export in JSON, CSV, XML and SQL. The Free plan is complete on its own (15 tags you create yourself); Paid unlocks the dynamic-data layer.",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "author": "Eshaan Manchanda",
   "author_uri": "https://eshaanportfolio.vercel.app/",
   "plugin_uri": "https://github.com/EshaanManchanda/WP-Dynamic-Tags",
@@ -81,6 +81,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "3.1.1",
+      "changes": [
+        "First public release: everything in 3.1.0 plus automatic updates",
+        "Automatic updates from GitHub Releases, on the Free and the Paid plan alike; the ZIP is checked against the SHA-256 published with the release before it is installed, and a failure never changes or removes anything"
+      ]
+    },
     {
       "version": "3.1.0",
       "changes": [

@@ -1,6 +1,6 @@
 # WP Dynamic Tags — Product Roadmap
 
-Last updated: 2026-11-12, released as 3.1.0 (the storage, admin and import/export parts of section 1 describe 3.1.0; the rest is the 3.0 plan)
+Last updated: 2026-11-16, first public release 3.1.1 (3.1.0 plus automatic updates from GitHub; the storage, admin and import/export parts of section 1 describe 3.1.0; the rest is the 3.0 plan)
 
 ## 1. Where the plugin stands today
 
@@ -34,9 +34,17 @@ are — those let a *field on the current record* drive a widget's output
 (image, link, repeater loop, visibility) anywhere in a page builder, not just
 inside a manually-authored shortcode string.
 
-**After 3.1.0 (not part of it):** licensing and the 15-tag free limit (the single
-`dt_can_create_tag` seam is in place), a bulk *Assign group* action on the list,
-group names in exports so groups travel between sites, and removal of the
+**Done in 3.1.0 / 3.1.1:** the Free and Paid plans with the 15-tag limit (the single
+`dt_can_create_tag` seam), and automatic updates from GitHub Releases with a
+repeatable, tested release pipeline.
+
+**After 3.1.1 (not part of it):** a bulk *Assign group* action on the list,
+group names in exports so groups travel between sites, a Tools check that finds
+tags saved as `name_1` while a page uses `name` (found on a real site that had
+moved from 3.0.0) and offers a one-click rename, a real network-activation test
+(the suites run as a network, but no lifecycle run activates the plugin for a
+whole network), signed releases (an offline key signs the manifest, so the
+updater no longer trusts the release page alone), and removal of the
 legacy-post compatibility window in 4.0.
 
 ---

@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Dynamic Tags 3.1.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-dynamic-tags\n"
+"Project-Id-Version: WP Dynamic Tags 3.1.1\n"
+"Report-Msgid-Bugs-To: https://github.com/EshaanManchanda/WP-Dynamic-Tags/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T17:14:38+00:00\n"
+"POT-Creation-Date: 2026-11-16T11:23:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-dynamic-tags\n"
@@ -113,19 +113,19 @@ msgstr ""
 
 #: admin/class-admin.php:149
 #: admin/class-admin.php:545
-#: wp-dynamic-tags.php:142
-#: wp-dynamic-tags.php:144
+#: wp-dynamic-tags.php:143
+#: wp-dynamic-tags.php:145
 msgid "Dynamic Tags"
 msgstr ""
 
 #: admin/class-admin.php:150
-#: wp-dynamic-tags.php:150
+#: wp-dynamic-tags.php:151
 msgid "All Tags"
 msgstr ""
 
 #: admin/class-admin.php:151
 #: admin/class-admin.php:590
-#: wp-dynamic-tags.php:145
+#: wp-dynamic-tags.php:146
 msgid "Add New Tag"
 msgstr ""
 
@@ -293,7 +293,7 @@ msgid "On the Free plan these Paid features render nothing, here and on your sit
 msgstr ""
 
 #: admin/class-admin.php:552
-#: wp-dynamic-tags.php:151
+#: wp-dynamic-tags.php:152
 msgid "Search Tags"
 msgstr ""
 
@@ -2537,58 +2537,74 @@ msgstr ""
 msgid "The tag [%s] would render itself: its content refers back to it, directly or through other tags."
 msgstr ""
 
-#: wp-dynamic-tags.php:143
+#: includes/class-updater.php:141
+msgid "Create dynamic tags and use them as shortcodes in WordPress, Elementor and other page builders."
+msgstr ""
+
+#: includes/class-updater.php:167
+msgid "This update package does not match the release this site last checked, so it was not installed. Open Dashboard > Updates, press \"Check again\" and try once more."
+msgstr ""
+
+#: includes/class-updater.php:180
+msgid "The downloaded update does not match the checksum published with the release, so it was not installed. Nothing was changed; try again later."
+msgstr ""
+
+#: includes/class-updater.php:212
+msgid "The update could not be unpacked into the folder the plugin is installed in, so it was not installed. Nothing was changed."
+msgstr ""
+
+#: wp-dynamic-tags.php:144
 msgid "Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:146
+#: wp-dynamic-tags.php:147
 msgid "Add New Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:147
+#: wp-dynamic-tags.php:148
 msgid "New Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:148
+#: wp-dynamic-tags.php:149
 msgid "Edit Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:149
+#: wp-dynamic-tags.php:150
 msgid "View Dynamic Tag"
 msgstr ""
 
-#: wp-dynamic-tags.php:152
+#: wp-dynamic-tags.php:153
 msgid "No tags found"
 msgstr ""
 
-#: wp-dynamic-tags.php:153
+#: wp-dynamic-tags.php:154
 msgid "No tags found in trash"
 msgstr ""
 
-#: wp-dynamic-tags.php:398
+#: wp-dynamic-tags.php:399
 msgid "no tags"
 msgstr ""
 
-#: wp-dynamic-tags.php:400
+#: wp-dynamic-tags.php:401
 msgid "1 tag"
 msgstr ""
 
 #. translators: %d: number of tags
-#: wp-dynamic-tags.php:403
+#: wp-dynamic-tags.php:404
 #, php-format
 msgid "%d tags"
 msgstr ""
 
-#: wp-dynamic-tags.php:756
+#: wp-dynamic-tags.php:757
 msgid "🎉 Welcome Back to WP Dynamic Tags!"
 msgstr ""
 
-#: wp-dynamic-tags.php:758
+#: wp-dynamic-tags.php:759
 msgid "Your data has been automatically restored:"
 msgstr ""
 
 #. translators: %d: number of tag posts
-#: wp-dynamic-tags.php:766
+#: wp-dynamic-tags.php:767
 #, php-format
 msgid "%d tag post"
 msgid_plural "%d tag posts"
@@ -2596,7 +2612,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of database tags
-#: wp-dynamic-tags.php:777
+#: wp-dynamic-tags.php:778
 #, php-format
 msgid "%d database tag"
 msgid_plural "%d database tags"
@@ -2604,47 +2620,47 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tag groups
-#: wp-dynamic-tags.php:788
+#: wp-dynamic-tags.php:789
 #, php-format
 msgid "%d tag group"
 msgid_plural "%d tag groups"
 msgstr[0] ""
 msgstr[1] ""
 
-#: wp-dynamic-tags.php:796
+#: wp-dynamic-tags.php:797
 msgid "✅ All your shortcodes are working and ready to use!"
 msgstr ""
 
-#: wp-dynamic-tags.php:821
+#: wp-dynamic-tags.php:822
 msgid "WP Dynamic Tags Deactivated"
 msgstr ""
 
-#: wp-dynamic-tags.php:824
+#: wp-dynamic-tags.php:825
 msgid "✅ Your data is safe!"
 msgstr ""
 
-#: wp-dynamic-tags.php:825
+#: wp-dynamic-tags.php:826
 msgid "All your tags and groups have been preserved. If you reinstall the plugin, everything will work automatically."
 msgstr ""
 
-#: wp-dynamic-tags.php:829
+#: wp-dynamic-tags.php:830
 msgid "⚠️ Data deletion is enabled"
 msgstr ""
 
-#: wp-dynamic-tags.php:830
+#: wp-dynamic-tags.php:831
 msgid "If you uninstall the plugin, all data will be permanently deleted."
 msgstr ""
 
-#: wp-dynamic-tags.php:835
+#: wp-dynamic-tags.php:836
 msgid "Manage Data Retention Settings"
 msgstr ""
 
-#: wp-dynamic-tags.php:851
-#: wp-dynamic-tags.php:873
+#: wp-dynamic-tags.php:852
+#: wp-dynamic-tags.php:874
 msgid "You do not have permission to download sample files."
 msgstr ""
 
-#: wp-dynamic-tags.php:857
-#: wp-dynamic-tags.php:879
+#: wp-dynamic-tags.php:858
+#: wp-dynamic-tags.php:880
 msgid "Sample file not found."
 msgstr ""

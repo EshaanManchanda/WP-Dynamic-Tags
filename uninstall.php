@@ -3,7 +3,7 @@
  * Uninstall WP Dynamic Tags Plugin
  *
  * @package WP_Dynamic_Tags
- * @version 3.1.0
+ * @version 3.1.1
  */
 
 // If uninstall not called from WordPress, exit

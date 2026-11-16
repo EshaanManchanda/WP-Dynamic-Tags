@@ -3,7 +3,7 @@ Tags: dynamic content, shortcodes, merge tags, elementor, woocommerce
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,10 +41,13 @@ The complete documentation, the roadmap and a manual test guide are in the plugi
 
 == Installation ==
 
-1. Upload the plugin folder to `/wp-content/plugins/`, or install the plugin through the WordPress admin's "Add New Plugin" screen.
-2. Activate the plugin through the "Plugins" screen in WordPress.
-3. Go to **Dynamic Tags → Add New** to create your first tag.
-4. Use the generated shortcode anywhere `do_shortcode()` runs.
+1. Download `wp-dynamic-tags-<version>.zip` from the latest release at https://github.com/EshaanManchanda/WP-Dynamic-Tags/releases (use that file, not GitHub's "Source code" download: only the release ZIP has the right folder name and can update itself).
+2. In WordPress open **Plugins → Add New Plugin → Upload Plugin**, choose the ZIP and install it, or upload the extracted `wp-dynamic-tags` folder to `/wp-content/plugins/`.
+3. Activate the plugin through the "Plugins" screen in WordPress.
+4. Go to **Dynamic Tags → Add New** to create your first tag.
+5. Use the generated shortcode anywhere `do_shortcode()` runs.
+
+Updates: from this version on, WordPress offers new versions on **Dashboard → Updates** and on the Plugins screen, and installs them like any other plugin update. A copy installed from an earlier build needs one manual upload of this version first.
 
 == Frequently Asked Questions ==
 
@@ -74,7 +77,7 @@ It renders nothing (a `{token??fallback}` you wrote still shows its fallback, an
 
 = Does the plugin contact any server? =
 
-Only the ones listed under External services below: the license server when you activate a key (and for the twice-daily check while a key is stored), and the address a tag author chose for `{api:...}`. With no key and no `{api:...}` tag, the plugin makes no outbound request. It has no telemetry and sends nothing to its author.
+Only the ones listed under External services below: GitHub, to find new versions of the plugin (through WordPress's own update check); the license server when you activate a key (and for the twice-daily check while a key is stored); and the address a tag author chose for `{api:...}`. The update check does not deliberately send your site address, any user information or your license key. With no key and no `{api:...}` tag, the plugin makes no other outbound request. It has no telemetry and sends nothing to its author.
 
 = Is there a query builder or external API support? =
 
@@ -104,6 +107,10 @@ What is sent, and when: when you activate a key, and about twice a day while a k
 If a tag uses the Paid `{api:URL}` placeholder, the plugin fetches that URL (public addresses only, JSON, at most 1 MB, at most 5 per request, cached for five minutes) and shows the data you select. The address is chosen by whoever writes the tag; the plugin does not send any site or user data with the request.
 
 == Changelog ==
+
+= 3.1.1 =
+* First public release: everything in 3.1.0 (below) plus automatic updates
+* Automatic updates from GitHub Releases: WordPress's own update check finds new versions, shows their notes under "View details" and installs them like any other plugin update, on the Free and the Paid plan alike. The ZIP is checked against the SHA-256 published with the release before it is installed. If GitHub cannot be reached, nothing changes and nothing is shown. See "External services"
 
 = 3.1.0 =
 * The custom table is the only tag store; the post-to-table bridge, dual mode and the post editor for tags are gone
@@ -137,6 +144,9 @@ If a tag uses the Paid `{api:URL}` placeholder, the plugin fetches that URL (pub
 * Initial release: post-type-based dynamic tags, groups, and basic shortcodes
 
 == Upgrade Notice ==
+
+= 3.1.1 =
+First public release, with everything in 3.1.0: back up first, then run Dynamic Tags > Tools if your tags are still stored as posts. WordPress offers new versions itself from now on; a copy from an earlier build needs this one manual upload. See docs/RELEASE-NOTES-3.1.1.md.
 
 = 3.1.0 =
 Back up first, then run Dynamic Tags > Tools to move tags stored as posts into the table (dry run, migrate, verify; nothing is deleted without your confirmation). New Free and Paid plans: Paid features render nothing on Free, and Free allows 15 tags you create. See docs/RELEASE-NOTES-3.1.0.md.
