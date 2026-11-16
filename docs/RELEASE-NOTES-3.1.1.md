@@ -79,7 +79,7 @@ local build of the tag by its SHA-256.
 
 ## What was verified for this release
 
-Everything below was run on 2026-11-16 on a development PC (Windows, MySQL 8.4) unless it says CI.
+Everything below was run on 2026-11-16 on a development PC (Windows, MySQL 8.4) unless it says GitHub Actions.
 
 * **Static:** PHPStan level 5, 0 errors; the WordPress security and i18n sniffs (output escaping, nonces, input validation, prepared SQL,
   text domain), 0 findings (the same command finds 14 errors in a file with deliberate violations); `composer audit --locked`, no advisories;
@@ -112,13 +112,19 @@ Everything below was run on 2026-11-16 on a development PC (Windows, MySQL 8.4) 
   second root folder, a syntax error or a path that climbs out of the folder. `actionlint` reports nothing on both workflows and
   reports the five defects of a deliberately broken one.
 
+* **GitHub Actions** (CI on pull request #1, 2026-11-16, run 43861325831 on `a0ae029` merged with `main`): all 15 jobs green in under a
+  minute. Static analysis (lint, PHPStan, the security and i18n sniffs, `composer audit`); the unit suite on **PHP 8.2, 8.3, 8.4 and 8.5**;
+  the WordPress front and admin suites on 7.0.8, 7.1.4 and the newest WordPress, on PHP 8.2 and 8.5, and as a network (303 and 280
+  tests, the same counts and assertions as on the development PC); the built ZIP built, verified, installed on a blank WordPress and walked
+  through the whole lifecycle on **PHP 8.2, 8.4 and 8.5**; and Gitleaks over all 109 commits. This is the evidence for PHP 8.3 and 8.4,
+  which could not be run on the development PC (8.4: the portable `php.exe` is blocked by Windows Application Control and was not
+  worked around).
+
 ### Not verified, and how that is handled
 
-* **PHP 8.3 and 8.4** were not run on this PC for this release (8.4: the portable `php.exe` is blocked by Windows Application Control and
-  was not worked around; 8.3 was run for 3.1.0 only). 8.2 and 8.5 ran. CI runs the unit suite on 8.2 to 8.5 and the built package on
-  8.2, 8.4 and 8.5, and the release workflow refuses to build if any of them fails.
-* **GitHub Actions had not run when these notes were written.** The workflows are validated by `actionlint` and every script they call
-  was run locally, but the first run on GitHub is the first run. Nothing is released unless it is green.
+* **The release workflow has not run yet.** CI has; `release.yml` only runs when a version tag is pushed, and all it does is create a
+  draft. Its scripts (`build.php`, `verify.php`) ran in CI's package job, and the workflow itself is validated by `actionlint`. Its first
+  run is the first real one; nothing is published unless the owner presses Publish.
 * **A real GitHub round trip** (a published release found by a real site's update check) needs a published release. It is the first
   thing to check after publishing: a site on the previous build, *Dashboard > Updates > Check again*.
 * **Activating the plugin for a whole network** is not exercised by a lifecycle run: the suites run as a network and the uninstall
