@@ -1,0 +1,111 @@
+# Builds the release files from a version tag and leaves them in a DRAFT GitHub release. It never publishes:
+# the owner reads the draft and presses Publish (only then does the plugin's updater see the release).
+#
+#   git tag v3.1.1 <the commit on main>  &&  git push origin v3.1.1
+#
+# It refuses, and builds nothing, when
+#   - any CI gate fails (the whole of ci.yml runs first),
+#   - the tag's commit is not on main,
+#   - a release for the tag already exists, or the version is not newer than the latest published release,
+#   - the version in the tag is not the version the plugin says it is (build.php), or the ZIP does not verify (verify.php).
+# It never replaces or edits an existing release or its files.
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ci:
+    name: Gates
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  draft:
+    name: Build and draft the release
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The tagged commit must be on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$TAG is not on main. Merge the pull request first, then tag the commit that is on main."
+            exit 1
+          fi
+      - name: Nothing may be overwritten, and the version must be new
+        run: |
+          version="${TAG#v}"
+          existing=$(gh release list --limit 200 --json tagName --jq '.[] | select(.tagName == env.TAG) | .tagName')
+          if [ -n "$existing" ]; then
+            echo "::error::A release for $TAG already exists (draft or published). It is never replaced."
+            exit 1
+          fi
+          latest=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName // empty')
+          if [ -n "$latest" ]; then
+            newest=$(printf '%s\n%s\n' "${latest#v}" "$version" | sort -V | tail -n1)
+            if [ "$newest" != "$version" ] || [ "${latest#v}" = "$version" ]; then
+              echo "::error::$version is not newer than the latest published release $latest."
+              exit 1
+            fi
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.2'
+          extensions: mbstring, zip
+          coverage: none
+          tools: none
+      - name: Build the ZIP, its checksum and its manifest
+        run: php tools/release/build.php "$VERSION" --out=build
+      - name: Verify the version declarations and the ZIP
+        run: php tools/release/verify.php "$VERSION" "build/wp-dynamic-tags-$VERSION.zip"
+      - name: Write the release notes from the changelog
+        run: |
+          awk -v v="$VERSION" '
+            /^== / { section = $0 }
+            section ~ /Changelog/ && $0 == "= " v " =" { on = 1; next }
+            on && (/^= / || /^== /) { exit }
+            on { print }
+          ' readme.txt | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > build/notes.md
+          test -s build/notes.md || { echo "::error::readme.txt has no changelog for $VERSION"; exit 1; }
+          printf '\nFull notes: https://github.com/%s/blob/%s/docs/RELEASE-NOTES-%s.md\n' "$GITHUB_REPOSITORY" "$TAG" "$VERSION" >> build/notes.md
+      - name: Create the DRAFT release
+        run: >
+          gh release create "$TAG"
+          "build/wp-dynamic-tags-$VERSION.zip"
+          "build/wp-dynamic-tags-$VERSION.zip.sha256"
+          "build/wp-dynamic-tags-$VERSION.manifest.json"
+          --draft --verify-tag
+          --title "WP Dynamic Tags $VERSION"
+          --notes-file build/notes.md
+      - name: Download the draft's files again and compare them with what was built
+        run: |
+          mkdir downloaded
+          gh release download "$TAG" --dir downloaded
+          (cd downloaded && sha256sum -c "wp-dynamic-tags-$VERSION.zip.sha256")
+          cmp "downloaded/wp-dynamic-tags-$VERSION.zip" "build/wp-dynamic-tags-$VERSION.zip"
+          cmp "downloaded/wp-dynamic-tags-$VERSION.manifest.json" "build/wp-dynamic-tags-$VERSION.manifest.json"
+          echo "The draft holds exactly the files that were built. Review it, then press Publish."
