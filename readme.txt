@@ -82,7 +82,16 @@ Yes (Paid) — `{query:...}` runs a WP_Query and returns an array of post rows, 
 
 == External services ==
 
-This plugin connects to two kinds of outside service, and only when you use them.
+This plugin connects to three kinds of outside service. The first one is how the plugin is updated; the other two only when you use them.
+
+= GitHub (plugin updates) =
+
+What it is: GitHub, where the plugin's releases are published (`https://github.com/EshaanManchanda/WP-Dynamic-Tags`). The plugin is not distributed through WordPress.org, so it asks GitHub for new versions instead.
+
+What is sent, and when: during WordPress's own update check (about twice a day, or when you press "Check again" on Dashboard > Updates) the plugin requests the latest release from `api.github.com` and a small manifest file from `github.com`; the answer is kept on your site for a few hours (an hour after a failure). The requests do not intentionally contain your site address, administrator or user information or your license key, and they carry no cookies. As with any web request, GitHub receives the server's IP address and may process it as described in its privacy statement. Before an update is installed, its ZIP is checked against the SHA-256 checksum published in the same release. This happens whether or not you have a license.
+
+Terms of Service: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+Privacy Statement: https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement
 
 = The license server =
 

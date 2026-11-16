@@ -12,6 +12,7 @@
  * Domain Path: /languages
  * Requires at least: 7.0
  * Requires PHP: 8.2
+ * Update URI: https://github.com/EshaanManchanda/WP-Dynamic-Tags
  */
 
 // Prevent direct access
@@ -1106,6 +1107,10 @@ class WP_Dynamic_Tags_Plugin
         if (file_exists($includes_dir . 'class-license-manager.php')) {
             require_once $includes_dir . 'class-license-manager.php';
         }
+
+        // Updates from GitHub Releases (the Update URI header): WordPress's own update check asks this class. No license is involved.
+        require_once $includes_dir . 'class-updater.php';
+        WP_Dynamic_Tags_Updater::register();
 
         // Load new table system classes first
         if (file_exists($includes_dir . 'class-database-manager.php')) {

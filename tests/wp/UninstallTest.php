@@ -37,6 +37,7 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         foreach (self::OWN_TRANSIENTS as $transient) {
             delete_transient($transient);
         }
+        delete_site_option(WP_Dynamic_Tags_Updater::OPTION);
         parent::tear_down();
     }
 
@@ -64,6 +65,9 @@ class DT_Uninstall_Test extends WP_UnitTestCase
             set_transient($transient, 'x', HOUR_IN_SECONDS);
         }
         update_option('dt_other_plugin_option', 'keep'); // same prefix, not ours
+
+        // The update checker's cache (a network option: one per network, shared by every site)
+        update_site_option(WP_Dynamic_Tags_Updater::OPTION, array('release' => null, 'next_check' => time() + HOUR_IN_SECONDS));
 
         update_option('wp_dynamic_tags_delete_on_uninstall', true);
         update_option('wp_dynamic_tags_table_version', '1.0.0');
@@ -116,5 +120,6 @@ class DT_Uninstall_Test extends WP_UnitTestCase
         $this->assertSame('keep', get_option('_transient_dtxtagxgroupsx_foreign'), 'a foreign transient survives');
         $this->assertFalse(get_option('_transient_dt_tag_groups_demo'), 'our transient is removed');
         $this->assertFalse(get_option('wp_dynamic_tags_table_version'), 'the stored schema version must not outlive the dropped table');
+        $this->assertFalse(get_site_option(WP_Dynamic_Tags_Updater::OPTION), 'the update checker\'s cache must not outlive the plugin');
     }
 }

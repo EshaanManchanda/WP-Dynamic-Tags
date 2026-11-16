@@ -22,6 +22,10 @@ if (!defined('ABSPATH')) {
 function wp_dynamic_tags_uninstall() {
     global $wpdb;
 
+    // The update checker's cache is not the site's data (a copy of what GitHub said, kept as a network option): it goes whether or
+    // not the tags are kept.
+    delete_site_option('dt_update_state');
+
     // Get the option to determine if data should be deleted
     // Note: WordPress validates permissions before running uninstall.php
     $delete_data = get_option('wp_dynamic_tags_delete_on_uninstall', false);
