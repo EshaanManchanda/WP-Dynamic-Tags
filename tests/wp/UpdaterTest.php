@@ -28,6 +28,9 @@ class DT_Updater_Test extends WP_UnitTestCase
     /** @var string[] files the mock wrote for a streamed download */
     private $streamed = array();
 
+    /** @var string[] folders a test unpacked an update into */
+    private $unpacked = array();
+
     public function set_up(): void
     {
         parent::set_up();
@@ -72,8 +75,25 @@ class DT_Updater_Test extends WP_UnitTestCase
                 unlink($file);
             }
         }
+        foreach ($this->unpacked as $dir) {
+            $this->remove_tree($dir);
+        }
+        $this->unpacked = array();
         delete_site_option(WP_Dynamic_Tags_Updater::OPTION);
         parent::tear_down();
+    }
+
+    private function remove_tree(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        foreach (scandir($dir) as $item) {
+            if ($item !== '.' && $item !== '..') {
+                is_dir("$dir/$item") ? $this->remove_tree("$dir/$item") : unlink("$dir/$item");
+            }
+        }
+        rmdir($dir);
     }
 
     // ------------------------------------------------------------------ fixtures
@@ -172,11 +192,12 @@ class DT_Updater_Test extends WP_UnitTestCase
         $this->assertSame('github.com', wp_parse_url($headers['uri'], PHP_URL_HOST), 'the hostname decides the filter name');
     }
 
-    public function test_the_three_hooks_are_registered(): void
+    public function test_the_four_hooks_are_registered(): void
     {
         $this->assertNotFalse(has_filter('update_plugins_github.com'));
         $this->assertNotFalse(has_filter('plugins_api'));
         $this->assertNotFalse(has_filter('upgrader_pre_download'));
+        $this->assertNotFalse(has_filter('upgrader_source_selection', array('WP_Dynamic_Tags_Updater', 'filter_source_selection')));
     }
 
     // ------------------------------------------------------------------ what is offered
@@ -685,5 +706,85 @@ class DT_Updater_Test extends WP_UnitTestCase
     {
         $package = $this->offered_package();
         $this->assertSame('/tmp/already.zip', apply_filters('upgrader_pre_download', '/tmp/already.zip', $package, null, array()));
+    }
+
+    // ------------------------------------------------------------------ the update goes into the folder the plugin lives in
+
+    /**
+     * WordPress installs an update into the folder named by the package's root, not into the folder the plugin is in. The release
+     * ZIP's root is wp-dynamic-tags/, so a copy that lives anywhere else (GitHub's "Source code" ZIP, a renamed or development
+     * folder) would get a second copy next to the old one and stay on the old version. The updater renames the unpacked folder.
+     *
+     * @return array{0: string, 1: string} the folder WordPress unpacked into, and the unpacked plugin folder inside it (with the slash)
+     */
+    private function unpacked(string $root = 'wp-dynamic-tags'): array
+    {
+        $remote = untrailingslashit(wp_normalize_path(get_temp_dir())) . '/dt-unpack-' . wp_generate_password(8, false);
+        wp_mkdir_p("$remote/$root");
+        file_put_contents("$remote/$root/wp-dynamic-tags.php", '<?php // the new version');
+        $this->unpacked[] = $remote;
+        return array($remote, "$remote/$root/");
+    }
+
+    private function installed_folder(): string
+    {
+        return basename(untrailingslashit(WP_DYNAMIC_TAGS_PLUGIN_DIR));
+    }
+
+    private function select_source(string $source, string $remote, $extra = null)
+    {
+        WP_Filesystem();
+        $extra = $extra ?? array('plugin' => WP_Dynamic_Tags_Updater::plugin_file(), 'type' => 'plugin', 'action' => 'update');
+        return apply_filters('upgrader_source_selection', $source, $remote, null, $extra);
+    }
+
+    public function test_the_unpacked_folder_is_renamed_to_the_folder_the_plugin_is_installed_in(): void
+    {
+        [$remote, $source] = $this->unpacked('some-other-folder');
+
+        $selected = $this->select_source($source, $remote);
+
+        $this->assertSame("$remote/" . $this->installed_folder() . '/', $selected);
+        $this->assertFileExists($selected . 'wp-dynamic-tags.php');
+        $this->assertSame('<?php // the new version', file_get_contents($selected . 'wp-dynamic-tags.php'));
+        $this->assertDirectoryDoesNotExist(untrailingslashit($source), 'the folder was moved, not copied');
+    }
+
+    public function test_a_folder_that_already_has_the_right_name_is_left_alone(): void
+    {
+        [$remote, $source] = $this->unpacked($this->installed_folder());
+
+        $this->assertSame($source, $this->select_source($source, $remote));
+        $this->assertFileExists($source . 'wp-dynamic-tags.php');
+    }
+
+    public function test_another_plugins_package_is_never_renamed(): void
+    {
+        [$remote, $source] = $this->unpacked('some-other-folder');
+
+        $this->assertSame($source, $this->select_source($source, $remote, array('plugin' => 'akismet/akismet.php')));
+        $this->assertSame($source, $this->select_source($source, $remote, array('theme' => 'twentytwentysix')));
+        $this->assertSame($source, $this->select_source($source, $remote, array()));
+        $this->assertSame($source, $this->select_source($source, $remote, 'not an array'));
+        $this->assertFileExists($source . 'wp-dynamic-tags.php', 'nothing was moved');
+    }
+
+    public function test_a_source_that_is_not_inside_the_unpack_folder_is_left_alone(): void
+    {
+        [$remote] = $this->unpacked('some-other-folder');
+        [, $elsewhere] = $this->unpacked('another-folder');
+
+        $this->assertSame($elsewhere, $this->select_source($elsewhere, $remote));
+        $this->assertFileExists($elsewhere . 'wp-dynamic-tags.php');
+    }
+
+    public function test_a_folder_that_cannot_be_moved_stops_the_update_with_an_error(): void
+    {
+        [$remote] = $this->unpacked('some-other-folder');
+
+        $result = $this->select_source("$remote/missing-folder/", $remote);
+
+        $this->assertWPError($result);
+        $this->assertSame('dt_update_rename', $result->get_error_code());
     }
 }

@@ -62,6 +62,7 @@ final class WP_Dynamic_Tags_Updater
         add_filter('update_plugins_github.com', array(__CLASS__, 'filter_update'), 10, 3);
         add_filter('plugins_api', array(__CLASS__, 'filter_plugins_api'), 10, 3);
         add_filter('upgrader_pre_download', array(__CLASS__, 'filter_pre_download'), 10, 2);
+        add_filter('upgrader_source_selection', array(__CLASS__, 'filter_source_selection'), 10, 4);
     }
 
     /** The plugin file as WordPress names it ("wp-dynamic-tags/wp-dynamic-tags.php"). */
@@ -179,6 +180,38 @@ final class WP_Dynamic_Tags_Updater
             return new WP_Error('dt_update_checksum', __('The downloaded update does not match the checksum published with the release, so it was not installed. Nothing was changed; try again later.', 'wp-dynamic-tags'));
         }
         return $file;
+    }
+
+    /**
+     * upgrader_source_selection: WordPress installs an update into the folder named by the package's root, not into the folder
+     * the plugin currently lives in. The release ZIP's root is wp-dynamic-tags/, so a copy installed anywhere else (GitHub's
+     * "Source code" ZIP, a renamed or development folder) would get a second copy next to the old one and stay on the old
+     * version. The unpacked folder is renamed to the installed one, so the update replaces the plugin where it is.
+     *
+     * @param string|WP_Error $source        The unpacked folder (with a trailing slash).
+     * @param string          $remote_source The folder WordPress unpacked into.
+     * @param mixed           $upgrader      Unused.
+     * @param array|mixed     $hook_extra    What is being updated ('plugin' => the plugin file for a plugin update).
+     * @return string|WP_Error The folder to install from.
+     */
+    public static function filter_source_selection($source, $remote_source = '', $upgrader = null, $hook_extra = array())
+    {
+        if (!is_array($hook_extra) || ($hook_extra['plugin'] ?? null) !== self::plugin_file() || !is_string($source) || !is_string($remote_source)) {
+            return $source;
+        }
+        $installed = basename(dirname(__DIR__));
+        $parent    = untrailingslashit(wp_normalize_path($remote_source));
+        $unpacked  = untrailingslashit(wp_normalize_path($source));
+        if (dirname($unpacked) !== $parent || basename($unpacked) === $installed) {
+            return $source; // not what this method is for, or already named right
+        }
+
+        global $wp_filesystem;
+        $target = $parent . '/' . $installed;
+        if (!is_object($wp_filesystem) || !$wp_filesystem->move($unpacked, $target, true)) {
+            return new WP_Error('dt_update_rename', __('The update could not be unpacked into the folder the plugin is installed in, so it was not installed. Nothing was changed.', 'wp-dynamic-tags'));
+        }
+        return trailingslashit($target);
     }
 
     // ================================================================== the release
