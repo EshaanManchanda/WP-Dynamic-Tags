@@ -75,9 +75,15 @@ $checks = static function (string $title, array $phase) use ($wp, $here, &$faile
     }
 };
 
+/** The value a WP-CLI command printed: its last line (a newer PHP makes WP-CLI's own libraries print deprecation notices before it). */
+$value = static function (string $output): string {
+    $lines = array_values(array_filter(array_map('trim', explode("\n", $output)), 'strlen'));
+    return $lines ? end($lines) : '';
+};
+
 // The site must be installed, and must look disposable.
 [$code, $home] = $wp(array('option', 'get', 'home'));
-$home = trim($home);
+$home = $value($home);
 if ($code !== 0 || $home === '') {
     fwrite(STDERR, "WP-CLI cannot read a WordPress site at {$opts['path']}: $home\n");
     exit(2);
@@ -87,7 +93,7 @@ if (!$sure && !preg_match('/(^localhost$|^127\.|\.local$|\.test$|\.localhost$|^e
     fwrite(STDERR, "Refusing to run: $host does not look like a disposable site. This check deletes tags and tables.\n");
     exit(2);
 }
-echo "Site $home, WordPress " . trim($wp(array('core', 'version'))[1]) . ', PHP ' . PHP_VERSION . ", plugin {$opts['version']}\n";
+echo "Site $home, WordPress " . $value($wp(array('core', 'version'))[1]) . ', PHP ' . PHP_VERSION . ", plugin {$opts['version']}\n";
 
 $slug = 'wp-dynamic-tags';
 $v    = $opts['version'];
